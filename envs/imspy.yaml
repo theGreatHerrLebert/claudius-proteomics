@@ -1,0 +1,58 @@
+# Conda environment for CLAUDIUS-PROTEOMICS
+# Alternative to Singularity containers for local development
+#
+# Usage:
+#   conda env create -f envs/imspy.yaml
+#   conda activate claudius-proteomics
+#
+# After activation, run the setup script to install imspy:
+#   ./scripts/setup_imspy.sh
+#
+
+name: claudius-proteomics
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.12
+  - pip
+
+  # Build tools for rustims
+  - rust
+  - maturin
+
+  # Scientific Python stack
+  - numpy
+  - pandas
+  - pyarrow
+  - scikit-learn
+  - scipy
+
+  # Visualization
+  - matplotlib
+  - seaborn
+
+  # Data handling
+  - h5py
+  - tqdm
+  - pyyaml
+
+  # Workflow
+  - snakemake>=8.0
+
+  # Development
+  - jupyter
+  - ipython
+  - pytest
+
+  # pip packages
+  - pip:
+      # TensorFlow with GPU support
+      - tensorflow[and-cuda]>=2.16.0
+
+      # Additional ML tools
+      - keras
+
+      # Note: imspy packages are installed via scripts/setup_imspy.sh
+      # They require building from source with Rust

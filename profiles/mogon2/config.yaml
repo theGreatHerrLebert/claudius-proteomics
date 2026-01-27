@@ -1,0 +1,52 @@
+# Snakemake profile for Mogon2 HPC (JGU Mainz)
+# Usage: snakemake --profile profiles/mogon2
+
+# Use SLURM executor
+executor: slurm
+
+# Default resources for all rules
+default-resources:
+  slurm_partition: "parallel"
+  mem_mb: 8000
+  time: "2:00:00"
+  cpus_per_task: 1
+
+# Resource mapping: Snakemake resource names -> SLURM options
+set-resources:
+  # GPU jobs go to GPU partition
+  train_ccs_model:
+    slurm_partition: "gpu"
+    slurm_extra: "'--gres=gpu:1'"
+  evaluate_model:
+    slurm_partition: "gpu"
+    slurm_extra: "'--gres=gpu:1'"
+
+# Maximum jobs to submit at once
+jobs: 100
+
+# Use Singularity for containers
+use-singularity: true
+
+# Pass CUDA devices to Singularity containers
+singularity-args: "--nv --bind /scratch:/scratch"
+
+# Latency wait for filesystem (important on HPC)
+latency-wait: 60
+
+# Rerun incomplete jobs
+rerun-incomplete: true
+
+# Keep going on errors (process other jobs)
+keep-going: true
+
+# Print shell commands
+printshellcmds: true
+
+# Local rules (don't submit to cluster)
+local-cores: 4
+localrules:
+  - all
+  - download_all
+  - process_all
+  - extract_all
+  - merge_all

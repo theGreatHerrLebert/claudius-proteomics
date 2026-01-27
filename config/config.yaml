@@ -1,0 +1,49 @@
+# CLAUDIUS-PROTEOMICS Configuration
+# ==================================
+
+# Datasets to process (PRIDE accession numbers)
+datasets:
+  - PXD019086  # Meier et al. 2021 - CCS prediction study
+
+# FragPipe configuration
+# NOTE: FragPipe must be downloaded separately due to licensing
+# Download from: https://fragpipe.nesvilab.org/
+fragpipe:
+  path: "/path/to/your/fragpipe"  # UPDATE THIS
+  workflow: "Default"
+  threads: 16
+  memory_gb: 64
+
+# Database for FragPipe search
+database:
+  fasta: "/path/to/your/fasta/uniprot_human.fasta"  # UPDATE THIS
+
+# Raw extraction settings (imspy)
+extraction:
+  # Ion distribution extraction
+  mz_tolerance_ppm: 20
+  rt_tolerance_sec: 30
+  mobility_tolerance: 0.05
+
+  # Features to extract
+  extract_chromatogram: true
+  extract_mobilogram: true
+  extract_isotopes: true
+
+# Model training settings
+training:
+  test_split: 0.1
+  validation_split: 0.1
+  batch_size: 256
+  epochs: 100
+  early_stopping_patience: 10
+
+# Models to train
+models:
+  - ccs_v1
+
+# Container paths (built Singularity images)
+containers:
+  download: "containers/download.sif"
+  fragpipe_base: "containers/fragpipe-base.sif"
+  imspy: "containers/imspy.sif"

@@ -1,0 +1,34 @@
+Bootstrap: docker
+From: python:3.12-slim
+
+%labels
+    Author CLAUDIUS-PROTEOMICS
+    Description Container for downloading data from PRIDE Archive
+
+%help
+    This container provides tools for downloading proteomics data from PRIDE.
+
+    Usage:
+        singularity exec download.sif python scripts/download_pride.py --accession PXD019086 --output data/raw/PXD019086
+
+%post
+    # Install system dependencies
+    apt-get update && apt-get install -y \
+        wget \
+        curl \
+        aspera-cli \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install Python packages for PRIDE API access
+    pip install --no-cache-dir \
+        requests \
+        tqdm \
+        pandas \
+        pyarrow
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
+%runscript
+    python "$@"

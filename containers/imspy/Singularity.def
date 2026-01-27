@@ -1,0 +1,118 @@
+Bootstrap: docker
+From: nvidia/cuda:11.8-cudnn8-devel-ubuntu22.04
+
+%labels
+    Author CLAUDIUS-PROTEOMICS
+    Description Container for imspy, imspy-predictors, and model training
+    Version 1.0
+
+%help
+    This container provides:
+    - rustims / imspy for timsTOF data processing
+    - imspy-predictors for CCS, RT, intensity prediction
+    - TensorFlow for model training
+
+    Built from source with Rust backend compilation.
+
+    Usage:
+        singularity exec --nv imspy.sif python3.12 scripts/train_ccs.py
+
+%post
+    # Prevent interactive prompts
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Install system dependencies
+    apt-get update && apt-get install -y \
+        software-properties-common \
+        build-essential \
+        curl \
+        wget \
+        git \
+        libhdf5-dev \
+        libssl-dev \
+        pkg-config \
+        cmake \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Add deadsnakes PPA for Python 3.12
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt-get update && apt-get install -y \
+        python3.12 \
+        python3.12-venv \
+        python3.12-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Install pip for Python 3.12
+    curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
+
+    # Make python3.12 the default
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1
+
+    # Install Rust
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    . "$HOME/.cargo/env"
+    export PATH="$HOME/.cargo/bin:$PATH"
+
+    # Verify Rust installation
+    rustc --version
+    cargo --version
+
+    # Install maturin (for building Rust Python extensions)
+    pip install --no-cache-dir maturin
+
+    # Clone rustims from the target branch
+    cd /opt
+    git clone --branch feature/koina-online --depth 1 \
+        https://github.com/theGreatHerrLebert/rustims.git
+
+    cd /opt/rustims
+
+    # Build and install imspy_connector (Rust -> Python bindings)
+    cd /opt/rustims/imspy_connector
+    maturin build --release
+    pip install target/wheels/*.whl
+
+    # Install imspy (Python package)
+    cd /opt/rustims/imspy
+    pip install --no-cache-dir .
+
+    # Install imspy-predictors
+    cd /opt/rustims/packages/imspy-predictors
+    pip install --no-cache-dir .
+
+    # Install TensorFlow with GPU support
+    pip install --no-cache-dir \
+        tensorflow[and-cuda]>=2.16.0
+
+    # Install additional scientific Python stack
+    pip install --no-cache-dir \
+        numpy \
+        pandas \
+        pyarrow \
+        scikit-learn \
+        matplotlib \
+        seaborn \
+        tqdm \
+        pyyaml \
+        h5py
+
+    # Verify installations
+    python3.12 -c "import imspy; print(f'imspy version: {imspy.__version__}')"
+    python3.12 -c "import imspy_predictors; print('imspy_predictors imported successfully')"
+    python3.12 -c "import tensorflow as tf; print(f'TensorFlow version: {tf.__version__}')"
+
+    # Cleanup to reduce image size
+    rm -rf /opt/rustims/.git
+    rm -rf /root/.cargo/registry
+    rm -rf /root/.cargo/git
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export PATH="/root/.cargo/bin:$PATH"
+    # TensorFlow GPU settings
+    export TF_CPP_MIN_LOG_LEVEL=2
+
+%runscript
+    python3.12 "$@"

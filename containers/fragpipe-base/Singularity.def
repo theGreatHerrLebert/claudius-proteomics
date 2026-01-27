@@ -1,0 +1,44 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%labels
+    Author CLAUDIUS-PROTEOMICS
+    Description Base container for FragPipe (Java + dependencies). FragPipe binaries NOT included due to licensing.
+
+%help
+    This container provides the runtime environment for FragPipe.
+    FragPipe itself must be downloaded separately and mounted at runtime.
+
+    Download FragPipe from: https://fragpipe.nesvilab.org/
+
+    Usage:
+        singularity exec --bind /path/to/fragpipe:/opt/fragpipe fragpipe-base.sif \
+            /opt/fragpipe/bin/fragpipe --help
+
+%post
+    # Update and install dependencies
+    apt-get update && apt-get install -y \
+        openjdk-17-jdk \
+        wget \
+        curl \
+        unzip \
+        libgomp1 \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Set Java home
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+    # Create mount point for FragPipe
+    mkdir -p /opt/fragpipe
+
+%environment
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    export PATH=$JAVA_HOME/bin:$PATH
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
+%runscript
+    echo "FragPipe base container"
+    echo "Mount your FragPipe installation to /opt/fragpipe"
+    echo "Example: singularity exec --bind /path/to/fragpipe:/opt/fragpipe fragpipe-base.sif /opt/fragpipe/bin/fragpipe"
+    java -version
