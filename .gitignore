@@ -205,3 +205,41 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ===================
+# CLAUDIUS-PROTEOMICS
+# ===================
+
+# Data directories (large files, downloaded from PRIDE)
+data/raw/*
+data/processed/*
+data/extracted/*
+!data/*/.gitkeep
+
+# Database (large, but keep structure)
+database/peptides/*
+database/snapshots/*
+!database/peptides/.gitkeep
+!database/snapshots/.gitkeep
+database/metadata.json
+
+# Trained models (can be large)
+models/*
+!models/.gitkeep
+
+# Built Singularity containers
+*.sif
+containers/*/*.sif
+
+# Snakemake working files
+.snakemake/
+
+# Log files
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local imspy installation
+.local/
