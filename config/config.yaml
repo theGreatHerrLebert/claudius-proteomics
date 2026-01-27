@@ -2,21 +2,24 @@
 # ==================================
 
 # Datasets to process (PRIDE accession numbers)
+# For local testing, we use pre-downloaded data
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
 
+# Local data paths (for testing without PRIDE download)
+local_data:
+  PXD019086: "/media/hd02/data/raw/dda/ccs/Raw_HeLa_Trp"
+
 # FragPipe configuration
-# NOTE: FragPipe must be downloaded separately due to licensing
-# Download from: https://fragpipe.nesvilab.org/
 fragpipe:
-  path: "/path/to/your/fragpipe"  # UPDATE THIS
+  path: "/home/administrator/fragpipe/fragpipe/fragpipe24/fragpipe-24.0"
   workflow: "Default"
   threads: 16
   memory_gb: 64
 
 # Database for FragPipe search
 database:
-  fasta: "/path/to/your/fasta/uniprot_human.fasta"  # UPDATE THIS
+  fasta: "/home/administrator/Documents/promotion/ccs-workflow/rescoring/data/human_20365_conts_172_2020-3-2_2-0-11_validated.fasta"
 
 # Raw extraction settings (imspy)
 extraction:
@@ -47,3 +50,8 @@ containers:
   download: "containers/download.sif"
   fragpipe_base: "containers/fragpipe-base.sif"
   imspy: "containers/imspy.sif"
+
+# Test mode: use subset of data for quick validation
+test_mode:
+  enabled: true
+  max_files: 3  # Only process first N .d files
