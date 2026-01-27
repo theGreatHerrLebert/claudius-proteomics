@@ -1,0 +1,64 @@
+Bootstrap: docker
+From: python:3.12-slim
+
+%labels
+    Author San José Project
+    Description Distributed worker for peptide property extraction
+    Version 1.0
+
+%post
+    # System dependencies
+    apt-get update && apt-get install -y --no-install-recommends \
+        wget \
+        curl \
+        unzip \
+        openjdk-17-jre-headless \
+        libgomp1 \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Python dependencies
+    pip install --no-cache-dir \
+        requests \
+        pandas \
+        pyarrow \
+        pyyaml \
+        tqdm \
+        boto3 \
+        google-cloud-storage
+
+    # Create directory structure
+    mkdir -p /app /data /output /fastas /config
+
+%files
+    scripts/ /app/scripts/
+    config/ /app/config/
+    entrypoint.sh /app/entrypoint.sh
+
+%environment
+    export FRAGPIPE_PATH=/opt/fragpipe
+    export DIANN_PATH=/opt/diann/diann-linux
+    export FASTA_DIR=/fastas
+    export OUTPUT_DIR=/output
+    export DATA_DIR=/data
+    export PATH=/app/scripts:$PATH
+
+%runscript
+    exec /app/entrypoint.sh "$@"
+
+%help
+    San José Worker Container
+
+    Process a single PRIDE dataset with FragPipe and DIA-NN.
+
+    Usage:
+        singularity run \
+            --bind /path/to/fragpipe:/opt/fragpipe \
+            --bind /path/to/diann:/opt/diann \
+            --bind /path/to/output:/output \
+            san-jose-worker.sif PXD019086
+
+    Or with job queue:
+        singularity run \
+            --bind ... \
+            --env JOB_QUEUE_URL=https://api.example.com/jobs \
+            san-jose-worker.sif --daemon
