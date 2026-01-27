@@ -188,7 +188,8 @@ claudius-proteomics/
 │   ├── processed/              # Search results
 │   │   └── {accession}/
 │   │       ├── psm.tsv         # FragPipe output
-│   │       └── diann/          # DIA-NN output
+│   │       └── diann/
+│   │           └── report.parquet  # DIA-NN output
 │   └── extracted/              # Raw features
 │
 ├── envs/imspy.yaml             # Conda environment
