@@ -48,9 +48,16 @@ local_data:
 # FragPipe configuration
 fragpipe:
   path: "/home/administrator/fragpipe/fragpipe/fragpipe24/fragpipe-24.0"
-  workflow: "Default"
+  workflow: "LFQ-MBR"  # Good default for DDA timsTOF with match-between-runs
   threads: 16
   memory_gb: 64
+
+# DIA-NN configuration (v2.3.2 supports DDA mode)
+diann:
+  path: "/home/administrator/Documents/promotion/diann/diann-2.3.2/diann-2.3.2/diann-linux"
+  threads: 16
+  qvalue: 0.01
+  # DIA-NN 2.3+ can run in DDA mode with --dda flag
 
 # Raw extraction settings (imspy)
 extraction:

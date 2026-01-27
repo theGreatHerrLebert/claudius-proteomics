@@ -18,8 +18,8 @@ PRIDE Archive                    Database                      Models
 │ PXD...      │   ├──────────►  │   PXD010012 │ ───────────►  │   metrics   │
 │             │   │  process    │   ...       │   train       │             │
 └─────────────┘ ──┘  extract    │ snapshots/  │               └─────────────┘
-                                │   v1.0/     │
-                                └─────────────┘
+                               │   v1.0/     │
+                               └─────────────┘
 ```
 
 See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan.
@@ -29,64 +29,112 @@ See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan.
 ### Prerequisites
 
 1. **FragPipe** (v24+) - Download from https://fragpipe.nesvilab.org/
-2. **Singularity** - For containerized HPC execution
+2. **DIA-NN** (v2.3+) - Download from https://github.com/vdemichev/DiaNN (required for DDA support)
 3. **Snakemake** (v8+) - Workflow orchestration
+4. **Singularity** (optional) - For containerized HPC execution
 
 ### Configuration
 
 Edit `config/config.yaml`:
 ```yaml
+# FragPipe installation
 fragpipe:
-  path: "/path/to/your/fragpipe"  # Required
+  path: "/path/to/fragpipe-24.0"
+  workflow: "LFQ-MBR"  # Good for DDA timsTOF
 
-database:
-  fasta: "/path/to/database.fasta"  # Required
+# DIA-NN installation (v2.3+ for DDA support)
+diann:
+  path: "/path/to/diann-linux"
+  threads: 16
+
+# Organism FASTA mapping
+organisms:
+  human:
+    proteome_id: "UP000005640"
+    local_fasta: "/path/to/human.fasta"  # Optional
+    includes_contaminants: true  # If local FASTA already has cRAP
+
+# Dataset to organism mapping
+dataset_metadata:
+  PXD019086:
+    organism: "human"
 ```
 
-### Build Containers
+### Search Methods
+
+The pipeline supports two orthogonal search methods for robust peptide identification:
+
+| Method | Tool | Approach | Strengths |
+|--------|------|----------|-----------|
+| **Spectrum-centric** | FragPipe/MSFragger | Match spectra to peptides | Fast, established, open modification support |
+| **Peptide-centric** | DIA-NN | Match peptides to spectra | Deep learning rescoring, excellent for ion mobility |
+
+Running both provides orthogonal validation - consensus identifications have higher confidence.
 
 ```bash
-# Build on a machine with sudo access
-singularity build containers/imspy.sif containers/imspy/Singularity.def
-singularity build containers/fragpipe-base.sif containers/fragpipe-base/Singularity.def
-singularity build containers/download.sif containers/download/Singularity.def
+# Spectrum-centric only (FragPipe)
+snakemake process_only --cores 16
+
+# Peptide-centric only (DIA-NN)
+snakemake process_diann --cores 16
+
+# Both methods (recommended for production)
+snakemake process_both --cores 16
+```
+
+### FASTA Resource Management
+
+The pipeline automatically manages FASTA databases:
+
+1. **Organism mapping**: Each dataset maps to an organism (human, yeast, mouse, etc.)
+2. **Local or download**: Uses local FASTA if available, otherwise downloads from UniProt
+3. **Contaminants**: Adds cRAP database (unless already included)
+4. **Decoys**: Generates reversed decoy sequences for target-decoy analysis
+
+```bash
+# Prepare FASTA for a dataset
+snakemake prepare_fasta --config accession=PXD019086
+
+# List available databases
+snakemake list_fasta_databases
 ```
 
 ### Phase 1: Build Database
 
 ```bash
 # Add a dataset to the database
-snakemake --profile profiles/mogon2 add_dataset --config accession=PXD019086
+snakemake add_dataset --config accession=PXD019086
 
 # Add all configured datasets
-snakemake --profile profiles/mogon2 add_all_datasets
+snakemake add_all_datasets
 
 # Create a snapshot for training
-snakemake --profile profiles/mogon2 create_snapshot --config version=v1.0
+snakemake create_snapshot --config version=v1.0
 ```
 
 ### Phase 2: Train Models
 
 ```bash
 # Train CCS model on snapshot
-snakemake --profile profiles/mogon2 train_model --config snapshot=v1.0 model=ccs_v1
+snakemake train_model --config snapshot=v1.0 model=ccs_v1
 
 # Evaluate model
-snakemake --profile profiles/mogon2 evaluate_model --config snapshot=v1.0 model=ccs_v1
+snakemake evaluate_model --config snapshot=v1.0 model=ccs_v1
 ```
 
 ### Local Development
 
 ```bash
-# Create conda environment
-conda env create -f envs/imspy.yaml
-conda activate claudius-proteomics
+# Create Python venv
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install snakemake
 
 # Install imspy from source
 ./scripts/setup_imspy.sh
 
-# Run locally
-snakemake --cores 8 add_dataset --config accession=PXD019086
+# Run locally (test mode: 3 files)
+snakemake process_both --cores 8
 ```
 
 ## Project Structure
@@ -98,8 +146,10 @@ claudius-proteomics/
 ├── profiles/mogon2/            # HPC cluster profile
 │
 ├── rules/                      # Snakemake rule modules
+│   ├── fasta.smk               # FASTA resource management
 │   ├── download.smk            # PRIDE download
-│   ├── fragpipe.smk            # PSM identification
+│   ├── fragpipe.smk            # MSFragger search (spectrum-centric)
+│   ├── diann.smk               # DIA-NN search (peptide-centric)
 │   ├── extract.smk             # Raw feature extraction (imspy)
 │   ├── database.smk            # Database insertion
 │   ├── snapshot.smk            # Snapshot creation
@@ -111,14 +161,21 @@ claudius-proteomics/
 │   └── imspy/                  # imspy + TensorFlow
 │
 ├── scripts/                    # Python/Bash scripts
-│   ├── download_pride.py
-│   ├── run_fragpipe.sh
+│   ├── download_pride.py       # PRIDE download
+│   ├── run_fragpipe.py         # FragPipe wrapper
 │   ├── extract_raw_features.py # imspy raw extraction
 │   ├── insert_to_database.py
 │   ├── create_snapshot.py
 │   ├── train_ccs.py
 │   ├── evaluate_model.py
 │   └── setup_imspy.sh          # Local imspy setup
+│
+├── resources/                  # Resource files
+│   └── fasta/                  # FASTA databases
+│       ├── {organism}.fasta    # Per-organism databases
+│       └── search_db/          # Per-dataset search databases
+│           ├── {accession}.fasta
+│           └── {accession}_decoys.fasta
 │
 ├── database/                   # Peptide property database
 │   ├── peptides/               # Per-accession data
@@ -128,7 +185,10 @@ claudius-proteomics/
 │
 ├── data/                       # Temporary processing data
 │   ├── raw/                    # Downloaded .d files
-│   ├── processed/              # FragPipe output
+│   ├── processed/              # Search results
+│   │   └── {accession}/
+│   │       ├── psm.tsv         # FragPipe output
+│   │       └── diann/          # DIA-NN output
 │   └── extracted/              # Raw features
 │
 ├── envs/imspy.yaml             # Conda environment
@@ -147,9 +207,11 @@ claudius-proteomics/
 
 ## Technical Stack
 
-- **Data processing**: rustims/imspy (Rust + Python)
-- **PSM identification**: FragPipe
-- **ML framework**: TensorFlow, imspy-predictors
+- **Raw data processing**: rustims/imspy (Rust + Python)
+- **Search engines**:
+  - FragPipe/MSFragger (spectrum-centric)
+  - DIA-NN v2.3+ (peptide-centric, DDA mode)
+- **ML framework**: PyTorch, imspy-predictors
 - **Workflow**: Snakemake
 - **Containers**: Singularity
 - **HPC**: SLURM (Mogon2)
