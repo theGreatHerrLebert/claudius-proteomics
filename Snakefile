@@ -209,7 +209,7 @@ rule process_diann:
     """Run DIA-NN on all datasets (peptide-centric search)."""
     input:
         expand(
-            "data/processed/{accession}/diann/report.tsv",
+            "data/processed/{accession}/diann/report.parquet",
             accession=config.get("datasets", ["PXD019086"])
         )
 
@@ -224,7 +224,7 @@ rule process_both:
         ),
         # Peptide-centric (DIA-NN)
         expand(
-            "data/processed/{accession}/diann/report.tsv",
+            "data/processed/{accession}/diann/report.parquet",
             accession=config.get("datasets", ["PXD019086"])
         )
 

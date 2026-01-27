@@ -17,7 +17,7 @@ rule diann_search:
         raw_dir="data/raw/{accession}",
         fasta="resources/fasta/search_db/{accession}.fasta"
     output:
-        report="data/processed/{accession}/diann/report.tsv",
+        report="data/processed/{accession}/diann/report.parquet",
         done="data/processed/{accession}/diann/.diann_done"
     params:
         diann_path=config["diann"]["path"],
@@ -108,7 +108,7 @@ rule diann_search_single:
         raw_file="data/raw/{accession}/{sample}.d",
         fasta="resources/fasta/search_db/{accession}.fasta"
     output:
-        report="data/processed/{accession}/{sample}/diann/report.tsv",
+        report="data/processed/{accession}/{sample}/diann/report.parquet",
         done="data/processed/{accession}/{sample}/diann/.diann_done"
     params:
         diann_path=config["diann"]["path"],
