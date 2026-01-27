@@ -144,6 +144,67 @@ rule prepare_search_database:
         print(f"  Total sequences: {n_seqs}")
 
 
+rule add_decoys:
+    """
+    Add decoy sequences to FASTA.
+
+    Generates reversed decoy sequences with 'rev_' prefix for target-decoy analysis.
+    """
+    input:
+        fasta="resources/fasta/search_db/{accession}.fasta"
+    output:
+        fasta="resources/fasta/search_db/{accession}_decoys.fasta"
+    params:
+        decoy_prefix="rev_"
+    log:
+        "logs/fasta/decoys/{accession}.log"
+    run:
+        from pathlib import Path
+
+        input_fasta = Path(input.fasta)
+        output_fasta = Path(output.fasta)
+        output_fasta.parent.mkdir(parents=True, exist_ok=True)
+
+        print(f"Adding decoys to {input_fasta}")
+
+        with open(input_fasta) as f_in, open(output_fasta, 'w') as f_out:
+            # First pass: write original sequences and collect for decoy generation
+            sequences = []
+            current_header = None
+            current_seq = []
+
+            for line in f_in:
+                f_out.write(line)  # Write original
+                if line.startswith('>'):
+                    if current_header and current_seq:
+                        sequences.append((current_header, ''.join(current_seq)))
+                    current_header = line.strip()
+                    current_seq = []
+                else:
+                    current_seq.append(line.strip())
+
+            # Don't forget the last sequence
+            if current_header and current_seq:
+                sequences.append((current_header, ''.join(current_seq)))
+
+            # Second pass: write reversed decoys
+            f_out.write("\n")  # Separator
+            for header, seq in sequences:
+                # Create decoy header with prefix
+                decoy_header = f">{params.decoy_prefix}{header[1:]}"
+                # Reverse the sequence
+                reversed_seq = seq[::-1]
+                f_out.write(f"{decoy_header}\n")
+                # Write in 80-character lines
+                for i in range(0, len(reversed_seq), 80):
+                    f_out.write(f"{reversed_seq[i:i+80]}\n")
+
+        n_target = len(sequences)
+        n_total = n_target * 2
+        print(f"  Target sequences: {n_target}")
+        print(f"  Total sequences (with decoys): {n_total}")
+
+
 rule list_fasta_databases:
     """
     List available FASTA databases.
