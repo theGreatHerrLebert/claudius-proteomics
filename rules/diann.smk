@@ -49,11 +49,14 @@ rule diann_search:
 
         print(f"Found {len(raw_files)} raw files")
 
-        # Build DIA-NN command
+        # Build DIA-NN command (use absolute paths)
+        fasta_abs = Path(input.fasta).resolve()
+        report_abs = Path(output.report).resolve()
+
         cmd = [
             params.diann_path,
-            "--fasta", input.fasta,
-            "--out", output.report,
+            "--fasta", str(fasta_abs),
+            "--out", str(report_abs),
             "--threads", str(params.threads),
             "--qvalue", str(params.qvalue),
             "--dda",  # DDA mode
@@ -67,9 +70,9 @@ rule diann_search:
             "--var-mods", "2",
         ]
 
-        # Add input files
+        # Add input files (absolute paths)
         for raw_file in raw_files:
-            cmd.extend(["--f", str(raw_file)])
+            cmd.extend(["--f", str(raw_file.resolve())])
 
         print(f"Running DIA-NN:")
         print(f"  Command: {' '.join(cmd[:20])}...")  # Truncate for display
