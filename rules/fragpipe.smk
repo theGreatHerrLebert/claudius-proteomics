@@ -9,9 +9,12 @@ rule fragpipe_search:
 
     FragPipe is mounted from user-provided path due to licensing.
     The container only provides Java and dependencies.
+
+    Uses the per-accession FASTA from the fasta.smk rules (organism + contaminants).
     """
     input:
-        raw_dir="data/raw/{accession}"
+        raw_dir="data/raw/{accession}",
+        fasta="resources/fasta/search_db/{accession}.fasta"
     output:
         psm="data/processed/{accession}/psm.tsv",
         ion="data/processed/{accession}/ion.tsv",
@@ -20,7 +23,6 @@ rule fragpipe_search:
         fragpipe_path=config["fragpipe"]["path"],
         workflow=config["fragpipe"]["workflow"],
         threads=config["fragpipe"]["threads"],
-        fasta=config["database"]["fasta"],
         outdir="data/processed/{accession}"
     singularity:
         config["containers"]["fragpipe_base"]
@@ -40,7 +42,7 @@ rule fragpipe_search:
             --fragpipe {params.fragpipe_path} \
             --input {input.raw_dir} \
             --output {params.outdir} \
-            --fasta {params.fasta} \
+            --fasta {input.fasta} \
             --workflow {params.workflow} \
             --threads {params.threads} \
             2>&1 | tee {log}

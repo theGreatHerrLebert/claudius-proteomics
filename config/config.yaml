@@ -2,9 +2,44 @@
 # ==================================
 
 # Datasets to process (PRIDE accession numbers)
-# For local testing, we use pre-downloaded data
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
+
+# Dataset metadata: organism mapping
+# Maps PRIDE accession to organism for automatic FASTA selection
+dataset_metadata:
+  PXD019086:
+    organism: "human"
+    description: "Meier et al. 2021 - HeLa tryptic digest for CCS prediction"
+    instrument: "timsTOF Pro"
+
+# Organism FASTA configuration
+# Local paths or UniProt IDs for automatic download
+organisms:
+  human:
+    taxon_id: 9606
+    proteome_id: "UP000005640"
+    local_fasta: "/home/administrator/Documents/promotion/ccs-workflow/rescoring/data/human_20365_conts_172_2020-3-2_2-0-11_validated.fasta"
+    includes_contaminants: true  # Local FASTA already has 172 cRAP contaminants
+    # If local_fasta not available, will download from UniProt
+  yeast:
+    taxon_id: 559292
+    proteome_id: "UP000002311"
+    local_fasta: null  # Will download from UniProt
+  ecoli:
+    taxon_id: 83333
+    proteome_id: "UP000000625"
+    local_fasta: null
+  mouse:
+    taxon_id: 10090
+    proteome_id: "UP000000589"
+    local_fasta: null
+
+# Contaminants database (appended to all FASTA files)
+contaminants:
+  enabled: true
+  source: "cRAP"  # Common Repository of Adventitious Proteins
+  url: "http://ftp.thegpm.org/fasta/cRAP/crap.fasta"
 
 # Local data paths (for testing without PRIDE download)
 local_data:
@@ -17,18 +52,11 @@ fragpipe:
   threads: 16
   memory_gb: 64
 
-# Database for FragPipe search
-database:
-  fasta: "/home/administrator/Documents/promotion/ccs-workflow/rescoring/data/human_20365_conts_172_2020-3-2_2-0-11_validated.fasta"
-
 # Raw extraction settings (imspy)
 extraction:
-  # Ion distribution extraction
   mz_tolerance_ppm: 20
   rt_tolerance_sec: 30
   mobility_tolerance: 0.05
-
-  # Features to extract
   extract_chromatogram: true
   extract_mobilogram: true
   extract_isotopes: true
@@ -54,4 +82,4 @@ containers:
 # Test mode: use subset of data for quick validation
 test_mode:
   enabled: true
-  max_files: 3  # Only process first N .d files
+  max_files: 3
