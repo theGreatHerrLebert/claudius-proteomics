@@ -25,6 +25,7 @@ configfile: "config/config.yaml"
 # PHASE 1: DATABASE BUILDING
 # =============================================================================
 
+include: "rules/fasta.smk"
 include: "rules/download.smk"
 include: "rules/fragpipe.smk"
 include: "rules/extract.smk"
@@ -71,6 +72,12 @@ Utilities:
 
   snakemake list_snapshots
       List available snapshots
+
+  snakemake prepare_fasta --config accession=PXD019086
+      Prepare FASTA database for a dataset (organism + contaminants)
+
+  snakemake list_fasta_databases
+      List available FASTA databases
 
 Use --profile profiles/mogon2 for HPC execution.
         """)
@@ -185,3 +192,9 @@ rule process_only:
             "data/processed/{accession}/psm.tsv",
             accession=config.get("datasets", ["PXD019086"])
         )
+
+
+rule prepare_fasta:
+    """Prepare FASTA database for a dataset."""
+    input:
+        lambda wildcards: f"resources/fasta/search_db/{config.get('accession', 'PXD019086')}.fasta"

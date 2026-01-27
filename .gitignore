@@ -244,3 +244,9 @@ logs/
 # Local imspy installation
 .local/
 .venv/
+
+# FASTA resources (downloaded/linked at runtime)
+resources/fasta/*.fasta
+resources/fasta/search_db/*.fasta
+!resources/fasta/.gitkeep
+!resources/fasta/search_db/.gitkeep
