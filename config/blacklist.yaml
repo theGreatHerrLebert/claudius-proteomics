@@ -1,0 +1,17 @@
+# San José Dataset Blacklist
+# Datasets that require manual handling or should be skipped
+#
+# Reasons to blacklist:
+# - multi_organism: Contains samples from multiple species
+# - multi_instrument: Mixed instrument types (e.g., timsTOF + Orbitrap)
+# - data_quality: Known issues with data quality
+# - format_unsupported: File formats we can't process
+# - manual_split: Needs to be split into sub-datasets
+
+blacklist: {}
+  # Example:
+  # PXD012345:
+  #   reason: "multi_organism"
+  #   organisms: ["human", "mouse"]
+  #   action: "skip"  # or "manual_split"
+  #   notes: "Contact author for sample mapping"
