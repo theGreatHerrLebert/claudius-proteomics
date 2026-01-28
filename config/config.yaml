@@ -59,6 +59,13 @@ diann:
   qvalue: 0.01
   # DIA-NN 2.3+ can run in DDA mode with --dda flag
 
+# Sage configuration (fast Rust-based search engine)
+sage:
+  path: "/home/administrator/Documents/promotion/sage/target/release/sage"
+  config: "config/sage_config.json"
+  threads: 16
+  # Sage uses timsrust for reading Bruker .d files
+
 # Raw extraction settings (imspy)
 extraction:
   mz_tolerance_ppm: 20
@@ -90,3 +97,7 @@ containers:
 test_mode:
   enabled: true
   max_files: 3
+
+# Temp directory for MSFragger cache files (use SSD for performance)
+# This avoids writing cache files next to raw data on potentially full drives
+temp_dir: "/scratch/timsim/claudius-proteomics/tmp"

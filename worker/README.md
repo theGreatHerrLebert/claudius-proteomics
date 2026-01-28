@@ -170,11 +170,34 @@ output:
 
 ```
 /output/PXD019086/
-├── fragpipe_psm.tsv      # FragPipe PSM results
-├── diann_report.parquet  # DIA-NN results
-├── job.yaml              # Job manifest copy
-└── COMPLETED             # Completion marker
+├── fragpipe/
+│   ├── combined_peptide.tsv   # Peptide-level summary
+│   ├── combined_ion.tsv       # Precursor-level (has charge)
+│   ├── combined_protein.tsv   # Protein groups
+│   └── {sample}/psm.tsv       # Per-sample PSMs (has mobility, scores)
+├── diann/
+│   └── report.parquet         # DIA-NN results
+├── consensus/
+│   ├── overlap_stats.json     # FragPipe vs DIA-NN comparison
+│   ├── overlap.parquet        # High-confidence (found by both)
+│   └── union.parquet          # Maximum coverage (found by either)
+├── job.yaml                   # Job manifest copy
+└── COMPLETED                  # Completion marker
 ```
+
+### Overlap Analysis
+
+After both searches complete, run overlap analysis:
+
+```bash
+python scripts/analyze_overlap.py --accession PXD019086 \
+    --output /output/PXD019086/consensus/overlap_stats.json
+```
+
+This computes:
+- Jaccard similarity (peptide overlap)
+- Per-engine unique peptides
+- Charge state and sequence length distributions
 
 ## Resource Requirements
 

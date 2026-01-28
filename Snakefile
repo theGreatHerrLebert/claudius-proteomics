@@ -29,6 +29,7 @@ include: "rules/fasta.smk"
 include: "rules/download.smk"
 include: "rules/fragpipe.smk"
 include: "rules/diann.smk"
+include: "rules/sage.smk"
 include: "rules/extract.smk"
 include: "rules/database.smk"
 
@@ -67,8 +68,14 @@ Search Methods (orthogonal validation):
   snakemake process_diann
       Run DIA-NN (peptide-centric)
 
+  snakemake process_sage
+      Run Sage (fast Rust-based search)
+
   snakemake process_both
-      Run both for orthogonal validation
+      Run FragPipe + DIA-NN
+
+  snakemake process_all
+      Run all three engines (triple orthogonal validation)
 
 Model Training (Phase 2):
   snakemake train_model --config snapshot=v1.0 model=ccs_v1
@@ -200,7 +207,7 @@ rule process_only:
     """Run FragPipe on all datasets."""
     input:
         expand(
-            "data/processed/{accession}/psm.tsv",
+            "data/processed/{accession}/combined_peptide.tsv",
             accession=config.get("datasets", ["PXD019086"])
         )
 
@@ -219,12 +226,41 @@ rule process_both:
     input:
         # Spectrum-centric (FragPipe/MSFragger)
         expand(
-            "data/processed/{accession}/psm.tsv",
+            "data/processed/{accession}/combined_peptide.tsv",
             accession=config.get("datasets", ["PXD019086"])
         ),
         # Peptide-centric (DIA-NN)
         expand(
             "data/processed/{accession}/diann/report.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        )
+
+
+rule process_sage:
+    """Run Sage on all datasets (fast Rust-based search)."""
+    input:
+        expand(
+            "data/processed/{accession}/sage/results.sage.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        )
+
+
+rule process_all:
+    """Run all three search engines for triple orthogonal validation."""
+    input:
+        # Spectrum-centric (FragPipe/MSFragger)
+        expand(
+            "data/processed/{accession}/combined_peptide.tsv",
+            accession=config.get("datasets", ["PXD019086"])
+        ),
+        # Peptide-centric (DIA-NN)
+        expand(
+            "data/processed/{accession}/diann/report.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        ),
+        # Fast Rust-based (Sage)
+        expand(
+            "data/processed/{accession}/sage/results.sage.parquet",
             accession=config.get("datasets", ["PXD019086"])
         )
 

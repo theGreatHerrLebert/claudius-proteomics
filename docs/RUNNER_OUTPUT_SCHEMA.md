@@ -34,7 +34,14 @@ fasta:
 ├── manifest.json
 ├── fragpipe.parquet
 ├── diann.parquet
-└── features.parquet
+├── features.parquet
+├── consensus/
+│   ├── overlap_stats.json    # FragPipe vs DIA-NN comparison metrics
+│   ├── overlap.parquet       # High-confidence: found by BOTH engines
+│   └── union.parquet         # Maximum coverage: found by EITHER engine
+└── spectra/                  # Optional: raw signal blobs
+    ├── index.parquet
+    └── blobs.bin
 ```
 
 ---
@@ -112,6 +119,7 @@ PSM-level results from FragPipe/MSFragger (spectrum-centric search).
 
 | Column | Type | Description |
 |--------|------|-------------|
+| `precursor_id` | int64 | Unique ID within dataset (for joins) |
 | `raw_file` | string | Source .d file name |
 | `scan_id` | int64 | Spectrum scan number |
 | `peptide_sequence` | string | Stripped sequence (no mods) |
@@ -134,6 +142,7 @@ Precursor-level results from DIA-NN (peptide-centric search).
 
 | Column | Type | Description |
 |--------|------|-------------|
+| `precursor_id` | int64 | Unique ID within dataset (for joins) |
 | `raw_file` | string | Source .d file name |
 | `peptide_sequence` | string | Stripped sequence (no mods) |
 | `modified_sequence` | string | UniMod format: `[]-AAC[UNIMOD:4]PY-[]` |
@@ -155,8 +164,9 @@ Raw signal features extracted via imspy from timsTOF .d files.
 
 | Column | Type | Description |
 |--------|------|-------------|
+| `precursor_id` | int64 | Unique ID within dataset (FK to fragpipe/diann) |
 | `raw_file` | string | Source .d file name |
-| `scan_id` | int64 | Reference scan |
+| `scan_id` | int64 | Reference scan (MS2 event) |
 | `precursor_mz` | float64 | Target m/z |
 | `charge` | int8 | Target charge |
 | `rt_apex` | float32 | Chromatographic apex (s) |
@@ -171,11 +181,87 @@ Raw signal features extracted via imspy from timsTOF .d files.
 
 ---
 
+## overlap_stats.json
+
+Consensus metrics comparing FragPipe and DIA-NN identifications.
+
+```json
+{
+  "accession": "PXD019086",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "match_type": "sequence+charge",
+  "stats": {
+    "n_fragpipe": 51064,
+    "n_diann": 33758,
+    "n_overlap": 29780,
+    "n_union": 55042,
+    "n_fragpipe_only": 21284,
+    "n_diann_only": 3978,
+    "jaccard_similarity": 0.541,
+    "fragpipe_overlap_rate": 0.583,
+    "diann_overlap_rate": 0.882
+  },
+  "analysis": {
+    "fragpipe_seq_length": {"mean": 15.7, "median": 15, "min": 7, "max": 50},
+    "diann_seq_length": {"mean": 14.1, "median": 13, "min": 7, "max": 30},
+    "fragpipe_charges": {"2": 44735, "3": 12650, "4": 2295},
+    "diann_charges": {"2": 33811, "3": 7048, "4": 838}
+  }
+}
+```
+
+---
+
+## consensus/overlap.parquet
+
+High-confidence peptides found by BOTH search engines.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `peptide_sequence` | string | Stripped sequence |
+| `modified_sequence` | string | UniMod format |
+| `charge` | int8 | Precursor charge |
+| `precursor_mz` | float64 | Average m/z |
+| `retention_time` | float32 | Average RT (seconds) |
+| `ion_mobility` | float32 | Average 1/K0 |
+| `ccs` | float32 | CCS (Å²) |
+| `fragpipe_score` | float32 | Best hyperscore |
+| `fragpipe_pep` | float64 | FragPipe PEP |
+| `diann_qvalue` | float64 | DIA-NN q-value |
+| `diann_pep` | float64 | DIA-NN PEP |
+| `n_observations` | int16 | Total PSMs across both engines |
+| `protein_ids` | string | Semicolon-separated |
+
+---
+
+## consensus/union.parquet
+
+Maximum coverage: all peptides found by EITHER search engine.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `peptide_sequence` | string | Stripped sequence |
+| `modified_sequence` | string | UniMod format |
+| `charge` | int8 | Precursor charge |
+| `precursor_mz` | float64 | Observed m/z |
+| `retention_time` | float32 | RT (seconds) |
+| `ion_mobility` | float32 | 1/K0 |
+| `ccs` | float32 | CCS (Å²) |
+| `source` | string | 'fragpipe', 'diann', or 'both' |
+| `best_score` | float32 | Best score from available engine |
+| `best_pep` | float64 | Best PEP from available engine |
+| `confidence_weight` | float32 | Weight for training (1.0 if both, 0.7 if single) |
+| `protein_ids` | string | Semicolon-separated |
+
+---
+
 ## Join Strategy
 
 **Within a runner output:**
-- FragPipe ↔ Features: `(raw_file, scan_id)`
-- DIA-NN ↔ Features: `(raw_file, precursor_mz, charge, retention_time)` with tolerance
+- FragPipe ↔ Features: `precursor_id` (assigned during extraction)
+- DIA-NN ↔ Features: `precursor_id` (assigned during extraction)
+
+**Note:** Avoid tolerance-based joins on (mz, rt, charge) - they're fragile. Instead, assign `precursor_id` during the extraction phase by matching each extracted feature to the nearest MS2 scan event.
 
 **Across runners (aggregator):**
 - `(modified_sequence, charge)` → unique precursor identity

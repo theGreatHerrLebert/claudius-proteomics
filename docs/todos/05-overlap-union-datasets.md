@@ -115,6 +115,26 @@ Two PSMs are considered the same peptide if:
   - DIA-NN: `M(UniMod:35)`
   - Normalize to: `M[+15.9949]` (delta mass)
 
+### Handling Isobaric Peptides
+
+**Problem:** Same precursor mass can match different peptide sequences. FragPipe and DIA-NN may assign different sequences to the same MS2 spectrum.
+
+**Detection:**
+```python
+# Flag potential isobaric conflicts
+conflicts = merged_df.groupby(['raw_file', 'scan']).filter(
+    lambda x: x['sequence'].nunique() > 1
+)
+```
+
+**Resolution Strategies:**
+1. **Trust higher score:** Use peptide with better combined score
+2. **Require agreement:** Exclude conflicting assignments from OVERLAP
+3. **Flag for review:** Keep both with `isobaric_conflict=True` flag
+4. **Mass difference:** If Δmass > 0.01 Da, treat as different precursors
+
+**Recommendation:** For OVERLAP dataset, require sequence agreement. For UNION, include both with conflict flag.
+
 ## Implementation
 
 ### New Scripts
@@ -246,6 +266,49 @@ database/snapshots/
     └── ...
 ```
 
+## Worker Architecture
+
+Each worker processes exactly **one PRIDE accession** (PID) atomically:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Worker Job: PXD019086                                  │
+├─────────────────────────────────────────────────────────┤
+│  1. Download raw files                                  │
+│  2. Run FragPipe (all files in accession)              │
+│  3. Run DIA-NN (all files in accession)                │
+│  4. Compute consensus (per-accession)                  │
+│  5. Extract scores + raw features                       │
+│  6. Insert to San José database                        │
+│  7. Report metrics                                      │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key Design Decisions:**
+- Consensus computed **per-accession** (not globally) - allows incremental database growth
+- Global consensus table rebuilt periodically from per-accession results
+- Worker is stateless - can be killed and restarted
+- Output is idempotent - re-running same PID overwrites cleanly
+
+**Worker Input:**
+```yaml
+# job.yaml
+accession: PXD019086
+organism: human           # from PRIDE metadata or override
+fasta_source: uniprot     # or custom path
+consensus_type: union     # default for initial processing
+```
+
+**Worker Output:**
+```
+database/peptides/accession=PXD019086/
+├── peptides.parquet      # All peptide observations
+├── consensus.parquet     # Per-accession consensus
+├── scores.parquet        # Search engine scores
+├── overlap_stats.json    # FragPipe vs DIA-NN metrics
+└── manifest.json         # Job metadata + provenance
+```
+
 ## Acceptance Criteria
 
 - [ ] `compute_consensus.py` handles all three types
@@ -254,3 +317,5 @@ database/snapshots/
 - [ ] Venn diagram visualization generated
 - [ ] Snapshots created for each consensus type
 - [ ] Documentation of which type to use when
+- [ ] Worker processes single PID end-to-end
+- [ ] Output is idempotent (safe to re-run)

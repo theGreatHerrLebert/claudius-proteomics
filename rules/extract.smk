@@ -21,7 +21,7 @@ rule extract_raw_features:
     """
     input:
         raw_dir="data/raw/{accession}",
-        psm="data/processed/{accession}/psm.tsv"  # Need PSMs to know what to extract
+        peptides="data/processed/{accession}/combined_peptide.tsv"  # Need peptides to know what to extract
     output:
         features="data/extracted/{accession}/raw_features.parquet"
     params:
