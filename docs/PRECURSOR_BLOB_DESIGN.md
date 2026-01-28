@@ -346,25 +346,66 @@ Per precursor blob (rough estimates):
 Per dataset:
 - 100K precursors × 10 KB = **~1 GB per dataset**
 
-## Open Questions
+### Storage Strategy
 
-1. **Precursor 4D extraction**: How many MS1 frames to include? Fixed window or adaptive based on peak detection?
+Given ~1 GB per dataset, 1000 datasets = 1 TB just for blobs. Consider tiered storage:
 
-2. **Raw frame storage**: Store full MS1 region (`raw_frame` field) or just profiles?
-   - Profiles: smaller, sufficient for most predictions
-   - Raw frame: full flexibility, larger
+| Tier | What | Storage | Use Case |
+|------|------|---------|----------|
+| **Always** | Index parquet | ~10 MB/dataset | Fast filtering, queries |
+| **OVERLAP only** | Blobs for high-confidence | ~300 MB/dataset | Training data |
+| **On-demand** | Full blobs | ~1 GB/dataset | Research, debugging |
 
-3. **Fragment m/z calibration**: Store raw TOF indices or calibrated m/z?
-   - Raw TOF: smaller, requires calibration on read
-   - Calibrated m/z: larger, self-contained
+**Recommendation:** Store blobs only for OVERLAP peptides (found by both FragPipe and DIA-NN). This reduces storage by ~60% while keeping the highest-confidence data.
 
-4. **Mobilogram per fragment peak**: Do we need IM distribution for each fragment ion, or just precursor-level?
+## Design Decisions
+
+### 1. Precursor 4D extraction window
+
+**Decision:** Adaptive window based on peak shape from search engine output.
+
+```python
+# Use FWHM from FragPipe/DIA-NN as extraction window
+rt_window = max(precursor.rt_fwhm * 3, 10.0)  # At least 10 seconds
+im_window = max(precursor.im_fwhm * 3, 0.05)  # At least 0.05 1/K0
+```
+
+**Rationale:** Fixed windows miss narrow peaks or waste space on broad ones. The search engines already computed peak boundaries - reuse them.
+
+### 2. Raw frame storage
+
+**Decision:** Store profiles only, not raw MS1 frame.
+
+**Rationale:**
+- Profiles (XIC, mobilogram, isotope envelope) are sufficient for CCS/RT prediction
+- Raw frame adds ~10x storage with marginal benefit
+- Can always re-extract from .d files if needed for research
+
+### 3. Fragment m/z calibration
+
+**Decision:** Store calibrated m/z, not raw TOF indices.
+
+**Rationale:**
+- Self-contained blobs are easier to work with
+- ~20% size increase is acceptable
+- Avoids needing per-file calibration coefficients at read time
+- Recalibration from TOF indices is error-prone across software versions
+
+### 4. Mobilogram per fragment peak
+
+**Decision:** Precursor-level mobilogram only.
+
+**Rationale:**
+- Fragment-level IM distributions would 10x the storage
+- For CCS prediction, precursor mobilogram is what matters
+- Fragment IM is useful for spectral library building (future work, separate pipeline)
 
 ## TODO
 
-- [ ] Implement `extract_precursor_4d()` function
-- [ ] Decide on RT/IM window strategy for precursor extraction
-- [ ] Decide on raw TOF vs calibrated m/z storage
-- [ ] Decide on raw MS1 frame vs extracted profiles only
-- [ ] Benchmark blob sizes with real data
+- [ ] Implement `extract_precursor_4d()` function with adaptive windowing
+- [x] ~~Decide on RT/IM window strategy~~ → Adaptive (3× FWHM, minimum floor)
+- [x] ~~Decide on raw TOF vs calibrated m/z~~ → Calibrated m/z (self-contained)
+- [x] ~~Decide on raw MS1 frame vs extracted profiles~~ → Profiles only
+- [ ] Benchmark blob sizes with real PXD019086 data
 - [ ] Test serialization round-trip with actual TimsFrame objects
+- [ ] Implement tiered storage (OVERLAP-only blobs vs full)

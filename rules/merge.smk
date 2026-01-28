@@ -13,7 +13,7 @@ rule merge_psm_raw:
     - Raw signal features (chromatograms, mobilograms, isotopes)
     """
     input:
-        psm="data/processed/{accession}/psm.tsv",
+        peptides="data/processed/{accession}/combined_peptide.tsv",
         raw_features="data/extracted/{accession}/raw_features.parquet"
     output:
         merged="data/merged/{accession}/peptides_full.parquet"

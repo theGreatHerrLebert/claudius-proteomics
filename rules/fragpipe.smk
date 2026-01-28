@@ -18,8 +18,9 @@ rule fragpipe_search:
         raw_dir="data/raw/{accession}",
         fasta="resources/fasta/search_db/{accession}_decoys.fasta"
     output:
-        psm="data/processed/{accession}/psm.tsv",
-        ion="data/processed/{accession}/ion.tsv",
+        peptide="data/processed/{accession}/combined_peptide.tsv",
+        ion="data/processed/{accession}/combined_ion.tsv",
+        protein="data/processed/{accession}/combined_protein.tsv",
         done="data/processed/{accession}/.fragpipe_done"
     params:
         fragpipe_path=config["fragpipe"]["path"],
@@ -27,7 +28,8 @@ rule fragpipe_search:
         threads=config["fragpipe"]["threads"],
         ram=config["fragpipe"]["memory_gb"],
         max_files=config.get("test_mode", {}).get("max_files", 0) if config.get("test_mode", {}).get("enabled", False) else 0,
-        outdir="data/processed/{accession}"
+        outdir="data/processed/{accession}",
+        temp_dir=config.get("temp_dir", "/scratch/timsim/claudius-proteomics/tmp")
     resources:
         mem_mb=config["fragpipe"]["memory_gb"] * 1000,
         time="8:00:00",
@@ -49,6 +51,7 @@ rule fragpipe_search:
             --threads {params.threads} \
             --ram {params.ram} \
             --max-files {params.max_files} \
+            --temp-dir {params.temp_dir} \
             2>&1 | tee {log}
 
         # Mark completion

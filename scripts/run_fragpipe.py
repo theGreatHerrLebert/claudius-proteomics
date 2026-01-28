@@ -97,6 +97,7 @@ def run_fragpipe(
     output_dir: Path,
     threads: int = 16,
     ram: int = 0,
+    temp_dir: Path | None = None,
 ) -> int:
     """Run FragPipe in headless mode."""
     fragpipe_bin = fragpipe_path / "bin" / "fragpipe"
@@ -121,9 +122,23 @@ def run_fragpipe(
 
     print(f"\nRunning FragPipe:")
     print(f"  Command: {' '.join(cmd)}")
+
+    # Set up environment with temp directory for MSFragger cache files
+    env = os.environ.copy()
+    if temp_dir:
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        # Set Java temp directory to avoid writing mzBIN cache next to raw files
+        java_opts = env.get("_JAVA_OPTIONS", "")
+        java_opts = f"{java_opts} -Djava.io.tmpdir={temp_dir}".strip()
+        env["_JAVA_OPTIONS"] = java_opts
+        env["TMPDIR"] = str(temp_dir)
+        env["TEMP"] = str(temp_dir)
+        env["TMP"] = str(temp_dir)
+        print(f"  Temp dir: {temp_dir}")
+
     print()
 
-    result = subprocess.run(cmd, cwd=output_dir)
+    result = subprocess.run(cmd, cwd=output_dir, env=env)
     return result.returncode
 
 
@@ -166,6 +181,10 @@ def main():
     parser.add_argument(
         "--no-timstof", action="store_true",
         help="Disable timsTOF ion mobility settings"
+    )
+    parser.add_argument(
+        "--temp-dir", type=str, default=None,
+        help="Temp directory for MSFragger cache files (avoids writing next to raw data)"
     )
 
     args = parser.parse_args()
@@ -227,6 +246,9 @@ def main():
         is_timstof=not args.no_timstof,
     )
 
+    # Resolve temp directory
+    temp_dir = Path(args.temp_dir).resolve() if args.temp_dir else None
+
     # Run FragPipe
     return_code = run_fragpipe(
         fragpipe_path,
@@ -235,6 +257,7 @@ def main():
         output_dir,
         args.threads,
         args.ram,
+        temp_dir,
     )
 
     if return_code == 0:

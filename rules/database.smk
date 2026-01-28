@@ -17,7 +17,7 @@ rule merge_to_database:
     and stores them in the database structure.
     """
     input:
-        psm="data/processed/{accession}/psm.tsv",
+        peptides="data/processed/{accession}/combined_peptide.tsv",
         raw_features="data/extracted/{accession}/raw_features.parquet"
     output:
         peptides="database/peptides/{accession}/peptides.parquet",
