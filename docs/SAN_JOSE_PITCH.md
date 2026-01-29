@@ -20,6 +20,32 @@ The outcome is a versioned dataset that can be cited, reused, and used as a trai
 
 ---
 
+## Why This Represents a Paradigm Shift (for PIs and Reviewers)
+
+Until now, we had no practical way to systematically compare peptide behavior across labs, instruments, gradients, and experiments at scale.
+
+PRIDE has contained the raw material for this for years, but the engineering cost of reprocessing thousands of raw datasets in a consistent way made such questions infeasible.
+
+That cost barrier is now gone.
+
+For the first time, we can treat PRIDE not as an archive of independent studies, but as a **single, reprocessable experimental corpus**.
+
+This enables questions that previously could only be asked within a single study, for example:
+
+* How stable is CCS across labs and instrument tunings?
+* How does gradient length affect RT reproducibility globally?
+* Where do search engines systematically disagree, and why?
+* What constitutes a truly "validated peptide observation" when seen across hundreds of experiments?
+
+A useful analogy is:
+
+> PRIDE today is like having thousands of microscopy images without a common coordinate system.
+> San José provides the coordinate system.
+
+This project changes what we can consider *data* in proteomics: not isolated datasets, but a unified, comparable experimental space.
+
+---
+
 ## Why Now?
 
 Three things changed recently:
