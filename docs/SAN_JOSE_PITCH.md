@@ -1,157 +1,267 @@
-# San José: Let's Build the Largest Peptide Property Database Ever
+# San José: A Reprocessed, Bias-Aware Reference Layer for timsTOF Data on PRIDE
 
 ## The Vision
 
-We're going to **mine every single timsTOF dataset on PRIDE** and build a peptide property database that dwarfs anything that exists today. Not 100k peptides. Not 1M. We're talking **50M+ validated peptide observations** with CCS, retention time, and raw signal features.
+PRIDE is not just an archive.
 
-And we're going to do it *fast*.
+It is the **largest unmined experimental corpus of LC-IMS-MS/MS data ever created**.
 
-## Why Now?
+We are going to systematically reprocess every timsTOF dataset on PRIDE and build:
 
-Three things just clicked into place:
+> **A reproducible, metadata-rich, bias-aware reference layer of validated peptide observations**
 
-1. **Sage** - A Rust-based search engine that's 65x faster than DIA-NN. We can now run triple orthogonal validation in the time it used to take to run one engine.
+This is not “a big peptide database”.
 
-2. **Claude Code** - AI-assisted development means we can iterate on pipeline code at unprecedented speed. The entire 3-way validation system was built and tested in one session.
+This is:
 
-3. **Public data explosion** - PRIDE has thousands of timsTOF datasets sitting there, waiting to be systematically processed.
+> **PRIDE-IMS-Processed** — a standardized, re-interpreted layer on top of PRIDE for ion mobility proteomics.
 
-The window is open. Let's go.
-
-## The Approach: Automation WITH Human Checkpoints
-
-This is **not** about removing humans from the loop. That's the wrong way to think about it.
-
-This is about **putting humans at the RIGHT checkpoints** while automating everything in between:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    HUMAN CHECKPOINTS                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  [1] DATASET SELECTION                                          │
-│      - Curated list of PRIDE accessions                         │
-│      - Organism/instrument filters                              │
-│      - Blacklist for known problematic datasets                 │
-│                                                                 │
-│  [2] QC DASHBOARD                                               │
-│      - Per-dataset HTML reports (auto-generated)                │
-│      - Overlap statistics, charge distributions                 │
-│      - Flag anomalies for human review                          │
-│                                                                 │
-│  [3] CONSENSUS THRESHOLDS                                       │
-│      - Configurable: "all 3 engines" vs "at least 2"            │
-│      - PEP thresholds (we use 0.05 = 95% confidence)            │
-│      - Human decides quality/quantity tradeoff                  │
-│                                                                 │
-│  [4] MODEL TRAINING SNAPSHOTS                                   │
-│      - Versioned database snapshots                             │
-│      - Human approves before training                           │
-│      - Reproducible: snapshot v1.0 always = same data           │
-│                                                                 │
-│  [5] RELEASE GATES                                              │
-│      - Model performance benchmarks                             │
-│      - Human sign-off before public release                     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Between checkpoints?** Full automation. Workers churn through PRIDE accessions 24/7. No babysitting required.
-
-## Triple Orthogonal Validation: The Numbers
-
-We ran PXD019086 (HeLa benchmark) through three independent search engines:
-
-| Engine | Philosophy | Precursors | Runtime | Validation Rate |
-|--------|------------|------------|---------|-----------------|
-| FragPipe | Spectrum-centric | 48,799 | 73 min | 81.1% |
-| DIA-NN | Peptide-centric | 31,690 | 260 min | 90.2% |
-| **Sage** | Fast Rust-based | 32,788 | **4 min** | **97.1%** |
-
-**Consensus (PEP ≤ 0.05, 95% confidence):**
-
-| Level | Precursors | % of Union |
-|-------|------------|------------|
-| All 3 engines agree | 20,559 | 38.8% |
-| At least 2 engines | 39,720 | **75.0%** |
-| Union (any engine) | 52,998 | 100% |
-
-**Key insight:** Sage at 95% confidence has only 965 unique identifications (2.9%). Almost everything Sage finds is confirmed by another engine. That's the power of orthogonal validation.
-
-## Architecture
-
-```
-PRIDE Repository (1000s of datasets)
-            │
-            ▼
-    ┌───────────────┐
-    │  Job Queue    │◄─── [HUMAN] Dataset selection + blacklist
-    └───────────────┘
-            │
-            ▼
-┌─────────────────────────────────────┐
-│  Worker Pool (HPC / Collaborators)  │
-├─────────────────────────────────────┤
-│  Each worker:                       │
-│  • Pulls 1 PRIDE accession          │
-│  • Downloads raw .d files           │
-│  • Runs FragPipe → DIA-NN → Sage    │
-│  • Computes 3-way consensus         │
-│  • Generates QC report              │
-│  • Uploads to central DB            │
-│  • Moves to next accession          │
-└─────────────────────────────────────┘
-            │
-            ▼
-    ┌───────────────┐
-    │  QC Dashboard │◄─── [HUMAN] Review flagged datasets
-    └───────────────┘
-            │
-            ▼
-    ┌───────────────┐
-    │  San José DB  │◄─── [HUMAN] Approve snapshot for training
-    │  (DuckDB)     │
-    └───────────────┘
-            │
-            ▼
-    ┌───────────────┐
-    │  Model Train  │◄─── [HUMAN] Validate before release
-    │  (CCS/RT/MS2) │
-    └───────────────┘
-```
-
-## What We Have Working Today
-
-- **Triple search engine pipeline** (FragPipe + DIA-NN + Sage)
-- **3-way overlap analysis** with I/L normalization, UNIMOD standardization
-- **PEP filtering** (Probability ≥ 0.95 for FragPipe, PEP ≤ 0.05 for others)
-- **HTML QC reports** - self-contained, ready for human review
-- **Consensus parquet export** - overlap.parquet, union.parquet
-
-## What's Next
-
-| Phase | What | Human Checkpoint |
-|-------|------|------------------|
-| **Now** | Process 10 more HeLa datasets | Review QC reports |
-| **Week 2** | Raw feature extraction (XICs, mobilograms) | Validate extraction quality |
-| **Week 4** | Worker containerization | Test on HPC |
-| **Week 6** | Scale to 100 datasets | Approve v1.0 snapshot |
-| **Ongoing** | Process all timsTOF on PRIDE | Periodic QC review |
-
-## The Ask
-
-1. **Compute time** - HPC allocation for worker pool
-2. **Storage** - ~2TB for raw + processed + database
-3. **Occasional human review** - QC dashboard checks, snapshot approval
-
-In return: **The largest validated peptide property database for ion mobility MS.**
-
-## Why "San José"?
-
-Named after the San José scale insect - a species so prolific it spreads across entire orchards. That's exactly what we're doing: systematically spreading across PRIDE, extracting value from every dataset.
-
-Let's scale this thing.
+The outcome is a versioned dataset that can be cited, reused, and used as a training corpus for CCS, RT, and MS2 models — grounded in real experimental physics across thousands of labs.
 
 ---
 
-*Built with the San José Pipeline (claudius-proteomics) + Claude Code*
+## Why Now?
+
+Three things changed recently:
+
+1. **Sage** makes high-quality searching cheap and fast enough to run multi-engine validation at scale.
+2. **rustims + timsTOF raw data expertise** makes feature extraction (XICs, mobilograms, peak shapes) feasible and reproducible.
+3. **LLM-assisted pipeline engineering** makes it realistic to build and iterate on complex processing infrastructure quickly.
+
+For the first time, the bottleneck is not engineering. It is **designing the data layer correctly**.
+
+---
+
+## Core Principle
+
+> We are not collecting peptides.
+> We are collecting **peptide observations in experimental context**.
+
+Every stored observation is inseparable from:
+
+* Lab / dataset provenance
+* Instrument configuration
+* Gradient / LC conditions
+* Acquisition method
+* Engine agreement / disagreement profile
+* Raw signal features
+
+This turns the project from “big data” into:
+
+> **A research platform for understanding peptide behavior across experimental space.**
+
+---
+
+## Triple Orthogonal Validation as a Curation Primitive
+
+Each dataset is processed with:
+
+* FragPipe (spectrum-centric)
+* DIA-NN (peptide-centric)
+* Sage (fast, independent Rust engine)
+
+We do **not** treat consensus as “ground truth”.
+
+Instead, we store:
+
+* Full union
+* 2/3 agreement
+* 3/3 agreement
+* Engine-specific unique IDs
+
+Because:
+
+> The most scientifically valuable data are often where engines disagree.
+
+Consensus reduces random FPs.
+Disagreement reveals systematic assumptions.
+
+Both are first-class citizens in San José.
+
+---
+
+## The Hidden Problem We Address Explicitly: Lab Bias
+
+PRIDE datasets are not independent samples. They cluster heavily by:
+
+* Lab
+* Sample prep
+* Column chemistry
+* Gradient length
+* Instrument tuning
+* Organism
+
+If aggregated naively, a model trained on this data will learn:
+
+> “How 20 labs run timsTOF” instead of “how peptides behave”.
+
+Therefore, from day one, San José tracks and exposes:
+
+```
+lab_id
+dataset_id
+organism
+gradient_length
+column_type
+acquisition_mode
+instrument_metadata
+```
+
+This allows:
+
+* Stratified sampling
+* Bias analysis
+* Weighted model training
+* Cross-lab validation studies
+
+This is a **design requirement**, not an afterthought.
+
+---
+
+## What an Entry in the San José Database Looks Like
+
+A single peptide observation contains:
+
+* Sequence (+ UNIMOD PTMs)
+* Charge
+* CCS
+* RT
+* MS2 features
+* XIC / mobilogram characteristics
+* Dataset / lab metadata
+* Engine scores and PEPs
+* Engine agreement profile (FragPipe / DIA-NN / Sage)
+
+This makes every row a **fully contextualized physical observation**, not just an identification.
+
+---
+
+## Human Checkpoints in the Right Places
+
+Automation runs the pipeline. Humans guard the scientific integrity.
+
+### [1] Dataset Selection
+
+* Curated PRIDE accessions
+* Blacklist for problematic datasets
+* Instrument / organism filters
+
+### [2] QC Dashboard
+
+* Auto-generated per-dataset reports
+* Charge distributions, overlap stats, anomaly detection
+* Human review only when flagged
+
+### [3] Consensus & Inclusion Rules
+
+* Configurable: 3/3 vs 2/3 vs union
+* PEP thresholds
+* Explicit quality vs quantity decision
+
+### [4] Versioned Snapshots
+
+* San José v1.0, v1.1, …
+* Frozen, reproducible datasets for model training
+* Snapshot always reproducible from PRIDE + pipeline version
+
+### [5] Release Gates
+
+* Bias checks
+* Cross-lab validation tests
+* Human sign-off before public release
+
+---
+
+## Architecture Overview
+
+```
+PRIDE (timsTOF datasets)
+            │
+            ▼
+      Job Queue  ◄── [Human dataset curation]
+            │
+            ▼
+  Worker Pool (HPC / collaborators)
+            │
+            ├─ FragPipe
+            ├─ DIA-NN
+            ├─ Sage
+            ├─ Feature extraction (rustims)
+            ├─ QC report
+            ▼
+        San José DB (DuckDB/Parquet)
+            │
+            ▼
+     Versioned Snapshots (v1.0, v1.1…)
+            │
+            ▼
+   Model training / community reuse
+```
+
+---
+
+## What This Enables (Beyond “a big DB”)
+
+Researchers can ask:
+
+* How does CCS drift across labs?
+* How does gradient length affect RT reproducibility?
+* Where do search engines systematically disagree?
+* How does instrument tuning affect mobility distributions?
+* How reproducible are peptide properties across thousands of experiments?
+
+This becomes a **scientific instrument**, not just a dataset.
+
+---
+
+## What Exists Today
+
+* Triple-engine pipeline
+* Overlap analysis with UNIMOD/I-L normalization
+* PEP-filtered consensus export
+* Automated HTML QC reports
+* Parquet exports for union and consensus sets
+
+---
+
+## Roadmap
+
+| Phase   | Goal                   | Human Checkpoint               |
+| ------- | ---------------------- | ------------------------------ |
+| Now     | 10 HeLa datasets       | QC report review               |
+| Week 2  | Raw feature extraction | Validate feature quality       |
+| Week 4  | Containerized workers  | HPC test run                   |
+| Week 6  | 100 datasets           | Approve San José v1.0 snapshot |
+| Ongoing | All timsTOF on PRIDE   | Periodic bias & QC review      |
+
+---
+
+## The Ask
+
+* HPC compute allocation
+* ~2TB storage
+* Occasional QC review
+
+---
+
+## The Outcome
+
+San José is not:
+
+> “The largest peptide database”
+
+It is:
+
+> **The reference, reproducible, bias-aware reprocessing layer for timsTOF data on PRIDE**
+
+A dataset that can be cited like ProteomeTools — but based on real experimental diversity across thousands of labs.
+
+---
+
+## Why “San José”?
+
+Named after the *San José*, a sunken ship whose rediscovery revealed immense, carefully preserved value beneath the surface.
+
+PRIDE is similar: a vast repository where the real value is hidden in raw experimental data, waiting to be systematically recovered, catalogued, and understood.
+
+This project is about diving down, recovering that value methodically, and bringing it back in a structured, usable form for the community.
