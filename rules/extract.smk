@@ -1,43 +1,196 @@
 """
-Rules for raw feature extraction via imspy/rustdf
+Rules for raw feature extraction via imspy
 
-This extracts signal-level features directly from timsTOF .d files:
-- Ion distributions
-- Chromatographic peaks
-- Mobilograms
-- Isotope patterns
+Extracts precursor+fragment data directly from timsTOF .d files:
+- Full 4D fragment spectra (merged if re-fragmented)
+- Precursor metadata (m/z, charge, isolation window)
+- Ion mobility (1/K0 apex)
+- Collision energies
+
+Output: index.parquet + blobs.bin per raw file
 """
 
+import os
 
-rule extract_raw_features:
+
+def get_raw_files(wildcards):
+    """Get all .d folders for an accession."""
+    raw_dir = f"data/raw/{wildcards.accession}"
+    if os.path.exists(raw_dir):
+        return [f for f in os.listdir(raw_dir) if f.endswith(".d")]
+    return []
+
+
+rule extract_all_precursors:
     """
-    Extract raw signal features from timsTOF .d files using imspy.
-
-    This goes beyond what FragPipe exports, giving access to:
-    - Full ion distributions (not just top-k)
-    - Raw chromatographic peak shapes
-    - Complete mobilograms
-    - Isotope envelopes
+    Extract precursors from all raw files for an accession.
     """
     input:
-        raw_dir="data/raw/{accession}",
-        peptides="data/processed/{accession}/combined_peptide.tsv"  # Need peptides to know what to extract
+        lambda wildcards: expand(
+            "data/extracted/{accession}/{raw_file}/index.parquet",
+            accession=wildcards.accession,
+            raw_file=get_raw_files(wildcards),
+        )
     output:
-        features="data/extracted/{accession}/raw_features.parquet"
+        touch("data/extracted/{accession}/.done")
+
+
+rule extract_precursors:
+    """
+    Extract precursors with fragment spectra from a single .d file using imspy.
+
+    Outputs:
+    - index.parquet: Lightweight precursor metadata (m/z, charge, RT, mobility, n_peaks)
+    - blobs.bin: Serialized TimsFrame data for each precursor (compressed)
+    """
+    input:
+        raw_file="data/raw/{accession}/{raw_file}"
+    output:
+        index="data/extracted/{accession}/{raw_file}/index.parquet",
+        blobs="data/extracted/{accession}/{raw_file}/blobs.bin"
     params:
-        mz_tol=config["extraction"]["mz_tolerance_ppm"],
-        rt_tol=config["extraction"]["rt_tolerance_sec"],
-        mob_tol=config["extraction"]["mobility_tolerance"],
-        extract_chrom=config["extraction"]["extract_chromatogram"],
-        extract_mob=config["extraction"]["extract_mobilogram"],
-        extract_iso=config["extraction"]["extract_isotopes"]
-    singularity:
-        config["containers"]["imspy"]
+        output_dir="data/extracted/{accession}/{raw_file}",
+        threads=config.get("extraction", {}).get("threads", 4),
+        use_bruker_sdk=config.get("extraction", {}).get("use_bruker_sdk", True),
     resources:
         mem_mb=32000,
-        time="4:00:00",
+        time="2:00:00",
         cpus_per_task=8
     log:
-        "logs/extract/{accession}.log"
-    script:
-        "../scripts/extract_raw_features.py"
+        "logs/extract/{accession}/{raw_file}.log"
+    run:
+        import sys
+        sys.path.insert(0, "scripts")
+
+        from pathlib import Path
+        from extract_precursors import (
+            TimsDatasetDDA,
+            extract_precursors,
+            write_extraction,
+            setup_logging,
+        )
+
+        logger = setup_logging(Path(log[0]))
+
+        logger.info("=" * 60)
+        logger.info("Precursor extraction with imspy")
+        logger.info("=" * 60)
+        logger.info(f"Input: {input.raw_file}")
+        logger.info(f"Output: {params.output_dir}")
+
+        # Load dataset
+        logger.info("Loading dataset...")
+        dataset = TimsDatasetDDA(
+            str(input.raw_file),
+            in_memory=False,
+            use_bruker_sdk=params.use_bruker_sdk,
+        )
+        logger.info(f"  Frames: {dataset.frame_count}")
+        logger.info(f"  Fragmented precursors: {len(dataset.fragmented_precursors)}")
+
+        # Extract
+        raw_file_name = Path(input.raw_file).name
+        precursors = extract_precursors(
+            dataset=dataset,
+            raw_file_name=raw_file_name,
+            num_threads=params.threads,
+            logger=logger,
+        )
+
+        # Write
+        stats = write_extraction(
+            precursors=precursors,
+            output_dir=Path(params.output_dir),
+            write_blobs=True,
+            logger=logger,
+        )
+
+        logger.info("=" * 60)
+        logger.info(f"Extraction complete: {stats['n_precursors']} precursors")
+        logger.info(f"Blob size: {stats['blob_size_bytes'] / 1024 / 1024:.1f} MB")
+        logger.info("=" * 60)
+
+
+rule merge_extracted_precursors:
+    """
+    Merge all extracted precursor indices into a single parquet per accession.
+    """
+    input:
+        indices=lambda wildcards: expand(
+            "data/extracted/{accession}/{raw_file}/index.parquet",
+            accession=wildcards.accession,
+            raw_file=get_raw_files(wildcards),
+        )
+    output:
+        merged="data/extracted/{accession}/precursors.parquet"
+    run:
+        import pandas as pd
+
+        dfs = []
+        for index_file in input.indices:
+            df = pd.read_parquet(index_file)
+            dfs.append(df)
+
+        if dfs:
+            merged = pd.concat(dfs, ignore_index=True)
+            merged.to_parquet(output.merged, index=False)
+            print(f"Merged {len(merged)} precursors from {len(dfs)} files")
+        else:
+            # Empty output
+            pd.DataFrame().to_parquet(output.merged, index=False)
+
+
+rule build_training_spectra:
+    """
+    Build training-ready spectra with normalization and fragment annotation.
+
+    Takes a precursor store (with fragment_mz/fragment_intensity columns) and adds:
+    - Normalized intensities (configurable method)
+    - Fragment ion annotations (b/y ions matched to theoretical)
+    - Annotation quality metrics (intensity explained, coverage)
+
+    Uses build_training_spectra.py which combines:
+    - spectrum_normalization.py for intensity normalization
+    - annotate_spectrum.py for b/y ion annotation
+    - fragment_matching.py (imspy) for theoretical fragment generation
+    """
+    input:
+        store="data/processed/{accession}/precursors.parquet"
+    output:
+        training="data/processed/{accession}/training_spectra.parquet"
+    params:
+        normalization=config.get("training", {}).get("normalization", "base_peak"),
+        mz_tolerance=config.get("training", {}).get("mz_tolerance_ppm", 20.0),
+        min_intensity=config.get("training", {}).get("min_intensity", 0.0),
+        batch_size=config.get("training", {}).get("batch_size", 1000),
+    resources:
+        mem_mb=16000,
+        time="1:00:00",
+        cpus_per_task=4
+    log:
+        "logs/training/{accession}/build_training_spectra.log"
+    run:
+        import sys
+        sys.path.insert(0, "scripts")
+
+        from build_training_spectra import build_training_spectra
+
+        print(f"Building training spectra for {wildcards.accession}")
+        print(f"  Input:  {input.store}")
+        print(f"  Output: {output.training}")
+        print(f"  Normalization: {params.normalization}")
+        print(f"  m/z tolerance: {params.mz_tolerance} ppm")
+
+        stats = build_training_spectra(
+            input_path=input.store,
+            output_path=output.training,
+            normalization=params.normalization,
+            mz_tolerance_ppm=params.mz_tolerance,
+            min_intensity=params.min_intensity,
+            batch_size=params.batch_size,
+        )
+
+        print(f"\nTraining spectra built:")
+        print(f"  Precursors: {stats.get('n_precursors', 0):,}")
+        print(f"  Annotated:  {stats.get('n_annotated', 0):,}")
+        print(f"  Mean intensity explained: {stats.get('mean_intensity_explained', 0):.1%}")
