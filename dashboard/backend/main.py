@@ -4,6 +4,7 @@ FastAPI backend for Precursor Browser
 Serves precursor data from Parquet store with efficient columnar reads.
 """
 
+import re
 from pathlib import Path
 from typing import Optional, List
 import numpy as np
@@ -13,6 +14,67 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pyarrow.parquet as pq
+
+
+# Mass delta to UNIMOD mapping (for standardizing modification display)
+MASS_TO_UNIMOD = {
+    57: "[UNIMOD:4]",   # Carbamidomethyl (C)
+    58: "[UNIMOD:4]",
+    16: "[UNIMOD:35]",  # Oxidation (M)
+    15: "[UNIMOD:35]",
+    42: "[UNIMOD:1]",   # Acetyl (N-term)
+    43: "[UNIMOD:1]",
+    80: "[UNIMOD:21]",  # Phospho (S/T/Y)
+    79: "[UNIMOD:21]",
+}
+
+
+def standardize_modified_sequence(sequence: str) -> str:
+    """Convert any modification format to unified UNIMOD format.
+
+    Handles:
+    - Sage: [+57.021465] -> [UNIMOD:4]
+    - DIA-NN: (UniMod:35) -> [UNIMOD:35]
+    - FragPipe: M[147.0354] -> M[UNIMOD:35]
+    """
+    if not sequence or pd.isna(sequence):
+        return sequence
+
+    result = str(sequence)
+
+    # Sage format: [+X.XXX] or [-X.XXX]
+    def replace_sage_mass(match):
+        try:
+            mass = abs(float(match.group(1)))
+            rounded = int(round(mass))
+            if rounded in MASS_TO_UNIMOD:
+                return MASS_TO_UNIMOD[rounded]
+        except ValueError:
+            pass
+        return match.group(0)
+
+    result = re.sub(r'\[([+-]?\d+\.?\d*)\]', replace_sage_mass, result)
+
+    # DIA-NN format: (UniMod:X) -> [UNIMOD:X]
+    result = re.sub(r'\(UniMod:(\d+)\)', r'[UNIMOD:\1]', result, flags=re.IGNORECASE)
+
+    # FragPipe absolute mass: [147.XXX] (oxidized M), [160.XXX] (carbamidomethyl C)
+    def replace_fragpipe_mass(match):
+        try:
+            mass = float(match.group(1))
+            rounded = int(round(mass))
+            # Common absolute masses
+            if 146 <= rounded <= 148:  # Oxidized M
+                return "[UNIMOD:35]"
+            if 159 <= rounded <= 161:  # Carbamidomethyl C
+                return "[UNIMOD:4]"
+        except ValueError:
+            pass
+        return match.group(0)
+
+    result = re.sub(r'\[(\d+\.?\d*)\]', replace_fragpipe_mass, result)
+
+    return result
 
 app = FastAPI(title="Precursor Browser API", version="1.0.0")
 
@@ -152,27 +214,43 @@ async def list_precursors(
     if parquet_file is None:
         raise HTTPException(400, "No store loaded")
 
-    # Read only scalar columns for listing
-    # Use raw_* columns from precursor index
-    columns = [
-        'precursor_id', 'raw_file', 'raw_mz', 'raw_charge', 'raw_rt_seconds', 'raw_mobility',
-        'n_engines', 'confidence_weight',
-        # FragPipe
+    # Detect column naming convention by trying to read
+    # Try non-prefixed first (newer format)
+    try:
+        test_table = pq.read_table(str(store_path), columns=['mz'], filters=[('precursor_id', '=', 1)])
+        use_raw_prefix = False
+    except Exception:
+        use_raw_prefix = True
+
+    # Map to actual column names
+    mz_col = 'raw_mz' if use_raw_prefix else 'mz'
+    charge_col = 'raw_charge' if use_raw_prefix else 'charge'
+    rt_col = 'raw_rt_seconds' if use_raw_prefix else 'rt_seconds'
+    mobility_col = 'raw_mobility' if use_raw_prefix else 'mobility'
+    intensity_col = 'raw_intensity_meta'  # This one stays the same
+
+    # Build column list - base columns that must exist
+    base_columns = ['precursor_id', 'raw_file', mz_col, charge_col, rt_col, mobility_col, 'n_engines']
+
+    # Optional columns - read what exists
+    optional_columns = [
+        'confidence_weight',
         'fragpipe_peptide', 'fragpipe_modified', 'fragpipe_probability', 'fragpipe_qvalue',
-        # Sage
         'sage_peptide', 'sage_modified', 'sage_qvalue', 'sage_match_tier',
-        # DIA-NN
         'diann_peptide', 'diann_modified', 'diann_qvalue', 'diann_ccs', 'diann_match_tier', 'diann_match_score',
-        # Raw
-        'raw_intensity', 'frame_id', 'isolation_mz'
+        intensity_col, 'frame_id', 'isolation_mz'
     ]
+
+    # Get available columns from schema
+    available_cols = parquet_file.schema_arrow.names
+    columns = base_columns + [c for c in optional_columns if c in available_cols]
 
     # Build filters
     filters = []
     if min_engines > 0:
         filters.append(('n_engines', '>=', min_engines))
     if charge is not None:
-        filters.append(('raw_charge', '=', charge))
+        filters.append((charge_col, '=', charge))
     if raw_file is not None:
         filters.append(('raw_file', '=', raw_file))
 
@@ -180,22 +258,21 @@ async def list_precursors(
     table = pq.read_table(str(store_path), columns=columns, filters=filters if filters else None)
     df = table.to_pandas()
 
-    # Filter for precursors with MS1 data (check if raw_rt_seconds is not null)
+    # Filter for precursors with MS1 data
     if has_ms1:
-        df = df[df['raw_rt_seconds'].notna()]
+        df = df[df[rt_col].notna()]
 
     # Sort - when sorting by n_engines, also sort by intensity within each group
-    if sort_by == 'n_engines' and 'raw_intensity' in df.columns:
-        # Multi-column sort: engines first, then intensity
+    if sort_by == 'n_engines' and intensity_col in df.columns:
         df = df.sort_values(
-            ['n_engines', 'raw_intensity'],
-            ascending=[not sort_desc, False],  # engines: user choice, intensity: always descending
+            ['n_engines', intensity_col],
+            ascending=[not sort_desc, False],
             na_position='last'
         )
-    elif sort_by == 'mz' and 'raw_mz' in df.columns:
-        df = df.sort_values('raw_mz', ascending=not sort_desc, na_position='last')
-    elif sort_by == 'rt_seconds' and 'raw_rt_seconds' in df.columns:
-        df = df.sort_values('raw_rt_seconds', ascending=not sort_desc, na_position='last')
+    elif sort_by == 'mz' and mz_col in df.columns:
+        df = df.sort_values(mz_col, ascending=not sort_desc, na_position='last')
+    elif sort_by == 'rt_seconds' and rt_col in df.columns:
+        df = df.sort_values(rt_col, ascending=not sort_desc, na_position='last')
     elif sort_by in df.columns:
         df = df.sort_values(sort_by, ascending=not sort_desc, na_position='last')
 
@@ -230,31 +307,31 @@ async def list_precursors(
         results.append(PrecursorSummary(
             precursor_id=int(row['precursor_id']),
             raw_file=str(row['raw_file']) if row['raw_file'] else '',
-            mz=float(row['raw_mz']) if pd.notna(row.get('raw_mz')) else 0.0,
-            charge=int(row['raw_charge']) if pd.notna(row.get('raw_charge')) else 0,
-            rt_seconds=float(row['raw_rt_seconds']) if pd.notna(row.get('raw_rt_seconds')) else 0.0,
-            mobility=float(row['raw_mobility']) if pd.notna(row.get('raw_mobility')) else 0.0,
+            mz=float(row[mz_col]) if pd.notna(row.get(mz_col)) else 0.0,
+            charge=int(row[charge_col]) if pd.notna(row.get(charge_col)) else 0,
+            rt_seconds=float(row[rt_col]) if pd.notna(row.get(rt_col)) else 0.0,
+            mobility=float(row[mobility_col]) if pd.notna(row.get(mobility_col)) else 0.0,
             n_engines=int(row['n_engines']),
             confidence_weight=safe_float(row.get('confidence_weight')),
             # FragPipe
             fragpipe_peptide=safe_str(row.get('fragpipe_peptide')),
-            fragpipe_modified=safe_str(row.get('fragpipe_modified')),
+            fragpipe_modified=standardize_modified_sequence(safe_str(row.get('fragpipe_modified'))),
             fragpipe_probability=safe_float(row.get('fragpipe_probability')),
             fragpipe_qvalue=safe_float(row.get('fragpipe_qvalue')),
             # Sage
             sage_peptide=safe_str(row.get('sage_peptide')),
-            sage_modified=safe_str(row.get('sage_modified')),
+            sage_modified=standardize_modified_sequence(safe_str(row.get('sage_modified'))),
             sage_qvalue=safe_float(row.get('sage_qvalue')),
             sage_match_tier=safe_str(row.get('sage_match_tier')),
             # DIA-NN
             diann_peptide=safe_str(row.get('diann_peptide')),
-            diann_modified=safe_str(row.get('diann_modified')),
+            diann_modified=standardize_modified_sequence(safe_str(row.get('diann_modified'))),
             diann_qvalue=safe_float(row.get('diann_qvalue')),
             diann_ccs=safe_float(row.get('diann_ccs')),
             diann_match_tier=safe_str(row.get('diann_match_tier')),
             diann_match_score=safe_float(row.get('diann_match_score')),
             # Raw
-            raw_intensity_meta=safe_float(row.get('raw_intensity')),
+            raw_intensity_meta=safe_float(row.get(intensity_col)),
             frame_id=safe_int(row.get('frame_id')),
             isolation_mz=safe_float(row.get('isolation_mz')),
         ))
@@ -327,15 +404,21 @@ async def get_stats():
     if parquet_file is None:
         raise HTTPException(400, "No store loaded")
 
-    # Read minimal columns for stats
-    table = pq.read_table(str(store_path), columns=['n_engines', 'raw_charge', 'raw_mz', 'raw_file'])
+    # Read all potential columns and use what exists
+    try:
+        table = pq.read_table(str(store_path), columns=['n_engines', 'charge', 'mz', 'raw_file'])
+        charge_col, mz_col = 'charge', 'mz'
+    except Exception:
+        table = pq.read_table(str(store_path), columns=['n_engines', 'raw_charge', 'raw_mz', 'raw_file'])
+        charge_col, mz_col = 'raw_charge', 'raw_mz'
+
     df = table.to_pandas()
 
     return {
         "total_precursors": len(df),
         "by_engines": df['n_engines'].value_counts().to_dict(),
-        "by_charge": df['raw_charge'].value_counts().to_dict(),
-        "mz_range": [float(df['raw_mz'].min()), float(df['raw_mz'].max())],
+        "by_charge": df[charge_col].value_counts().to_dict(),
+        "mz_range": [float(df[mz_col].min()), float(df[mz_col].max())],
         "raw_files": df['raw_file'].value_counts().to_dict(),
     }
 

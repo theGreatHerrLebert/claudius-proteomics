@@ -549,12 +549,13 @@ def match_diann_to_precursors(
 ) -> pd.DataFrame:
     """Match DIA-NN results to raw precursors using tiered matching.
 
-    Strategy (via PrecursorMatcher):
-    1. Tier 1/2: Match by sequence + charge (highest confidence)
-    2. Tier 3: Match by m/z + charge + RT + IM (full coordinate)
-    3. Tier 4: Match by m/z + charge only (partial coordinate)
+    Strategy (two-pass to prioritize sequence matches):
+    Pass 1: Match precursors WITH existing IDs by sequence + charge (highest confidence)
+    Pass 2: Match remaining DIA-NN to unidentified precursors by coordinates
 
-    This allows DIA-NN to identify precursors that FragPipe/Sage missed.
+    This ensures DIA-NN results are preferentially matched to precursors that
+    already have FragPipe/Sage identifications (for consensus), and only then
+    matched to unidentified precursors.
     """
     config = config or MatchConfig()
     matcher = PrecursorMatcher(config)
@@ -595,102 +596,140 @@ def match_diann_to_precursors(
         )
 
         matched_diann_indices = set()
+        matched_raw_indices = set()
 
+        # ===== PASS 1: Sequence matching for identified precursors =====
+        # Process precursors WITH FragPipe/Sage IDs first
+        identified_df = raw_file_df[raw_file_df['fragpipe_peptide'].notna() |
+                                     raw_file_df.get('sage_peptide', pd.Series()).notna()]
+
+        for raw_idx, raw_row in identified_df.iterrows():
+            # Get source sequence (prefer fragpipe_modified, fallback to sage_modified)
+            raw_seq = raw_row.get('fragpipe_modified')
+            if pd.isna(raw_seq):
+                raw_seq = raw_row.get('fragpipe_peptide')
+            if pd.isna(raw_seq):
+                raw_seq = raw_row.get('sage_modified')
+            if pd.isna(raw_seq):
+                raw_seq = raw_row.get('sage_peptide')
+
+            raw_charge = raw_row.get('fragpipe_charge')
+            if pd.isna(raw_charge):
+                raw_charge = raw_row.get('sage_charge')
+            if pd.isna(raw_charge):
+                raw_charge = raw_row.get('raw_charge')
+
+            if pd.isna(raw_seq) or pd.isna(raw_charge):
+                continue
+
+            norm_seq = normalize_sequence_for_matching(raw_seq, config.normalize_il)
+            key = (norm_seq, int(raw_charge), raw_file)
+
+            if key in diann_seq_index:
+                for diann_idx in diann_seq_index[key]:
+                    if diann_idx in matched_diann_indices:
+                        continue
+                    diann_row = diann_file_df.loc[diann_idx]
+                    match_dict = {
+                        "raw_file": raw_row["raw_file"],
+                        "precursor_id": raw_row["precursor_id"],
+                        "diann_match_tier": (MatchTier.SEQUENCE_IL_NORM if config.normalize_il
+                                             else MatchTier.SEQUENCE_EXACT).name,
+                        "diann_match_score": 0.0,
+                    }
+                    for col in diann_row.index:
+                        if col.startswith("diann_"):
+                            match_dict[col] = diann_row[col]
+                    matches.append(match_dict)
+                    matched_diann_indices.add(diann_idx)
+                    matched_raw_indices.add(raw_idx)
+                    tier_counts[match_dict["diann_match_tier"]] += 1
+                    break  # One DIA-NN result per precursor
+
+        # ===== PASS 2: Coordinate matching for remaining precursors =====
+        # Process unmatched precursors (including unidentified ones)
         for raw_idx, raw_row in raw_file_df.iterrows():
+            if raw_idx in matched_raw_indices:
+                continue  # Already matched in Pass 1
+
+            raw_mz = raw_row.get('raw_mz', raw_row.get('fragpipe_mz'))
+            raw_charge = raw_row.get('raw_charge', raw_row.get('fragpipe_charge'))
+
+            # Prefer raw RT (seconds), convert to minutes for DIA-NN comparison
+            raw_rt_sec = raw_row.get('raw_rt_seconds')
+            if pd.isna(raw_rt_sec):
+                raw_rt_min = raw_row.get('fragpipe_rt')
+            else:
+                raw_rt_min = float(raw_rt_sec) / 60.0
+
+            # Prefer raw mobility from PASEF, fallback to FragPipe
+            raw_im = raw_row.get('raw_mobility')
+            if pd.isna(raw_im):
+                raw_im = raw_row.get('fragpipe_mobility')
+
+            if pd.isna(raw_mz) or pd.isna(raw_charge):
+                continue
+
+            mz_bin = int(float(raw_mz) / 0.01)
+            key = (mz_bin, int(raw_charge), raw_file)
+
+            if key not in diann_coord_index:
+                continue
+
+            mz_tol = float(raw_mz) * config.mz_tol_ppm / 1e6
+            rt_tol_min = config.rt_tol_sec / 60.0  # DIA-NN RT is in minutes
+
             best_match = None
             best_diann_idx = None
             best_tier = MatchTier.NO_MATCH
             best_score = float('inf')
 
-            # Get source sequence (prefer fragpipe_modified, fallback to fragpipe_peptide)
-            raw_seq = raw_row.get('fragpipe_modified', raw_row.get('fragpipe_peptide'))
-            raw_charge = raw_row.get('fragpipe_charge', raw_row.get('raw_charge'))
+            for diann_idx, diann_mz in diann_coord_index[key]:
+                if diann_idx in matched_diann_indices:
+                    continue
 
-            # Try sequence match first (for identified precursors)
-            if not pd.isna(raw_seq) and not pd.isna(raw_charge):
-                norm_seq = normalize_sequence_for_matching(raw_seq, config.normalize_il)
-                key = (norm_seq, int(raw_charge), raw_file)
+                mz_diff = abs(float(raw_mz) - diann_mz)
+                if mz_diff > mz_tol:
+                    continue
 
-                if key in diann_seq_index:
-                    for diann_idx in diann_seq_index[key]:
-                        if diann_idx in matched_diann_indices:
-                            continue
-                        diann_row = diann_file_df.loc[diann_idx]
-                        best_match = diann_row
-                        best_diann_idx = diann_idx
-                        best_tier = MatchTier.SEQUENCE_IL_NORM if config.normalize_il else MatchTier.SEQUENCE_EXACT
-                        best_score = 0.0
-                        break  # Take first sequence match
+                diann_row = diann_file_df.loc[diann_idx]
+                score = mz_diff / mz_tol
 
-            # If no sequence match, try coordinate-based matching
-            if best_match is None:
-                raw_mz = raw_row.get('raw_mz', raw_row.get('fragpipe_mz'))
-                # Prefer raw RT (seconds), convert to minutes for DIA-NN comparison
-                raw_rt_sec = raw_row.get('raw_rt_seconds')
-                if pd.isna(raw_rt_sec):
-                    # Fallback to FragPipe RT (already in minutes)
-                    raw_rt_min = raw_row.get('fragpipe_rt')
-                else:
-                    raw_rt_min = float(raw_rt_sec) / 60.0
-                # Prefer raw mobility from PASEF, fallback to FragPipe
-                raw_im = raw_row.get('raw_mobility')
-                if pd.isna(raw_im):
-                    raw_im = raw_row.get('fragpipe_mobility')
+                # Check RT/IM for tier determination
+                has_rt_match = False
+                has_im_match = False
 
-                if not pd.isna(raw_mz) and not pd.isna(raw_charge):
-                    mz_bin = int(float(raw_mz) / 0.01)
-                    key = (mz_bin, int(raw_charge), raw_file)
+                diann_rt = diann_row.get('diann_rt')  # DIA-NN RT in minutes
+                if not pd.isna(raw_rt_min) and not pd.isna(diann_rt):
+                    rt_diff = abs(float(raw_rt_min) - float(diann_rt))
+                    if rt_diff <= rt_tol_min:
+                        has_rt_match = True
+                        score += rt_diff / rt_tol_min
+                    else:
+                        continue  # RT mismatch, skip
 
-                    if key in diann_coord_index:
-                        mz_tol = float(raw_mz) * config.mz_tol_ppm / 1e6
-                        rt_tol_min = config.rt_tol_sec / 60.0  # DIA-NN RT is in minutes
+                diann_im = diann_row.get('diann_mobility')
+                if not pd.isna(raw_im) and not pd.isna(diann_im):
+                    im_diff = abs(float(raw_im) - float(diann_im))
+                    if im_diff <= config.im_tol:
+                        has_im_match = True
+                        score += im_diff / config.im_tol
+                    else:
+                        continue  # IM mismatch, skip
 
-                        for diann_idx, diann_mz in diann_coord_index[key]:
-                            if diann_idx in matched_diann_indices:
-                                continue
+                # Add q-value to score (prefer better matches)
+                qval = diann_row.get('diann_qvalue', 1.0)
+                if pd.notna(qval):
+                    score += qval
 
-                            mz_diff = abs(float(raw_mz) - diann_mz)
-                            if mz_diff > mz_tol:
-                                continue
-
-                            diann_row = diann_file_df.loc[diann_idx]
-                            score = mz_diff / mz_tol
-
-                            # Check RT/IM for tier determination
-                            has_rt_match = False
-                            has_im_match = False
-
-                            diann_rt = diann_row.get('diann_rt')  # DIA-NN RT in minutes
-                            if not pd.isna(raw_rt_min) and not pd.isna(diann_rt):
-                                rt_diff = abs(float(raw_rt_min) - float(diann_rt))
-                                if rt_diff <= rt_tol_min:
-                                    has_rt_match = True
-                                    score += rt_diff / rt_tol_min
-                                else:
-                                    continue  # RT mismatch, skip
-
-                            diann_im = diann_row.get('diann_mobility')
-                            if not pd.isna(raw_im) and not pd.isna(diann_im):
-                                im_diff = abs(float(raw_im) - float(diann_im))
-                                if im_diff <= config.im_tol:
-                                    has_im_match = True
-                                    score += im_diff / config.im_tol
-                                else:
-                                    continue  # IM mismatch, skip
-
-                            # Add q-value to score (prefer better matches)
-                            qval = diann_row.get('diann_qvalue', 1.0)
-                            if pd.notna(qval):
-                                score += qval
-
-                            if score < best_score:
-                                best_score = score
-                                best_match = diann_row
-                                best_diann_idx = diann_idx
-                                if has_rt_match and has_im_match:
-                                    best_tier = MatchTier.COORDINATE_FULL
-                                else:
-                                    best_tier = MatchTier.COORDINATE_PARTIAL
+                if score < best_score:
+                    best_score = score
+                    best_match = diann_row
+                    best_diann_idx = diann_idx
+                    if has_rt_match and has_im_match:
+                        best_tier = MatchTier.COORDINATE_FULL
+                    else:
+                        best_tier = MatchTier.COORDINATE_PARTIAL
 
             # Record match
             if best_match is not None:
