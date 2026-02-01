@@ -4,10 +4,15 @@ Rules for raw feature extraction via imspy
 Extracts precursor+fragment data directly from timsTOF .d files:
 - Full 4D fragment spectra (merged if re-fragmented)
 - Precursor metadata (m/z, charge, isolation window)
-- Ion mobility (1/K0 apex)
+- Ion mobility (1/K0 apex) - with accurate Bruker SDK calibration via lookup tables
 - Collision energies
 
 Output: index.parquet + blobs.bin per raw file
+
+Ion Mobility Calibration:
+The Bruker SDK provides accurate scan→1/K0 conversion but is not thread-safe.
+We extract calibration lookup tables once per raw file, enabling fast parallel
+extraction with accurate mobility values.
 """
 
 import os
@@ -19,6 +24,52 @@ def get_raw_files(wildcards):
     if os.path.exists(raw_dir):
         return [f for f in os.listdir(raw_dir) if f.endswith(".d")]
     return []
+
+
+rule extract_im_calibration:
+    """
+    Extract ion mobility calibration lookup table from a .d file.
+
+    Uses the Bruker SDK (single-threaded) to probe the exact scan→1/K0 mapping,
+    then saves it as a numpy array for fast parallel extraction later.
+
+    This is a one-time extraction per raw file (~1-2 seconds).
+    The resulting lookup table is small (~8KB for 1000 scans).
+    """
+    input:
+        raw_file="data/raw/{accession}/{raw_file}"
+    output:
+        calibration="data/raw/{accession}/{raw_file}.im_calibration.npy"
+    params:
+        # Configuration from config.yaml
+        use_bruker_sdk=config.get("extraction", {}).get("use_bruker_sdk", True),
+    resources:
+        mem_mb=4000,
+        time="0:05:00",
+        cpus_per_task=1  # Single-threaded for Bruker SDK
+    log:
+        "logs/calibration/{accession}/{raw_file}.log"
+    run:
+        import sys
+        sys.path.insert(0, "scripts")
+
+        from pathlib import Path
+        from extract_calibration import extract_and_save_calibration
+
+        if not params.use_bruker_sdk:
+            # If not using SDK, create a dummy calibration file to satisfy dependencies
+            # The extraction will use linear interpolation instead
+            import numpy as np
+            print(f"Bruker SDK disabled - creating dummy calibration file")
+            np.save(output.calibration, np.array([]))
+        else:
+            print(f"Extracting IM calibration for: {input.raw_file}")
+            extract_and_save_calibration(
+                str(input.raw_file),
+                str(output.calibration),
+                verbose=True,
+            )
+            print(f"Calibration saved to: {output.calibration}")
 
 
 rule extract_all_precursors:
@@ -39,19 +90,22 @@ rule extract_precursors:
     """
     Extract precursors with fragment spectra from a single .d file using imspy.
 
+    Uses pre-computed IM calibration for accurate mobility values with fast parallel extraction.
+
     Outputs:
     - index.parquet: Lightweight precursor metadata (m/z, charge, RT, mobility, n_peaks)
     - blobs.bin: Serialized TimsFrame data for each precursor (compressed)
     """
     input:
-        raw_file="data/raw/{accession}/{raw_file}"
+        raw_file="data/raw/{accession}/{raw_file}",
+        calibration="data/raw/{accession}/{raw_file}.im_calibration.npy"
     output:
         index="data/extracted/{accession}/{raw_file}/index.parquet",
         blobs="data/extracted/{accession}/{raw_file}/blobs.bin"
     params:
         output_dir="data/extracted/{accession}/{raw_file}",
         threads=config.get("extraction", {}).get("threads", 4),
-        use_bruker_sdk=config.get("extraction", {}).get("use_bruker_sdk", True),
+        use_calibration=config.get("extraction", {}).get("use_bruker_sdk", True),
     resources:
         mem_mb=32000,
         time="2:00:00",
@@ -77,14 +131,33 @@ rule extract_precursors:
         logger.info("=" * 60)
         logger.info(f"Input: {input.raw_file}")
         logger.info(f"Output: {params.output_dir}")
+        logger.info(f"Using calibration: {params.use_calibration}")
 
-        # Load dataset
+        # Load dataset with calibration if available
+        import numpy as np
         logger.info("Loading dataset...")
-        dataset = TimsDatasetDDA(
-            str(input.raw_file),
-            in_memory=False,
-            use_bruker_sdk=params.use_bruker_sdk,
-        )
+
+        if params.use_calibration and Path(input.calibration).exists():
+            cal_data = np.load(input.calibration)
+            if len(cal_data) > 0:
+                # Use calibrated dataset (accurate + thread-safe)
+                from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
+                rust_dataset = PyTimsDatasetDDARust.with_calibration(
+                    str(input.raw_file), False, cal_data.tolist()
+                )
+                logger.info("  Using pre-computed IM calibration (accurate + fast)")
+                # Also load Python wrapper for metadata access
+                dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
+            else:
+                # Dummy calibration file - use linear interpolation
+                logger.info("  No calibration data - using linear interpolation")
+                dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
+                rust_dataset = None
+        else:
+            # Fall back to SDK or linear interpolation
+            dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
+            rust_dataset = None
+
         logger.info(f"  Frames: {dataset.frame_count}")
         logger.info(f"  Fragmented precursors: {len(dataset.fragmented_precursors)}")
 

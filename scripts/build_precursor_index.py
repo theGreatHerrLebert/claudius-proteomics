@@ -280,6 +280,7 @@ def load_raw_precursors(
     accession: str,
     local_data_dir: Path,
     raw_file_filter: Optional[str] = None,
+    use_calibration: bool = True,
 ) -> pd.DataFrame:
     """Load precursor metadata from raw data (.d files).
 
@@ -287,6 +288,12 @@ def load_raw_precursors(
     - fragmented_precursors: precursor_id, mz, charge, intensity
     - pasef_meta_data: frame_id, scan range, isolation window
     - meta_data (frames): retention time
+
+    Args:
+        accession: PRIDE accession
+        local_data_dir: Path to directory containing .d files
+        raw_file_filter: Optional filter for specific raw file
+        use_calibration: Use pre-computed IM calibration for accurate values
 
     Returns one row per unique precursor (aggregated across PASEF events).
     """
@@ -301,11 +308,33 @@ def load_raw_precursors(
         print(f"  No .d files found in {local_data_dir}")
         return pd.DataFrame()
 
+    # Import calibration utilities if needed
+    if use_calibration:
+        from extract_calibration import ensure_calibration, get_calibration_path
+
     all_precursors = []
     for d_file in d_files:
         print(f"  Loading precursors from: {d_file.name}")
         try:
-            dataset = TimsDatasetDDA(str(d_file), in_memory=False, use_bruker_sdk=False)
+            # Load dataset with optional calibration
+            if use_calibration:
+                cal_path = get_calibration_path(str(d_file))
+                if cal_path.exists():
+                    im_lookup = np.load(cal_path)
+                else:
+                    print(f"    Extracting IM calibration (one-time)...")
+                    im_lookup = ensure_calibration(str(d_file), verbose=False)
+
+                # Create calibrated dataset
+                from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
+                rust_dataset = PyTimsDatasetDDARust.with_calibration(
+                    str(d_file), False, im_lookup.tolist()
+                )
+                # Also load Python wrapper for metadata access
+                dataset = TimsDatasetDDA(str(d_file), in_memory=False, use_bruker_sdk=False)
+            else:
+                dataset = TimsDatasetDDA(str(d_file), in_memory=False, use_bruker_sdk=False)
+                rust_dataset = None
 
             # Get base precursor info
             precursors = dataset.fragmented_precursors.copy()
@@ -323,14 +352,22 @@ def load_raw_precursors(
             # Use center of scan range for mobility calculation
             scan_center = ((pasef['scan_begin'] + pasef['scan_end']) / 2).astype(np.int32)
 
-            # Convert scans to mobility (need to do per-frame due to calibration)
-            # Group by frame and convert
+            # Convert scans to mobility
+            # When calibration is used, rust_dataset has accurate IM values
+            # When not, use the dataset (which has linear interpolation)
             mobilities = []
             for frame_id in pasef['frame_id'].unique():
                 mask = pasef['frame_id'] == frame_id
                 scans = scan_center[mask].values
                 try:
-                    im_values = dataset.scan_to_inverse_mobility(int(frame_id), scans)
+                    if use_calibration and rust_dataset is not None:
+                        # Use calibrated Rust dataset (accurate + fast)
+                        im_values = rust_dataset.scan_to_inverse_mobility(
+                            int(frame_id), [int(s) for s in scans]
+                        )
+                    else:
+                        # Use Python dataset (linear interpolation)
+                        im_values = dataset.scan_to_inverse_mobility(int(frame_id), scans)
                     mobilities.extend(im_values)
                 except Exception:
                     # Fallback: use approximate conversion if calibration fails
@@ -860,6 +897,7 @@ def build_unified_index(
     load_raw: bool = True,
     include_unidentified: bool = True,
     match_config: Optional[MatchConfig] = None,
+    use_calibration: bool = True,
 ) -> pd.DataFrame:
     """Build unified precursor index combining all sources.
 
@@ -868,6 +906,7 @@ def build_unified_index(
                               not just those identified by search engines.
         match_config: Configuration for precursor matching tolerances.
                       Defaults: mz_tol_ppm=20, rt_tol_sec=30, im_tol=0.05
+        use_calibration: Use pre-computed IM calibration for accurate mobility values.
     """
     # Initialize match config with defaults if not provided
     match_config = match_config or MatchConfig()
@@ -893,7 +932,10 @@ def build_unified_index(
     raw_df = pd.DataFrame()
     if include_unidentified and local_data_dir and local_data_dir.exists():
         print("\nLoading ALL raw precursors...")
-        raw_df = load_raw_precursors(accession, local_data_dir, raw_file_filter)
+        raw_df = load_raw_precursors(
+            accession, local_data_dir, raw_file_filter,
+            use_calibration=use_calibration
+        )
         print(f"  Loaded {len(raw_df)} raw precursors (ALL fragmented)")
 
     # Start with FragPipe or raw precursors
@@ -1099,6 +1141,11 @@ def main():
         action="store_true",
         help="Include ALL fragmented precursors, not just identified ones"
     )
+    parser.add_argument(
+        "--no-calibration",
+        action="store_true",
+        help="Skip IM calibration (use linear interpolation - less accurate)"
+    )
 
     args = parser.parse_args()
 
@@ -1110,6 +1157,7 @@ def main():
         raw_file_filter=args.raw_file,
         load_raw=not args.no_raw,
         include_unidentified=args.include_unidentified,
+        use_calibration=not args.no_calibration,
     )
 
     if index_df.empty:

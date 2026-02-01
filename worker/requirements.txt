@@ -9,5 +9,6 @@ tqdm>=4.66.0
 boto3>=1.34.0
 google-cloud-storage>=2.14.0
 
-# For PRIDE API
+# For PRIDE API and download
 requests-cache>=1.1.0
+pridepy>=0.0.1
