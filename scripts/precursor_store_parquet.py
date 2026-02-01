@@ -284,6 +284,7 @@ class PrecursorStoreParquet:
         batch_size: int = 2000,
         limit: Optional[int] = None,
         row_group_size: int = 10000,
+        use_calibration: bool = True,
     ) -> 'PrecursorStoreParquet':
         """
         Create Parquet store from unified index + raw data extraction.
@@ -300,12 +301,14 @@ class PrecursorStoreParquet:
             batch_size: Batch size for extraction and writing
             limit: Limit number of precursors (for testing)
             row_group_size: Parquet row group size
+            use_calibration: Use pre-computed IM calibration for accurate values
 
         Returns:
             PrecursorStoreParquet instance
         """
         from imspy_core.timstof import TimsDatasetDDA
         from imspy_connector import py_dda
+        from imspy_connector.py_dataset import PyTimsDataset
 
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -327,10 +330,38 @@ class PrecursorStoreParquet:
             print(f"  Limiting to {limit} precursors")
             file_index = file_index.head(limit)
 
-        # Load dataset
+        # Load dataset with optional calibration
         print(f"Loading dataset: {raw_data_path}")
-        dataset = TimsDatasetDDA(str(raw_data_path), in_memory=False, use_bruker_sdk=False)
-        rust_dataset = dataset.get_py_ptr()
+        raw_data_path_obj = Path(raw_data_path)
+
+        if use_calibration:
+            # Import calibration utilities
+            import sys
+            scripts_dir = Path(__file__).parent
+            if str(scripts_dir) not in sys.path:
+                sys.path.insert(0, str(scripts_dir))
+            from extract_calibration import ensure_calibration, get_calibration_path
+
+            # Check for cached calibration or extract it
+            cal_path = get_calibration_path(str(raw_data_path))
+            if cal_path.exists():
+                print(f"  Using cached IM calibration: {cal_path}")
+                im_lookup = np.load(cal_path)
+            else:
+                print(f"  Extracting IM calibration (one-time, using Bruker SDK)...")
+                im_lookup = ensure_calibration(str(raw_data_path), verbose=True)
+
+            # Create DDA dataset with calibration (fast + accurate + thread-safe)
+            from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
+            rust_dataset = PyTimsDatasetDDARust.with_calibration(
+                str(raw_data_path), False, im_lookup.tolist()
+            )
+            print(f"  Dataset loaded with calibrated IM (thread-safe parallel extraction)")
+        else:
+            # Fallback: use linear interpolation (fast but inaccurate)
+            print(f"  WARNING: Using linear IM interpolation (may be inaccurate)")
+            dataset = TimsDatasetDDA(str(raw_data_path), in_memory=False, use_bruker_sdk=False)
+            rust_dataset = dataset.get_py_ptr()
 
         # Helper function to extract and merge fragments for a batch of precursor IDs
         def extract_fragments_for_batch(precursor_ids: List[int]) -> dict:
@@ -619,6 +650,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=2000)
     parser.add_argument("--limit", type=int, default=None, help="Limit precursors (testing)")
     parser.add_argument("--row-group-size", type=int, default=10000)
+    parser.add_argument("--no-calibration", action="store_true",
+                        help="Skip IM calibration (use linear interpolation - less accurate)")
 
     args = parser.parse_args()
 
@@ -631,6 +664,7 @@ def main():
         batch_size=args.batch_size,
         limit=args.limit,
         row_group_size=args.row_group_size,
+        use_calibration=not args.no_calibration,
     )
 
 

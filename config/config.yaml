@@ -5,13 +5,29 @@
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
 
-# Dataset metadata: organism mapping
+# Dataset metadata: organism mapping and bias-aware fields
 # Maps PRIDE accession to organism for automatic FASTA selection
+# These values are used as fallback if automatic extraction fails
 dataset_metadata:
   PXD019086:
     organism: "human"
     description: "Meier et al. 2021 - HeLa tryptic digest for CCS prediction"
     instrument: "timsTOF Pro"
+    # Bias-aware fields (manually verified from publication)
+    lab_id: "Max Planck Institute of Biochemistry"
+    gradient_length: 120  # minutes (from LC method name "120min")
+    column_type: "C18 25cm nanoLC"  # From publication methods
+    acquisition_mode: "PASEF"  # DDA-PASEF
+
+# Download settings for PRIDE data
+download:
+  protocol: "ftp"  # ftp | aspera (aspera requires ascp client)
+  retry_count: 3
+  file_patterns:
+    - "*.d.zip"
+    - "*.d.tar"
+    - "*.d"
+    - "*.raw"
 
 # Organism FASTA configuration
 # Local paths or UniProt IDs for automatic download
