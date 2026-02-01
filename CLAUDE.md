@@ -116,10 +116,26 @@ See `docs/RAW_DATA_ARCHITECTURE.md` for full specification.
 Precursor data is stored in Parquet with list columns for variable-length arrays:
 - Full 4D raw MS1 signal (`raw_rt`, `raw_mz`, `raw_mobility`, `raw_intensity`)
 - 1D projections (XIC, mobilogram, isotope envelope)
-- Merged fragment spectrum
-- Search engine identifications
+- Merged fragment spectrum with intensity normalization
+- Fragment ion annotations (b/y ion matching)
+- Search engine identifications from all three engines
 
 Benefits: columnar reads, predicate pushdown, batch iteration for training.
+
+### Training Spectra
+
+The `training_spectra.parquet` extends base precursor data with:
+- **Normalized intensities**: base_peak, tic, sqrt, or log normalization
+- **Fragment annotations**: b/y ion type, position, charge, theoretical m/z, error in ppm
+- **Coverage metrics**: intensity_explained, sequence_coverage_b, sequence_coverage_y
+
+Build with:
+```bash
+python scripts/build_training_spectra.py \
+    --input data/processed/PXD019086/precursors.parquet \
+    --output data/processed/PXD019086/training_spectra.parquet \
+    --normalization base_peak --mz-tolerance 20.0
+```
 
 ### Dashboard
 
@@ -155,6 +171,18 @@ Open http://localhost:5173 in browser to access the precursor browser.
 | `database.smk` | Database insertion & aggregation |
 | `snapshot.smk` | Versioned snapshot creation |
 | `train.smk` | Model training & evaluation |
+
+### Key Scripts (`scripts/`)
+| Script | Purpose |
+|--------|---------|
+| `run_fragpipe.py` | FragPipe wrapper with San José mode (FDR override) |
+| `build_precursor_index.py` | Bridges raw timsTOF data to search engine results |
+| `sequence_utils.py` | UNIMOD normalization across engines (FragPipe/DIA-NN/Sage) |
+| `fragment_matching.py` | Theoretical b/y ion matching for spectrum annotation |
+| `build_training_spectra.py` | Adds normalized intensities and fragment annotations |
+| `precursor_store.py` | Parquet store utilities for precursor data |
+| `precursor_store_parquet.py` | Full 4D extraction to Parquet with list columns |
+| `analyze_overlap.py` | Engine agreement/disagreement analysis |
 
 ### Key Design Decisions
 - **Triple orthogonal validation**: FragPipe + DIA-NN + Sage for consensus and disagreement analysis

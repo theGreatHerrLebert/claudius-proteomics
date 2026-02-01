@@ -1,58 +1,102 @@
-# CLAUDIUS-PROTEOMICS
+# San José
 
-Building the world's largest peptide property prediction resource through systematic reanalysis of public proteomics data.
+> A reproducible, metadata-rich, bias-aware reference layer for timsTOF data on PRIDE.
 
-## Overview
+## Vision
 
-This project provides a two-phase pipeline:
+**We are not collecting peptides. We are collecting peptide observations in experimental context.**
 
-**Phase 1: Database Building** - Download, process, and extract peptide properties from public proteomics data (PRIDE). The database is the primary output - an extensible resource of peptide properties.
-
-**Phase 2: Model Training** - Train prediction models on database snapshots. Models are versioned and reproducible.
+San José systematically reprocesses every timsTOF dataset on PRIDE to build a versioned, citable dataset for CCS, RT, and MS2 model training — grounded in real experimental physics across thousands of labs.
 
 ```
-PRIDE Archive                    Database                      Models
-┌─────────────┐                 ┌─────────────┐               ┌─────────────┐
-│ PXD019086   │ ──┐             │ peptides/   │               │ ccs_v1/     │
-│ PXD010012   │   │  download   │   PXD019086 │   snapshot    │   model.h5  │
-│ PXD...      │   ├──────────►  │   PXD010012 │ ───────────►  │   metrics   │
-│             │   │  process    │   ...       │   train       │             │
-└─────────────┘ ──┘  extract    │ snapshots/  │               └─────────────┘
-                                │   v1.0/     │
-                                └─────────────┘
+PRIDE Archive                    San José Database              Models
+┌─────────────┐                 ┌─────────────────┐           ┌─────────────┐
+│ PXD019086   │ ──┐             │ precursors/     │           │ ccs_v1/     │
+│ PXD010012   │   │  download   │   PXD019086     │ snapshot  │   model.h5  │
+│ PXD...      │   ├──────────►  │   PXD010012     │ ────────► │   metrics   │
+│             │   │  search     │ snapshots/      │  train    │             │
+└─────────────┘ ──┘  extract    │   v1.0/         │           └─────────────┘
+                                └─────────────────┘
 ```
 
-See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan.
+See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan and [docs/SAN_JOSE_PITCH.md](docs/SAN_JOSE_PITCH.md) for the vision.
+
+## Key Design Principles
+
+### Triple Orthogonal Validation
+
+Each dataset is processed with three independent search engines:
+
+| Engine | Approach | Strength |
+|--------|----------|----------|
+| **FragPipe** | Spectrum-centric | Gold standard for DDA |
+| **DIA-NN** | Peptide-centric | Best for DIA, deep learning rescoring |
+| **Sage** | Fast Rust engine | Independent validation, cheap at scale |
+
+We store: full union, 2/3 agreement, 3/3 agreement, and engine-specific unique IDs. Disagreements are scientifically valuable.
+
+### Bias-Awareness
+
+PRIDE datasets cluster heavily by lab, sample prep, column chemistry, and gradient length. San José tracks:
+
+```
+lab_id, dataset_id, organism, gradient_length, column_type, acquisition_mode
+```
+
+This enables stratified sampling, bias analysis, and cross-lab validation.
+
+### San José Mode (Report ALL Results)
+
+All search engines are configured to report ALL PSMs without FDR filtering. San José stores the full union with per-engine scores; thresholds are applied at query time for downstream analysis.
+
+### Human Checkpoints
+
+| Checkpoint | Purpose |
+|------------|---------|
+| Dataset Selection | Curated PRIDE accessions, blacklist for problematic datasets |
+| QC Dashboard | Auto-generated reports, anomaly detection, human review when flagged |
+| Consensus Rules | Configurable: 3/3 vs 2/3 vs union, PEP thresholds |
+| Versioned Snapshots | San José v1.0, v1.1… frozen, reproducible datasets |
+| Release Gates | Bias checks, cross-lab validation, human sign-off |
 
 ## Quick Start
 
 ### Prerequisites
 
-1. **FragPipe** (v24+) - Download from https://fragpipe.nesvilab.org/
-2. **DIA-NN** (v2.3+) - Download from https://github.com/vdemichev/DiaNN (required for DDA support)
-3. **Snakemake** (v8+) - Workflow orchestration
-4. **Singularity** (optional) - For containerized HPC execution
+1. **FragPipe** (v24+) - https://fragpipe.nesvilab.org/ (academic license)
+2. **DIA-NN** (v2.3+) - https://github.com/vdemichev/DiaNN (academic license)
+3. **Sage** - https://github.com/lazear/sage (open source Rust)
+4. **Snakemake** (v8+) - Workflow orchestration
+5. **Singularity** (optional) - For containerized HPC execution
 
 ### Configuration
 
 Edit `config/config.yaml`:
+
 ```yaml
-# FragPipe installation
+# Search engine paths
 fragpipe:
   path: "/path/to/fragpipe-24.0"
-  workflow: "LFQ-MBR"  # Good for DDA timsTOF
+  workflow: "LFQ-MBR"
 
-# DIA-NN installation (v2.3+ for DDA support)
 diann:
   path: "/path/to/diann-linux"
   threads: 16
+  qvalue: 1.0  # San José: report ALL results
+
+sage:
+  path: "/path/to/sage"
+  config: "config/sage_config.json"
+
+# San José mode (default)
+san_jose:
+  report_all: true
 
 # Organism FASTA mapping
 organisms:
   human:
     proteome_id: "UP000005640"
-    local_fasta: "/path/to/human.fasta"  # Optional
-    includes_contaminants: true  # If local FASTA already has cRAP
+    local_fasta: "/path/to/human.fasta"
 
 # Dataset to organism mapping
 dataset_metadata:
@@ -60,142 +104,129 @@ dataset_metadata:
     organism: "human"
 ```
 
-### Search Methods
-
-The pipeline supports two orthogonal search methods for robust peptide identification:
-
-| Method | Tool | Approach | Strengths |
-|--------|------|----------|-----------|
-| **Spectrum-centric** | FragPipe/MSFragger | Match spectra to peptides | Fast, established, open modification support |
-| **Peptide-centric** | DIA-NN | Match peptides to spectra | Deep learning rescoring, excellent for ion mobility |
-
-Running both provides orthogonal validation - consensus identifications have higher confidence.
+### Running the Pipeline
 
 ```bash
-# Spectrum-centric only (FragPipe)
-snakemake process_only --cores 16
+# Phase 1: Triple-engine search
+snakemake process_fragpipe --cores 16  # Spectrum-centric
+snakemake process_diann --cores 16     # Peptide-centric
+snakemake process_sage --cores 16      # Fast Rust engine
+snakemake process_all --cores 16       # All three (recommended)
 
-# Peptide-centric only (DIA-NN)
-snakemake process_diann --cores 16
+# Build precursor index (bridges raw data to search results)
+snakemake build_precursor_index --config accession=PXD019086
 
-# Both methods (recommended for production)
-snakemake process_both --cores 16
-```
-
-### FASTA Resource Management
-
-The pipeline automatically manages FASTA databases:
-
-1. **Organism mapping**: Each dataset maps to an organism (human, yeast, mouse, etc.)
-2. **Local or download**: Uses local FASTA if available, otherwise downloads from UniProt
-3. **Contaminants**: Adds cRAP database (unless already included)
-4. **Decoys**: Generates reversed decoy sequences for target-decoy analysis
-
-```bash
-# Prepare FASTA for a dataset
-snakemake prepare_fasta --config accession=PXD019086
-
-# List available databases
-snakemake list_fasta_databases
-```
-
-### Phase 1: Build Database
-
-```bash
-# Add a dataset to the database
-snakemake add_dataset --config accession=PXD019086
-
-# Add all configured datasets
-snakemake add_all_datasets
-
-# Create a snapshot for training
+# Create versioned snapshot
 snakemake create_snapshot --config version=v1.0
-```
 
-### Phase 2: Train Models
-
-```bash
-# Train CCS model on snapshot
+# Phase 2: Train models
 snakemake train_model --config snapshot=v1.0 model=ccs_v1
-
-# Evaluate model
-snakemake evaluate_model --config snapshot=v1.0 model=ccs_v1
 ```
 
-### Local Development
+### Interactive Dashboard
+
+Browse precursors with full 4D visualization:
 
 ```bash
-# Create Python venv
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install snakemake
+# Backend (FastAPI)
+.venv/bin/python dashboard/backend/main.py \
+    --store data/processed/PXD019086/precursor_index_v3.parquet \
+    --port 8000
 
-# Install imspy from source
-./scripts/setup_imspy.sh
-
-# Run locally (test mode: 3 files)
-snakemake process_both --cores 8
+# Frontend (React + TypeScript)
+cd dashboard/frontend && npm run dev  # http://localhost:5173
 ```
+
+Features: fragment spectrum, IM vs m/z scatter, XIC, mobilogram, isotope envelope.
 
 ## Project Structure
 
 ```
 claudius-proteomics/
 ├── Snakefile                   # Main workflow
-├── config/config.yaml          # Pipeline configuration
+├── config/
+│   ├── config.yaml             # Pipeline configuration
+│   └── sage_config.json        # Sage search parameters
 ├── profiles/mogon2/            # HPC cluster profile
 │
 ├── rules/                      # Snakemake rule modules
 │   ├── fasta.smk               # FASTA resource management
 │   ├── download.smk            # PRIDE download
-│   ├── fragpipe.smk            # MSFragger search (spectrum-centric)
-│   ├── diann.smk               # DIA-NN search (peptide-centric)
-│   ├── extract.smk             # Raw feature extraction (imspy)
+│   ├── fragpipe.smk            # FragPipe search
+│   ├── diann.smk               # DIA-NN search
+│   ├── sage.smk                # Sage search
+│   ├── extract.smk             # Raw feature extraction
 │   ├── database.smk            # Database insertion
 │   ├── snapshot.smk            # Snapshot creation
 │   └── train.smk               # Model training
 │
-├── containers/                 # Singularity definitions
-│   ├── fragpipe-base/          # Java runtime
-│   ├── download/               # PRIDE tools
-│   └── imspy/                  # imspy + TensorFlow
+├── scripts/
+│   ├── run_fragpipe.py         # FragPipe wrapper (San José mode)
+│   ├── build_precursor_index.py # Unified precursor index
+│   ├── sequence_utils.py       # UNIMOD normalization
+│   ├── fragment_matching.py    # Theoretical fragment matching
+│   ├── precursor_store.py      # Parquet store utilities
+│   └── ...
 │
-├── scripts/                    # Python/Bash scripts
-│   ├── download_pride.py       # PRIDE download
-│   ├── run_fragpipe.py         # FragPipe wrapper
-│   ├── extract_raw_features.py # imspy raw extraction
-│   ├── insert_to_database.py
-│   ├── create_snapshot.py
-│   ├── train_ccs.py
-│   ├── evaluate_model.py
-│   └── setup_imspy.sh          # Local imspy setup
+├── dashboard/
+│   ├── backend/main.py         # FastAPI server
+│   └── frontend/               # React + TypeScript + Deck.gl
 │
-├── resources/                  # Resource files
-│   └── fasta/                  # FASTA databases
-│       ├── {organism}.fasta    # Per-organism databases
-│       └── search_db/          # Per-dataset search databases
-│           ├── {accession}.fasta
-│           └── {accession}_decoys.fasta
+├── docs/
+│   ├── SAN_JOSE_PITCH.md       # Vision and architecture
+│   ├── RAW_DATA_ARCHITECTURE.md # Parquet schema, dashboard API
+│   ├── RUNNER_OUTPUT_SCHEMA.md # Per-dataset output format
+│   └── BUGS_FOUND.md           # Bug documentation
 │
-├── database/                   # Peptide property database
-│   ├── peptides/               # Per-accession data
-│   └── snapshots/              # Versioned training sets
-│
-├── models/                     # Trained models
-│
-├── data/                       # Temporary processing data
+├── data/
 │   ├── raw/                    # Downloaded .d files
-│   ├── processed/              # Search results
-│   │   └── {accession}/
-│   │       ├── psm.tsv         # FragPipe output
-│   │       └── diann/
-│   │           └── report.parquet  # DIA-NN output
-│   └── extracted/              # Raw features
+│   └── processed/{accession}/  # Search results + precursor store
 │
-├── envs/imspy.yaml             # Conda environment
 ├── CLAUDIUS-PROTEOMICS.md      # Full project plan
-└── README.md
+└── CLAUDE.md                   # Claude Code instructions
 ```
+
+## Data Storage
+
+### Precursor Parquet Schema
+
+Each precursor observation contains:
+
+```
+# Identity
+precursor_id, raw_file, mz, charge, rt_seconds, mobility
+
+# Search engine results (NULL if not identified)
+fragpipe_peptide, sage_peptide, diann_peptide
+consensus_peptide, n_engines
+
+# Quality metrics
+fragpipe_probability, diann_qvalue, sage_qvalue
+
+# Fragment spectrum (variable length lists)
+fragment_mz, fragment_intensity, fragment_mobility
+
+# MS1 projections
+xic_rt, xic_intensity
+mobilogram_im, mobilogram_intensity
+isotope_mz, isotope_intensity
+
+# Raw 4D MS1 data
+raw_rt, raw_mz, raw_mobility, raw_intensity
+```
+
+See [docs/RAW_DATA_ARCHITECTURE.md](docs/RAW_DATA_ARCHITECTURE.md) for full specification.
+
+## Technical Stack
+
+- **Orchestration**: Snakemake v8+
+- **Raw processing**: rustims/imspy (Rust backend + Python bindings)
+- **Search engines**: FragPipe + DIA-NN + Sage
+- **Database**: DuckDB/Parquet (columnar, versioned snapshots)
+- **Dashboard**: FastAPI + React + TypeScript + Deck.gl (WebGL)
+- **ML**: TensorFlow/keras via imspy-predictors
+- **Containers**: Singularity (HPC) / Docker (local)
+- **HPC**: SLURM (Mogon2 @ JGU Mainz)
 
 ## Data Sources
 
@@ -206,16 +237,11 @@ claudius-proteomics/
 - **Data**: >1 million CCS measurements from timsTOF
 - **Target**: R > 0.99, <1.4% median error
 
-## Technical Stack
+## Why "San José"?
 
-- **Raw data processing**: rustims/imspy (Rust + Python)
-- **Search engines**:
-  - FragPipe/MSFragger (spectrum-centric)
-  - DIA-NN v2.3+ (peptide-centric, DDA mode)
-- **ML framework**: PyTorch, imspy-predictors
-- **Workflow**: Snakemake
-- **Containers**: Singularity
-- **HPC**: SLURM (Mogon2)
+Named after the *San José*, a sunken ship whose rediscovery revealed immense, carefully preserved value beneath the surface.
+
+PRIDE is similar: a vast repository where the real value is hidden in raw experimental data, waiting to be systematically recovered, catalogued, and understood.
 
 ## License
 
