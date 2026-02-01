@@ -18,8 +18,8 @@ PRIDE Archive                    Database                      Models
 │ PXD...      │   ├──────────►  │   PXD010012 │ ───────────►  │   metrics   │
 │             │   │  process    │   ...       │   train       │             │
 └─────────────┘ ──┘  extract    │ snapshots/  │               └─────────────┘
-                               │   v1.0/     │
-                               └─────────────┘
+                                │   v1.0/     │
+                                └─────────────┘
 ```
 
 See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan.

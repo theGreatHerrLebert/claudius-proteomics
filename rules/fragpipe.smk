@@ -42,7 +42,13 @@ rule fragpipe_search:
         mkdir -p {params.outdir}
 
         # Run FragPipe via Python wrapper
-        python scripts/run_fragpipe.py \
+        # San José mode: disable FDR filtering to report ALL PSMs
+        FDR_FLAG=""
+        if [ "{config[san_jose][report_all]}" != "True" ]; then
+            FDR_FLAG="--enable-fdr-filter"
+        fi
+
+        python3 scripts/run_fragpipe.py \
             --fragpipe {params.fragpipe_path} \
             --input {input.raw_dir} \
             --output {params.outdir} \
@@ -52,6 +58,7 @@ rule fragpipe_search:
             --ram {params.ram} \
             --max-files {params.max_files} \
             --temp-dir {params.temp_dir} \
+            $FDR_FLAG \
             2>&1 | tee {log}
 
         # Mark completion

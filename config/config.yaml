@@ -56,7 +56,7 @@ fragpipe:
 diann:
   path: "/home/administrator/Documents/promotion/diann/diann-2.3.2/diann-2.3.2/diann-linux"
   threads: 16
-  qvalue: 0.01
+  qvalue: 1.0  # Report ALL results - no q-value filtering (San José applies thresholds at query time)
   # DIA-NN 2.3+ can run in DDA mode with --dda flag
 
 # Sage configuration (fast Rust-based search engine)
@@ -65,6 +65,11 @@ sage:
   config: "config/sage_config.json"
   threads: 16
   # Sage uses timsrust for reading Bruker .d files
+
+# San José mode: report ALL results without FDR/PEP filtering
+# Thresholds are applied at query time, not during search
+san_jose:
+  report_all: true  # Disable FDR filtering in all search engines
 
 # Raw extraction settings (imspy)
 extraction:
