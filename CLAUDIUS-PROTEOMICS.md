@@ -1,23 +1,38 @@
 # CLAUDIUS-PROTEOMICS
 
-> Building the world's largest peptide property prediction resource through systematic reanalysis of public proteomics data.
+> **San José**: A reproducible, metadata-rich, bias-aware reference layer for timsTOF data on PRIDE.
 
 ---
 
-## 1. Vision (Full Scope)
+## 1. Vision: San José
+
+### The Core Principle
+
+> We are not collecting peptides.
+> We are collecting **peptide observations in experimental context**.
+
+Every stored observation is inseparable from:
+- Lab / dataset provenance
+- Instrument configuration
+- Gradient / LC conditions
+- Acquisition method
+- Engine agreement / disagreement profile
+- Raw signal features
 
 ### The Problem
 Public proteomics repositories (PRIDE, MassIVE, PeptideAtlas) contain petabytes of raw mass spectrometry data. This data is:
 - Processed with inconsistent, often outdated pipelines
 - Underutilized for machine learning applications
 - Fragmented across studies with incompatible formats
+- **Aggregated naively**, learning "how 20 labs run timsTOF" instead of "how peptides behave"
 
 ### The Solution
-CLAUDIUS-PROTEOMICS will:
-1. **Systematically download** raw data from public repositories
-2. **Reprocess uniformly** with state-of-the-art tools
-3. **Extract peptide properties** (CCS, retention time, fragmentation spectra, charge states)
-4. **Build prediction models** trained on this unprecedented scale of consistent data
+San José systematically reprocesses every timsTOF dataset on PRIDE to build:
+
+1. **Triple orthogonal validation** - FragPipe + DIA-NN + Sage for consensus AND disagreement analysis
+2. **Bias-aware metadata** - Track lab, instrument, gradient, column chemistry
+3. **Raw signal extraction** - Full 4D data (RT, m/z, mobility, intensity)
+4. **Versioned snapshots** - Citable, reproducible datasets for model training
 
 ### Target Properties (Long-term)
 | Property | Instrument Requirement | Use Case |
@@ -27,6 +42,68 @@ CLAUDIUS-PROTEOMICS will:
 | MS2 Fragmentation | Any MS/MS | Spectral library generation |
 | Charge State Distribution | Any MS | Improved precursor selection |
 | Detectability | Any MS | Proteome coverage optimization |
+
+---
+
+## 1b. Triple Orthogonal Validation
+
+Each dataset is processed with three independent search engines:
+
+| Engine | Approach | Strength |
+|--------|----------|----------|
+| **FragPipe** | Spectrum-centric | Gold standard for DDA |
+| **DIA-NN** | Peptide-centric | Best for DIA, fast |
+| **Sage** | Fast Rust engine | Independent validation, cheap at scale |
+
+We do **not** treat consensus as "ground truth". Instead, we store:
+
+- **Full union** - All identifications from any engine
+- **2/3 agreement** - Identified by at least 2 engines
+- **3/3 agreement** - Identified by all 3 engines
+- **Engine-specific unique IDs** - Disagreements are scientifically valuable
+
+> The most scientifically valuable data are often where engines disagree.
+
+**Important**: All engines report ALL results (no FDR or PEP filtering). Thresholds applied at query time.
+
+---
+
+## 1c. Bias-Awareness as Design Requirement
+
+PRIDE datasets are not independent samples. They cluster heavily by:
+- Lab / research group
+- Sample prep protocols
+- Column chemistry
+- Gradient length
+- Instrument tuning
+- Organism
+
+San José tracks and exposes:
+```
+lab_id
+dataset_id
+organism
+gradient_length
+column_type
+acquisition_mode
+instrument_metadata
+```
+
+This enables stratified sampling, bias analysis, weighted training, and cross-lab validation.
+
+---
+
+## 1d. Human Checkpoints
+
+Automation runs the pipeline. Humans guard scientific integrity.
+
+| Checkpoint | Purpose |
+|------------|---------|
+| **Dataset Selection** | Curated PRIDE accessions, blacklist for problematic datasets |
+| **QC Dashboard** | Auto-generated reports, anomaly detection, human review when flagged |
+| **Consensus Rules** | Configurable: 3/3 vs 2/3 vs union, PEP thresholds |
+| **Versioned Snapshots** | San José v1.0, v1.1… frozen, reproducible datasets |
+| **Release Gates** | Bias checks, cross-lab validation, human sign-off |
 
 ---
 
@@ -62,7 +139,7 @@ Nature Communications 12, 1185 (2021). https://doi.org/10.1038/s41467-021-21352-
 | Dimension | POC Choice | Rationale |
 |-----------|------------|-----------|
 | Instrument | timsTOF only | Native CCS measurement via TIMS |
-| Processing | FragPipe | SOTA, handles timsTOF, open source |
+| Processing | FragPipe + DIA-NN + Sage | Triple orthogonal validation |
 | Data source | **PXD019086** (Meier et al.) | Landmark CCS study, >1M data points, CV <1% |
 | Target property | CCS | Well-defined, measurable ground truth |
 | Model | ionmob (GRU-based) | Existing architecture, proven performance |
@@ -121,25 +198,25 @@ FragPipe/MaxQuant export summarized results (PSMs, quantification). We go deeper
 ```
 ┌──────────────────┐
 │   PRIDE Archive  │
-│   (PXD019086)    │
+│   (timsTOF data) │
 └────────┬─────────┘
          │ download .d files
          ▼
+┌──────────────────────────────────────────┐
+│         Triple Search Engines            │
+│  FragPipe │ DIA-NN │ Sage (all results) │
+└────────┬─────────────────────────────────┘
+         │ PSMs + consensus analysis
+         ▼
 ┌──────────────────┐
-│    FragPipe      │────────────► PSMs (identifications)
-└────────┬─────────┘                      │
-         │ .d files                       │
-         ▼                                │
-┌──────────────────┐                      │
 │  imspy/rustdf    │────────────► Raw extraction:
 │  (raw extraction)│              - ion distributions
 └────────┬─────────┘              - chromatograms
          │                        - mobilograms
-         │                                │
-         ▼                                ▼
+         ▼
 ┌──────────────────────────────────────────┐
-│              Merge & Align               │
-│  (PSM identities + raw signal features)  │
+│          San José Database               │
+│  (Bias-aware, versioned snapshots)       │
 └────────────────────┬─────────────────────┘
                      │
                      ▼
@@ -539,6 +616,39 @@ Unique to this project - enabled by imspy raw extraction:
 
 ---
 
+## 7. What Exists Today
+
+- Triple-engine pipeline (FragPipe + DIA-NN + Sage)
+- Overlap analysis with UNIMOD/I-L normalization
+- PEP-filtered consensus export (configurable thresholds)
+- Automated HTML QC reports
+- Parquet exports for union and consensus sets
+- Interactive precursor browser dashboard
+
+---
+
+## 8. Roadmap
+
+| Phase   | Goal                   | Human Checkpoint               |
+| ------- | ---------------------- | ------------------------------ |
+| Now     | 10 HeLa datasets       | QC report review               |
+| Week 2  | Raw feature extraction | Validate feature quality       |
+| Week 4  | Containerized workers  | HPC test run                   |
+| Week 6  | 100 datasets           | Approve San José v1.0 snapshot |
+| Ongoing | All timsTOF on PRIDE   | Periodic bias & QC review      |
+
+---
+
+## 9. Why "San José"?
+
+Named after the *San José*, a sunken ship whose rediscovery revealed immense, carefully preserved value beneath the surface.
+
+PRIDE is similar: a vast repository where the real value is hidden in raw experimental data, waiting to be systematically recovered, catalogued, and understood.
+
+This project is about diving down, recovering that value methodically, and bringing it back in a structured, usable form for the community.
+
+---
+
 ## References
 
 ### Primary Data Source
@@ -560,6 +670,8 @@ Unique to this project - enabled by imspy raw extraction:
 
 ### Tools
 - FragPipe: https://fragpipe.nesvilab.org/ (academic license required - not redistributable)
+- DIA-NN: https://github.com/vdemichev/DiaNN (academic license)
+- Sage: https://github.com/lazear/sage (open source Rust search engine)
 - PRIDE Archive: https://www.ebi.ac.uk/pride/
 - Snakemake: https://snakemake.readthedocs.io/
 - Singularity: https://sylabs.io/singularity/

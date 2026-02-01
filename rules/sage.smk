@@ -3,6 +3,9 @@ Rules for Sage search engine processing of timsTOF DDA data.
 
 Sage is a fast, open-source proteomics search engine written in Rust.
 Uses timsrust internally for reading Bruker .d files.
+
+NOTE: Sage reports ALL PSMs by default with q-values calculated post-hoc.
+No FDR filtering occurs during search - all results are preserved.
 """
 
 import json
@@ -68,6 +71,8 @@ rule sage_search:
             json.dump(sage_config, f, indent=2)
 
         # Build Sage command
+        # NOTE: Sage reports ALL PSMs by default with q-values calculated post-hoc
+        # No FDR filtering occurs during search - all results are preserved
         outdir_abs = outdir.resolve()
         cmd = [
             params.sage_path,
@@ -75,6 +80,7 @@ rule sage_search:
             "-o", str(outdir_abs),
             "--parquet",  # Output in parquet format
             "--write-pin",  # Write percolator input for rescoring
+            "--annotate-matches",  # Write matched fragment ions
         ]
 
         print(f"Running Sage:")

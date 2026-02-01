@@ -3,6 +3,9 @@ Rules for DIA-NN processing of timsTOF DDA data.
 
 DIA-NN 2.3+ supports DDA mode with --dda flag.
 Can be used as an alternative or complement to FragPipe.
+
+NOTE: San José mode uses qvalue=1.0 in config to report ALL PSMs.
+Filtering is applied at query time, not during search.
 """
 
 

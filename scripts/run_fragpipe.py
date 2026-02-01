@@ -30,15 +30,34 @@ def update_workflow(
     output_workflow: Path,
     fasta_path: Path,
     is_timstof: bool = True,
+    disable_fdr_filter: bool = True,
 ) -> None:
     """
     Update workflow file with FASTA path and timsTOF settings.
+
+    If disable_fdr_filter=True (San José mode), sets all FDR thresholds to 1.0
+    so that ALL PSMs are reported regardless of confidence.
     """
     with open(base_workflow) as f:
         lines = f.readlines()
 
     updated_lines = []
     found_db_path = False
+
+    # FDR-related settings to override for San José (report ALL results)
+    fdr_overrides = {
+        'msfragger.report-fdr': '1.0',
+        'percolator.protein-level-fdr-cutoff': '1.0',
+        'percolator.peptide-level-fdr-cutoff': '1.0',
+        'percolator.psm-level-fdr-cutoff': '1.0',
+        'philosopher.peptide-level-fdr-cutoff': '1.0',
+        'philosopher.protein-level-fdr-cutoff': '1.0',
+        'philosopher.psm-level-fdr-cutoff': '1.0',
+        'filter.pep-fdr': '1.0',
+        'filter.prot-fdr': '1.0',
+        'filter.psm-fdr': '1.0',
+        'ptmprophet.fdr': '1.0',
+    }
 
     for line in lines:
         line = line.rstrip('\n')
@@ -52,6 +71,13 @@ def update_workflow(
             updated_lines.append('workflow.input.data-type.im-ms=true')
         elif is_timstof and line.startswith('workflow.input.data-type.regular-ms='):
             updated_lines.append('workflow.input.data-type.regular-ms=false')
+        # Override FDR settings if San José mode
+        elif disable_fdr_filter:
+            key = line.split('=')[0] if '=' in line else None
+            if key and key in fdr_overrides:
+                updated_lines.append(f'{key}={fdr_overrides[key]}')
+            else:
+                updated_lines.append(line)
         else:
             updated_lines.append(line)
 
@@ -72,6 +98,8 @@ def update_workflow(
     print(f"Created workflow: {output_workflow}")
     print(f"  FASTA: {fasta_path}")
     print(f"  timsTOF IM-MS: {is_timstof}")
+    if disable_fdr_filter:
+        print(f"  FDR filtering: DISABLED (San José mode - report ALL PSMs)")
 
 
 def find_raw_files(input_dir: Path, max_files: int = 0) -> list[Path]:
@@ -186,6 +214,10 @@ def main():
         "--temp-dir", type=str, default=None,
         help="Temp directory for MSFragger cache files (avoids writing next to raw data)"
     )
+    parser.add_argument(
+        "--enable-fdr-filter", action="store_true",
+        help="Enable FDR filtering (default: disabled for San José - report ALL PSMs)"
+    )
 
     args = parser.parse_args()
 
@@ -244,6 +276,7 @@ def main():
         workflow_path,
         fasta_path,
         is_timstof=not args.no_timstof,
+        disable_fdr_filter=not args.enable_fdr_filter,  # Default: disable FDR (San José mode)
     )
 
     # Resolve temp directory
