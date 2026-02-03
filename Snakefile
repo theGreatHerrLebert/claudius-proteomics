@@ -61,6 +61,14 @@ Database Building (Phase 1):
   snakemake create_snapshot --config version=v1.0
       Create a versioned snapshot for training
 
+Processing:
+  snakemake process_full
+      Run extraction + all search engines (RECOMMENDED)
+      Extraction first (IM calibration), then triple search
+
+  snakemake extract_only
+      Run raw feature extraction with IM calibration (imspy)
+
 Search Methods (orthogonal validation):
   snakemake process_only
       Run FragPipe/MSFragger (spectrum-centric)
@@ -248,6 +256,45 @@ rule process_sage:
 rule process_all:
     """Run all three search engines for triple orthogonal validation."""
     input:
+        # Spectrum-centric (FragPipe/MSFragger)
+        expand(
+            "data/processed/{accession}/combined_peptide.tsv",
+            accession=config.get("datasets", ["PXD019086"])
+        ),
+        # Peptide-centric (DIA-NN)
+        expand(
+            "data/processed/{accession}/diann/report.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        ),
+        # Fast Rust-based (Sage)
+        expand(
+            "data/processed/{accession}/sage/results.sage.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        )
+
+
+rule extract_only:
+    """Run raw feature extraction with IM calibration (imspy)."""
+    input:
+        expand(
+            "data/extracted/{accession}/raw_features.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        )
+
+
+rule process_full:
+    """
+    Run extraction + all search engines (recommended workflow).
+
+    Extraction runs first (uses Bruker SDK for accurate IM calibration),
+    then all three search engines run for triple orthogonal validation.
+    """
+    input:
+        # Raw extraction with IM calibration (runs first)
+        expand(
+            "data/extracted/{accession}/raw_features.parquet",
+            accession=config.get("datasets", ["PXD019086"])
+        ),
         # Spectrum-centric (FragPipe/MSFragger)
         expand(
             "data/processed/{accession}/combined_peptide.tsv",

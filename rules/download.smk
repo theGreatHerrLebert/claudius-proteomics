@@ -66,8 +66,11 @@ rule download_raw_files:
             local = Path(params.local_path)
             print(f"Linking local data: {local} -> {output_path}")
 
-            if output_path.exists() or output_path.is_symlink():
+            if output_path.is_symlink():
                 os.remove(output_path)
+            elif output_path.exists():
+                import shutil
+                shutil.rmtree(output_path)
 
             os.symlink(local, output_path)
             print(f"Created symlink to {local}")

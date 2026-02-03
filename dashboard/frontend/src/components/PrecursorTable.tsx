@@ -172,6 +172,37 @@ export default function PrecursorTable({
         cell: (info) => info.getValue() ?? '-',
         size: 60,
       }),
+      // Quality metrics
+      columnHelper.accessor('ms1_rt_r2', {
+        header: 'RT R²',
+        cell: (info) => {
+          const val = info.getValue();
+          if (val === null) return '-';
+          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          return <span className={color}>{val.toFixed(2)}</span>;
+        },
+        size: 55,
+      }),
+      columnHelper.accessor('ms1_im_r2', {
+        header: 'IM R²',
+        cell: (info) => {
+          const val = info.getValue();
+          if (val === null) return '-';
+          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          return <span className={color}>{val.toFixed(2)}</span>;
+        },
+        size: 55,
+      }),
+      columnHelper.accessor('isotope_cosim', {
+        header: 'Iso',
+        cell: (info) => {
+          const val = info.getValue();
+          if (val === null) return '-';
+          const color = val >= 0.95 ? 'text-green-400' : val >= 0.85 ? 'text-yellow-400' : 'text-red-400';
+          return <span className={color}>{val.toFixed(2)}</span>;
+        },
+        size: 50,
+      }),
     ],
     []
   );

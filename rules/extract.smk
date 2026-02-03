@@ -12,17 +12,26 @@ Output: index.parquet + blobs.bin per raw file
 Ion Mobility Calibration:
 The Bruker SDK provides accurate scan→1/K0 conversion but is not thread-safe.
 We extract calibration lookup tables once per raw file, enabling fast parallel
-extraction with accurate mobility values.
+extraction with accurate mobility values via LookupIndexConverter.
+
+Flow:
+1. extract_im_calibration: Bruker SDK → im_lookup array (scan → 1/K0)
+2. extract_precursors: PyTimsDatasetDDA.with_calibration() → LookupIndexConverter (fast + thread-safe)
 """
 
 import os
 
 
 def get_raw_files(wildcards):
-    """Get all .d folders for an accession."""
+    """Get all .d folders for an accession, respecting test_mode."""
     raw_dir = f"data/raw/{wildcards.accession}"
     if os.path.exists(raw_dir):
-        return [f for f in os.listdir(raw_dir) if f.endswith(".d")]
+        files = sorted([f for f in os.listdir(raw_dir) if f.endswith(".d")])
+        # Apply test_mode limit
+        if config.get("test_mode", {}).get("enabled", False):
+            max_files = config.get("test_mode", {}).get("max_files", 3)
+            files = files[:max_files]
+        return files
     return []
 
 
@@ -106,6 +115,7 @@ rule extract_precursors:
         output_dir="data/extracted/{accession}/{raw_file}",
         threads=config.get("extraction", {}).get("threads", 4),
         use_calibration=config.get("extraction", {}).get("use_bruker_sdk", True),
+        batch_size=config.get("extraction", {}).get("batch_size", 10000),
     resources:
         mem_mb=32000,
         time="2:00:00",
@@ -117,69 +127,55 @@ rule extract_precursors:
         sys.path.insert(0, "scripts")
 
         from pathlib import Path
+        import numpy as np
         from extract_precursors import (
             TimsDatasetDDA,
-            extract_precursors,
-            write_extraction,
+            extract_precursors_batched,
             setup_logging,
         )
 
         logger = setup_logging(Path(log[0]))
 
         logger.info("=" * 60)
-        logger.info("Precursor extraction with imspy")
+        logger.info("Batched precursor extraction with LookupIndexConverter")
         logger.info("=" * 60)
         logger.info(f"Input: {input.raw_file}")
         logger.info(f"Output: {params.output_dir}")
-        logger.info(f"Using calibration: {params.use_calibration}")
+        logger.info(f"Batch size: {params.batch_size}")
 
-        # Load dataset with calibration if available
-        import numpy as np
-        logger.info("Loading dataset...")
-
+        # Load calibration if available
+        calibration = None
         if params.use_calibration and Path(input.calibration).exists():
             cal_data = np.load(input.calibration)
             if len(cal_data) > 0:
-                # Use calibrated dataset (accurate + thread-safe)
-                from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
-                rust_dataset = PyTimsDatasetDDARust.with_calibration(
-                    str(input.raw_file), False, cal_data.tolist()
-                )
-                logger.info("  Using pre-computed IM calibration (accurate + fast)")
-                # Also load Python wrapper for metadata access
-                dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
+                calibration = cal_data
+                logger.info(f"Loaded IM calibration: {len(cal_data)} scans")
+                logger.info(f"  1/K0 range: {cal_data.min():.4f} - {cal_data.max():.4f}")
             else:
-                # Dummy calibration file - use linear interpolation
-                logger.info("  No calibration data - using linear interpolation")
-                dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
-                rust_dataset = None
+                logger.info("Empty calibration file - using linear interpolation")
         else:
-            # Fall back to SDK or linear interpolation
-            dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
-            rust_dataset = None
+            logger.info("No calibration - using linear interpolation")
 
+        # Load dataset (use_bruker_sdk=False since we have calibration lookup)
+        logger.info("Loading dataset...")
+        dataset = TimsDatasetDDA(str(input.raw_file), in_memory=False, use_bruker_sdk=False)
         logger.info(f"  Frames: {dataset.frame_count}")
         logger.info(f"  Fragmented precursors: {len(dataset.fragmented_precursors)}")
 
-        # Extract
+        # Extract in batches with calibration for accurate IM values
         raw_file_name = Path(input.raw_file).name
-        precursors = extract_precursors(
+        stats = extract_precursors_batched(
             dataset=dataset,
             raw_file_name=raw_file_name,
-            num_threads=params.threads,
-            logger=logger,
-        )
-
-        # Write
-        stats = write_extraction(
-            precursors=precursors,
             output_dir=Path(params.output_dir),
-            write_blobs=True,
+            batch_size=params.batch_size,
+            num_threads=params.threads,
+            calibration=calibration,
             logger=logger,
         )
 
         logger.info("=" * 60)
-        logger.info(f"Extraction complete: {stats['n_precursors']} precursors")
+        logger.info(f"Extraction complete: {stats['n_precursors']} precursors in {stats['n_batches']} batches")
         logger.info(f"Blob size: {stats['blob_size_bytes'] / 1024 / 1024:.1f} MB")
         logger.info("=" * 60)
 
@@ -187,6 +183,8 @@ rule extract_precursors:
 rule merge_extracted_precursors:
     """
     Merge all extracted precursor indices into a single parquet per accession.
+
+    Output filename: raw_features.parquet (used by merge.smk and database.smk)
     """
     input:
         indices=lambda wildcards: expand(
@@ -195,7 +193,7 @@ rule merge_extracted_precursors:
             raw_file=get_raw_files(wildcards),
         )
     output:
-        merged="data/extracted/{accession}/precursors.parquet"
+        merged="data/extracted/{accession}/raw_features.parquet"
     run:
         import pandas as pd
 
