@@ -70,7 +70,13 @@ def extract_im_calibration(d_path: str, verbose: bool = False) -> np.ndarray:
         print(f"  Converting {num_scans} scan indices to 1/K0...")
 
     # Convert using the Bruker SDK
-    im_lookup = np.array(dataset.scan_to_inverse_mobility(1, scans.tolist()), dtype=np.float64)
+    try:
+        im_lookup = np.array(dataset.scan_to_inverse_mobility(1, scans.tolist()), dtype=np.float64)
+    except Exception as e:
+        if verbose:
+            print(f"  Warning: Could not extract calibration via SDK: {e}")
+            print("  Returning empty calibration (will use linear interpolation)")
+        return np.array([], dtype=np.float64)
 
     if verbose:
         print(f"  1/K0 range: {im_lookup.min():.4f} - {im_lookup.max():.4f}")
@@ -117,12 +123,15 @@ def extract_and_save_calibration(
     # Extract calibration
     im_lookup = extract_im_calibration(d_path, verbose=verbose)
 
-    # Save
+    # Save (even if empty - serves as a marker that extraction was attempted)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     np.save(output_path, im_lookup)
 
     if verbose:
-        print(f"  Saved calibration to: {output_path}")
+        if len(im_lookup) > 0:
+            print(f"  Saved calibration to: {output_path}")
+        else:
+            print(f"  Saved empty calibration (will use linear interpolation): {output_path}")
 
     return output_path
 
@@ -235,17 +244,21 @@ def main():
 
     # Optionally verify
     if args.verify:
-        if verbose:
-            print("\nVerifying calibration accuracy...")
         im_lookup = np.load(cal_path)
-        max_abs, max_rel = verify_calibration(str(args.input), im_lookup)
-        if verbose:
-            print(f"  Max absolute error: {max_abs:.2e} 1/K0")
-            print(f"  Max relative error: {max_rel:.2e}")
-            if max_rel < 1e-10:
-                print("  Calibration is exact (as expected)")
-            else:
-                print("  WARNING: Calibration has unexpected errors!")
+        if len(im_lookup) == 0:
+            if verbose:
+                print("\nSkipping verification (empty calibration)")
+        else:
+            if verbose:
+                print("\nVerifying calibration accuracy...")
+            max_abs, max_rel = verify_calibration(str(args.input), im_lookup)
+            if verbose:
+                print(f"  Max absolute error: {max_abs:.2e} 1/K0")
+                print(f"  Max relative error: {max_rel:.2e}")
+                if max_rel < 1e-10:
+                    print("  Calibration is exact (as expected)")
+                else:
+                    print("  WARNING: Calibration has unexpected errors!")
 
     if verbose:
         print(f"\nCalibration file: {cal_path}")
