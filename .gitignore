@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ - removed, our lib/ is source code, venv is at .venv/
 lib64/
 parts/
 sdist/
