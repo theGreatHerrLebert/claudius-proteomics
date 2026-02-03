@@ -90,7 +90,7 @@ san_jose:
 # Raw extraction settings (imspy)
 extraction:
   mz_tolerance_ppm: 20
-  rt_tolerance_sec: 6  # Total window = ±3s around apex (typical elution ~3s)
+  rt_tolerance_sec: 15  # Total window = ±7.5s around apex (increased for better signal capture)
   mobility_tolerance: 0.05
   extract_chromatogram: true
   extract_mobilogram: true
@@ -119,7 +119,7 @@ containers:
 # Test mode: use subset of data for quick validation
 test_mode:
   enabled: true
-  max_files: 3
+  max_files: 1
 
 # Temp directory for MSFragger cache files (use SSD for performance)
 # This avoids writing cache files next to raw data on potentially full drives
