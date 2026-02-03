@@ -90,7 +90,7 @@ san_jose:
 # Raw extraction settings (imspy)
 extraction:
   mz_tolerance_ppm: 20
-  rt_tolerance_sec: 30
+  rt_tolerance_sec: 6  # Total window = ±3s around apex (typical elution ~3s)
   mobility_tolerance: 0.05
   extract_chromatogram: true
   extract_mobilogram: true
