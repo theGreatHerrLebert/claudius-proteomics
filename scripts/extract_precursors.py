@@ -29,7 +29,10 @@ import pyarrow.parquet as pq
 # imspy imports
 from imspy_core.timstof import TimsDatasetDDA
 from imspy_core.timstof.frame import TimsFrame
-from imspy_connector import py_dda
+from imspy_connector import py_dda, py_chemistry
+
+# scipy for Gaussian fitting
+from scipy.optimize import curve_fit
 
 # Optional zstd compression (fallback to gzip if not available)
 try:
@@ -74,6 +77,72 @@ def calculate_moments(coords: np.ndarray, intensities: np.ndarray) -> Dict[str, 
         "fwhm": float(fwhm),
         "total_intensity": float(total),
     }
+
+
+def gaussian(x: np.ndarray, amplitude: float, mu: float, sigma: float) -> np.ndarray:
+    """Gaussian function for curve fitting."""
+    return amplitude * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+
+
+def fit_gaussian(coords: np.ndarray, intensities: np.ndarray) -> Dict[str, float]:
+    """Fit Gaussian to 1D signal, return apex, sigma, r2."""
+    if len(coords) < 3 or np.sum(intensities) == 0:
+        return {"apex": 0.0, "sigma": 0.0, "r2": 0.0}
+
+    total = np.sum(intensities)
+    weights = intensities / total
+    mu_init = np.sum(coords * weights)
+    var_init = np.sum(weights * (coords - mu_init) ** 2)
+    sigma_init = np.sqrt(var_init) if var_init > 0 else 0.1
+    amp_init = np.max(intensities)
+
+    try:
+        popt, _ = curve_fit(
+            gaussian, coords, intensities,
+            p0=[amp_init, mu_init, sigma_init],
+            bounds=([0, coords.min(), 1e-6],
+                    [np.inf, coords.max(), coords.max() - coords.min() + 1e-6]),
+            maxfev=1000
+        )
+        amplitude, mu, sigma = popt
+
+        y_pred = gaussian(coords, amplitude, mu, sigma)
+        ss_res = np.sum((intensities - y_pred) ** 2)
+        ss_tot = np.sum((intensities - np.mean(intensities)) ** 2)
+        r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+        r2 = max(0.0, min(1.0, r2))
+
+        return {"apex": float(mu), "sigma": float(sigma), "r2": float(r2)}
+    except (RuntimeError, ValueError):
+        return {"apex": float(mu_init), "sigma": float(sigma_init), "r2": 0.0}
+
+
+def compute_isotope_cosine_similarity(
+    mass: float, charge: int, observed: List[float], n_isotopes: int = 5
+) -> float:
+    """Compute cosine similarity between observed and theoretical isotope envelope."""
+    if charge <= 0 or mass <= 0 or not observed:
+        return 0.0
+
+    theo = py_chemistry.generate_precursor_spectrum(
+        mass=mass, charge=charge, min_intensity=1,
+        k=n_isotopes, resolution=3, centroid=True
+    )
+    theo_int = np.array(theo.intensity[:n_isotopes])
+    obs = np.array(observed[:n_isotopes])
+
+    # Pad to same length
+    max_len = max(len(theo_int), len(obs))
+    theo_int = np.pad(theo_int, (0, max_len - len(theo_int)))
+    obs = np.pad(obs, (0, max_len - len(obs)))
+
+    # Normalize and compute cosine
+    theo_norm = np.linalg.norm(theo_int)
+    obs_norm = np.linalg.norm(obs)
+    if theo_norm == 0 or obs_norm == 0:
+        return 0.0
+
+    return float(np.dot(theo_int, obs) / (theo_norm * obs_norm))
 
 
 @dataclass
@@ -126,6 +195,15 @@ class ExtractedPrecursor:
     ms1_im_coords: np.ndarray
     ms1_im_intensities: np.ndarray
 
+    # Gaussian fit quality metrics
+    ms1_rt_sigma: float
+    ms1_rt_r2: float
+    ms1_im_sigma: float
+    ms1_im_r2: float
+
+    # Isotope envelope quality
+    isotope_cosim: float
+
     @property
     def mz(self) -> float:
         if self.mono_mz is not None and not np.isnan(self.mono_mz):
@@ -177,6 +255,13 @@ class ExtractedPrecursor:
             "ms1_iso_2": self.ms1_isotope_intensities[2] if len(self.ms1_isotope_intensities) > 2 else 0.0,
             "ms1_iso_3": self.ms1_isotope_intensities[3] if len(self.ms1_isotope_intensities) > 3 else 0.0,
             "ms1_iso_4": self.ms1_isotope_intensities[4] if len(self.ms1_isotope_intensities) > 4 else 0.0,
+            # Gaussian fit quality metrics
+            "ms1_rt_sigma": self.ms1_rt_sigma,
+            "ms1_rt_r2": self.ms1_rt_r2,
+            "ms1_im_sigma": self.ms1_im_sigma,
+            "ms1_im_r2": self.ms1_im_r2,
+            # Isotope envelope quality
+            "isotope_cosim": self.isotope_cosim,
         }
 
     def serialize_blob(self) -> bytes:
@@ -249,7 +334,7 @@ def extract_precursors(
     dataset: TimsDatasetDDA,
     raw_file_name: str,
     num_threads: int = 16,
-    rt_window_sec: float = 30.0,
+    rt_window_sec: float = 6.0,
     mz_tol_ppm: float = 20.0,
     im_window: float = 0.1,
     n_isotopes: int = 5,
@@ -409,6 +494,22 @@ def extract_precursors(
             ms1_rt_intensities = np.array(ms1.rt_intensities)
             ms1_im_coords = np.array(ms1.im_coords)
             ms1_im_intensities = np.array(ms1.im_intensities)
+
+            # Gaussian fit quality metrics
+            rt_fit = fit_gaussian(ms1_rt_coords, ms1_rt_intensities)
+            im_fit = fit_gaussian(ms1_im_coords, ms1_im_intensities)
+            ms1_rt_sigma = rt_fit["sigma"]
+            ms1_rt_r2 = rt_fit["r2"]
+            ms1_im_sigma = im_fit["sigma"]
+            ms1_im_r2 = im_fit["r2"]
+
+            # Isotope cosine similarity
+            precursor_mz = pdata['mono_mz'] if pdata['mono_mz'] is not None else pdata['largest_peak_mz']
+            charge = pdata['charge'] if pdata['charge'] is not None else 2
+            mass = (precursor_mz - 1.007276) * charge
+            isotope_cosim = compute_isotope_cosine_similarity(
+                mass, charge, ms1_isotope_intensities, n_isotopes=5
+            )
         else:
             ms1_rt_apex = 0.0
             ms1_rt_fwhm = 0.0
@@ -422,6 +523,11 @@ def extract_precursors(
             ms1_rt_intensities = np.array([])
             ms1_im_coords = np.array([])
             ms1_im_intensities = np.array([])
+            ms1_rt_sigma = 0.0
+            ms1_rt_r2 = 0.0
+            ms1_im_sigma = 0.0
+            ms1_im_r2 = 0.0
+            isotope_cosim = 0.0
 
         precursor = ExtractedPrecursor(
             precursor_id=pid,
@@ -456,6 +562,11 @@ def extract_precursors(
             ms1_rt_intensities=ms1_rt_intensities,
             ms1_im_coords=ms1_im_coords,
             ms1_im_intensities=ms1_im_intensities,
+            ms1_rt_sigma=ms1_rt_sigma,
+            ms1_rt_r2=ms1_rt_r2,
+            ms1_im_sigma=ms1_im_sigma,
+            ms1_im_r2=ms1_im_r2,
+            isotope_cosim=isotope_cosim,
         )
         results.append(precursor)
 
@@ -521,7 +632,7 @@ def extract_precursors_batched(
     output_dir: Path,
     batch_size: int = 10000,
     num_threads: int = 16,
-    rt_window_sec: float = 30.0,
+    rt_window_sec: float = 6.0,
     mz_tol_ppm: float = 20.0,
     im_window: float = 0.1,
     n_isotopes: int = 5,
@@ -698,6 +809,22 @@ def extract_precursors_batched(
                     ms1_rt_intensities = np.array(ms1.rt_intensities)
                     ms1_im_coords = np.array(ms1.im_coords)
                     ms1_im_intensities = np.array(ms1.im_intensities)
+
+                    # Gaussian fit quality metrics
+                    rt_fit = fit_gaussian(ms1_rt_coords, ms1_rt_intensities)
+                    im_fit = fit_gaussian(ms1_im_coords, ms1_im_intensities)
+                    ms1_rt_sigma = rt_fit["sigma"]
+                    ms1_rt_r2 = rt_fit["r2"]
+                    ms1_im_sigma = im_fit["sigma"]
+                    ms1_im_r2 = im_fit["r2"]
+
+                    # Isotope cosine similarity
+                    precursor_mz = pdata['mono_mz'] if pdata['mono_mz'] is not None else pdata['largest_peak_mz']
+                    charge = pdata['charge'] if pdata['charge'] is not None else 2
+                    mass = (precursor_mz - 1.007276) * charge
+                    isotope_cosim = compute_isotope_cosine_similarity(
+                        mass, charge, ms1_isotope_intensities, n_isotopes=5
+                    )
                 else:
                     ms1_rt_apex = 0.0
                     ms1_rt_fwhm = 0.0
@@ -711,6 +838,11 @@ def extract_precursors_batched(
                     ms1_rt_intensities = np.array([])
                     ms1_im_coords = np.array([])
                     ms1_im_intensities = np.array([])
+                    ms1_rt_sigma = 0.0
+                    ms1_rt_r2 = 0.0
+                    ms1_im_sigma = 0.0
+                    ms1_im_r2 = 0.0
+                    isotope_cosim = 0.0
 
                 precursor = ExtractedPrecursor(
                     precursor_id=pid,
@@ -745,6 +877,11 @@ def extract_precursors_batched(
                     ms1_rt_intensities=ms1_rt_intensities,
                     ms1_im_coords=ms1_im_coords,
                     ms1_im_intensities=ms1_im_intensities,
+                    ms1_rt_sigma=ms1_rt_sigma,
+                    ms1_rt_r2=ms1_rt_r2,
+                    ms1_im_sigma=ms1_im_sigma,
+                    ms1_im_r2=ms1_im_r2,
+                    isotope_cosim=isotope_cosim,
                 )
 
                 # Write blob and record offset
@@ -810,7 +947,7 @@ def main():
     parser.add_argument("--threads", type=int, default=16, help="Number of threads")
     parser.add_argument("--no-blobs", action="store_true", help="Skip blob writing")
     parser.add_argument("--no-bruker-sdk", action="store_true", help="Don't use Bruker SDK")
-    parser.add_argument("--rt-window", type=float, default=30.0, help="RT window for MS1 (seconds)")
+    parser.add_argument("--rt-window", type=float, default=6.0, help="RT window for MS1 (seconds, ±3s around apex)")
     parser.add_argument("--mz-tol", type=float, default=20.0, help="m/z tolerance for MS1 (ppm)")
     parser.add_argument("--im-window", type=float, default=0.1, help="IM window for MS1 (1/K0)")
     parser.add_argument("--log", type=Path, help="Log file path")
