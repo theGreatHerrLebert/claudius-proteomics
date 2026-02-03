@@ -49,7 +49,7 @@
     "min_peaks": 15,
     "max_peaks": 150,
     "max_fragment_charge": 2,
-    "report_psms": 5,
+    "report_psms": 1,
     "annotate_matches": true,
     "mzml_paths": []
 }

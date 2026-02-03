@@ -365,10 +365,10 @@ def _stratify_precursors(
     """Stratify precursors by engine agreement."""
     stratified_dir.mkdir(parents=True, exist_ok=True)
 
-    # Define conditions
-    has_fp = index_df["fragpipe_peptide"].notna()
-    has_dn = index_df["diann_peptide"].notna()
-    has_sg = index_df["sage_peptide"].notna()
+    # Define conditions - handle missing columns for engines with 0 results
+    has_fp = index_df["fragpipe_peptide"].notna() if "fragpipe_peptide" in index_df.columns else pd.Series(False, index=index_df.index)
+    has_dn = index_df["diann_peptide"].notna() if "diann_peptide" in index_df.columns else pd.Series(False, index=index_df.index)
+    has_sg = index_df["sage_peptide"].notna() if "sage_peptide" in index_df.columns else pd.Series(False, index=index_df.index)
 
     strata = {
         "all_three": has_fp & has_dn & has_sg,

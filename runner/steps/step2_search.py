@@ -32,6 +32,7 @@ def run_step2_search(
     fasta_path: Optional[Path] = None,
     engines: Optional[List[str]] = None,
     num_threads: int = 16,
+    max_files: int = 0,
 ) -> StepSummary:
     """
     Execute Step 2: Run search engines.
@@ -83,21 +84,21 @@ def run_step2_search(
         # Run FragPipe
         if "fragpipe" in engines:
             fp_result = _run_fragpipe(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads
+                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
             )
             results["fragpipe"] = fp_result
 
         # Run DIA-NN
         if "diann" in engines:
             dn_result = _run_diann(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads
+                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
             )
             results["diann"] = dn_result
 
         # Run Sage
         if "sage" in engines:
             sg_result = _run_sage(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads
+                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
             )
             results["sage"] = sg_result
 
@@ -129,8 +130,8 @@ def run_step2_search(
 
 def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Path) -> Path:
     """Get FASTA database path for accession."""
-    # Check for accession-specific FASTA in resources
-    resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta"
+    # Check for accession-specific FASTA in resources/fasta/search_db
+    resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta" / "search_db"
     accession_fasta = resources_dir / f"{accession}_decoys.fasta"
     if accession_fasta.exists():
         return accession_fasta
@@ -187,6 +188,7 @@ def _run_fragpipe(
     processed_dir: Path,
     fasta_path: Path,
     num_threads: int,
+    max_files: int = 0,
 ) -> Dict[str, Any]:
     """Run FragPipe search."""
     fragpipe_config = config.get("fragpipe", {})
@@ -206,12 +208,14 @@ def _run_fragpipe(
         if runner_script.exists():
             cmd = [
                 sys.executable, str(runner_script),
-                "--accession", accession,
-                "--raw-dir", str(raw_dir),
-                "--output-dir", str(output_dir),
+                "--fragpipe", str(fragpipe_path),
+                "--input", str(raw_dir),
+                "--output", str(output_dir),
                 "--fasta", str(fasta_path),
                 "--threads", str(num_threads),
             ]
+            if max_files > 0:
+                cmd.extend(["--max-files", str(max_files)])
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600 * 4)
 
             if result.returncode != 0:
@@ -257,6 +261,7 @@ def _run_diann(
     processed_dir: Path,
     fasta_path: Path,
     num_threads: int,
+    max_files: int = 0,
 ) -> Dict[str, Any]:
     """Run DIA-NN search."""
     diann_config = config.get("diann", {})
@@ -269,17 +274,21 @@ def _run_diann(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Get all .d files
+        # Get .d files (DIA-NN reads Bruker .d directly)
         d_files = sorted(raw_dir.glob("*.d"))
+        if max_files > 0:
+            d_files = d_files[:max_files]
 
         # Build DIA-NN command
         cmd = [
             str(diann_path),
             "--fasta", str(fasta_path),
+            "--fasta-search",  # Enable FASTA digest for library-free search
             "--out", str(output_dir / "report.tsv"),
             "--qvalue", "1.0",  # No FDR filtering
             "--threads", str(num_threads),
             "--predictor",  # Enable deep learning
+            "--dda",  # DDA mode for DDA datasets
         ]
 
         # Add input files
@@ -325,6 +334,7 @@ def _run_sage(
     processed_dir: Path,
     fasta_path: Path,
     num_threads: int,
+    max_files: int = 0,
 ) -> Dict[str, Any]:
     """Run Sage search."""
     sage_config = config.get("sage", {})
@@ -337,26 +347,28 @@ def _run_sage(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Get all .d files - Sage needs mzML, check for conversion
+        # Get input files - Sage can read .d files directly, prefer them over mzML
         d_files = sorted(raw_dir.glob("*.d"))
-        mzml_files = sorted(raw_dir.glob("*.mzML"))
+        if max_files > 0:
+            d_files = d_files[:max_files]
 
-        if not mzml_files and d_files:
-            # Would need to convert .d to mzML first
-            return {"status": "skipped", "reason": "mzML conversion needed"}
+        input_files = d_files
+        if not input_files:
+            return {"status": "skipped", "reason": "No .d files found"}
 
-        input_files = mzml_files if mzml_files else d_files
-
-        # Build Sage command
+        # Build Sage command - requires config JSON as first positional arg
+        sage_config = Path(__file__).parent.parent.parent / "config" / "sage_config.json"
         cmd = [
             str(sage_path),
+            str(sage_config),
             "--fasta", str(fasta_path),
-            "--output-directory", str(output_dir),
-            "--threads", str(num_threads),
-            "--report-psms",
+            "--output_directory", str(output_dir),
+            "--batch-size", str(max(1, num_threads // 2)),
+            "--parquet",
+            "--annotate-matches",
         ]
 
-        # Add input files
+        # Add input files as positional arguments
         cmd.extend([str(f) for f in input_files])
 
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600 * 2)

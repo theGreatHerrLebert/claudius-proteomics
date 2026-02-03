@@ -209,6 +209,7 @@ def _run_step(
             config=config,
             output_base_dir=output_base_dir,
             num_threads=num_threads,
+            max_files=state.max_files if state.test_mode else 0,
         )
 
     elif step_num == 3:
