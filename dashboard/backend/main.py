@@ -122,6 +122,12 @@ class PrecursorSummary(BaseModel):
     raw_intensity_meta: Optional[float] = None
     frame_id: Optional[int] = None
     isolation_mz: Optional[float] = None
+    # Quality metrics
+    ms1_rt_sigma: Optional[float] = None
+    ms1_rt_r2: Optional[float] = None
+    ms1_im_sigma: Optional[float] = None
+    ms1_im_r2: Optional[float] = None
+    isotope_cosim: Optional[float] = None
 
 
 class PrecursorDetail(BaseModel):
@@ -238,7 +244,8 @@ async def list_precursors(
         'fragpipe_peptide', 'fragpipe_modified', 'fragpipe_probability', 'fragpipe_qvalue',
         'sage_peptide', 'sage_modified', 'sage_qvalue', 'sage_match_tier',
         'diann_peptide', 'diann_modified', 'diann_qvalue', 'diann_ccs', 'diann_match_tier', 'diann_match_score',
-        intensity_col, 'frame_id', 'isolation_mz'
+        intensity_col, 'frame_id', 'isolation_mz',
+        'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim'
     ]
 
     # Get available columns from schema
@@ -334,6 +341,12 @@ async def list_precursors(
             raw_intensity_meta=safe_float(row.get(intensity_col)),
             frame_id=safe_int(row.get('frame_id')),
             isolation_mz=safe_float(row.get('isolation_mz')),
+            # Quality metrics
+            ms1_rt_sigma=safe_float(row.get('ms1_rt_sigma')),
+            ms1_rt_r2=safe_float(row.get('ms1_rt_r2')),
+            ms1_im_sigma=safe_float(row.get('ms1_im_sigma')),
+            ms1_im_r2=safe_float(row.get('ms1_im_r2')),
+            isotope_cosim=safe_float(row.get('isotope_cosim')),
         ))
 
     return results

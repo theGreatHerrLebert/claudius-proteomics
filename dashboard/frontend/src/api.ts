@@ -37,6 +37,12 @@ export interface PrecursorSummary {
   raw_intensity_meta: number | null;
   frame_id: number | null;
   isolation_mz: number | null;
+  // Quality metrics
+  ms1_rt_sigma: number | null;
+  ms1_rt_r2: number | null;
+  ms1_im_sigma: number | null;
+  ms1_im_r2: number | null;
+  isotope_cosim: number | null;
 }
 
 export interface RawFileInfo {
