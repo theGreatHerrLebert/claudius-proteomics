@@ -253,6 +253,7 @@ def extract_precursors(
     mz_tol_ppm: float = 20.0,
     im_window: float = 0.1,
     n_isotopes: int = 5,
+    calibration: Optional[NDArray[np.float64]] = None,
     logger: Optional[logging.Logger] = None,
 ) -> List[ExtractedPrecursor]:
     """
@@ -266,6 +267,9 @@ def extract_precursors(
         mz_tol_ppm: m/z tolerance for MS1 extraction (ppm)
         im_window: IM window for MS1 extraction (1/K0)
         n_isotopes: Number of isotope peaks to extract
+        calibration: Optional IM calibration array (scan → 1/K0 lookup).
+                     If provided, uses LookupIndexConverter for fast + accurate extraction.
+                     If None, uses the dataset's default converter.
         logger: Optional logger
 
     Returns:
@@ -352,7 +356,16 @@ def extract_precursors(
     if logger:
         logger.info(f"  Extracting MS1 signals ({len(coords)} precursors)...")
 
-    rust_dataset = dataset.get_py_ptr()
+    # Use calibrated dataset if calibration provided (fast + accurate via LookupIndexConverter)
+    if calibration is not None and len(calibration) > 0:
+        if logger:
+            logger.info(f"    Using IM calibration ({len(calibration)} scans) for accurate extraction")
+        rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
+            dataset.data_path, False, calibration.tolist()
+        )
+    else:
+        rust_dataset = dataset.get_py_ptr()
+
     ms1_signals = rust_dataset.extract_precursor_ms1_signals(
         coords,
         rt_window_sec=rt_window_sec,
@@ -499,6 +512,270 @@ def write_extraction(
     return {
         "n_precursors": len(index_records),
         "blob_size_bytes": current_offset if write_blobs else 0,
+    }
+
+
+def extract_precursors_batched(
+    dataset: TimsDatasetDDA,
+    raw_file_name: str,
+    output_dir: Path,
+    batch_size: int = 10000,
+    num_threads: int = 16,
+    rt_window_sec: float = 30.0,
+    mz_tol_ppm: float = 20.0,
+    im_window: float = 0.1,
+    n_isotopes: int = 5,
+    calibration: Optional[NDArray[np.float64]] = None,
+    logger: Optional[logging.Logger] = None,
+) -> dict:
+    """
+    Extract precursors in batches to reduce peak memory usage.
+
+    Instead of loading all 200k+ precursors into memory, processes in chunks
+    and writes directly to disk. Reduces memory from ~65GB to ~10GB per file.
+
+    Args:
+        dataset: Loaded TimsDatasetDDA object
+        raw_file_name: Name of the .d file
+        output_dir: Output directory for index.parquet and blobs.bin
+        batch_size: Number of precursors per batch (default 10k)
+        num_threads: Threads for parallel MS1 extraction
+        rt_window_sec: RT window for MS1 extraction (seconds)
+        mz_tol_ppm: m/z tolerance for MS1 extraction (ppm)
+        im_window: IM window for MS1 extraction (1/K0)
+        n_isotopes: Number of isotope peaks to extract
+        calibration: Optional IM calibration array (scan → 1/K0 lookup)
+        logger: Optional logger
+
+    Returns:
+        Dict with extraction statistics
+    """
+    import gc
+    from math import ceil
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    index_path = output_dir / "index.parquet"
+    blobs_path = output_dir / "blobs.bin"
+
+    if logger:
+        logger.info(f"Batched extraction from {raw_file_name}")
+        logger.info(f"  Batch size: {batch_size}")
+
+    # Step 1: Get PASEF fragments (this is relatively lightweight)
+    if logger:
+        logger.info("  Getting PASEF fragments...")
+    fragments_df = dataset.get_pasef_fragments(num_threads=num_threads)
+    if logger:
+        logger.info(f"    Raw fragments: {len(fragments_df)}")
+
+    # Group by precursor_id - keep only metadata, not the heavy raw_data yet
+    grouped = fragments_df.groupby('precursor_id').agg({
+        'frame_id': 'first',
+        'time': 'first',
+        'raw_data': 'sum',  # Merge fragment frames
+        'scan_begin': 'first',
+        'scan_end': 'first',
+        'isolation_mz': 'first',
+        'isolation_width': 'first',
+        'collision_energy': list,
+        'largest_peak_mz': 'first',
+        'average_mz': 'first',
+        'monoisotopic_mz': 'first',
+        'charge': 'first',
+        'average_scan': 'first',
+        'intensity': 'first',
+        'parent_id': 'first',
+    })
+
+    precursor_ids = list(grouped.index)
+    n_precursors = len(precursor_ids)
+    n_batches = ceil(n_precursors / batch_size)
+
+    if logger:
+        logger.info(f"    Unique precursors: {n_precursors}")
+        logger.info(f"    Batches: {n_batches} x {batch_size}")
+
+    # Create calibrated Rust dataset once (reused across batches)
+    if calibration is not None and len(calibration) > 0:
+        if logger:
+            logger.info(f"  Using IM calibration ({len(calibration)} scans)")
+        rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
+            dataset.data_path, False, calibration.tolist()
+        )
+    else:
+        rust_dataset = dataset.get_py_ptr()
+
+    # Process batches
+    all_records = []
+    current_offset = 0
+
+    with open(blobs_path, "wb") as blob_file:
+        for batch_idx in range(n_batches):
+            batch_start = batch_idx * batch_size
+            batch_end = min(batch_start + batch_size, n_precursors)
+            batch_ids = precursor_ids[batch_start:batch_end]
+
+            if logger:
+                logger.info(f"  Batch {batch_idx + 1}/{n_batches}: precursors {batch_start}-{batch_end}")
+
+            # Get grouped data for this batch
+            batch_grouped = grouped.loc[batch_ids]
+
+            # Build coords and precursor data for batch
+            coords = []
+            batch_data = []
+
+            for precursor_id, row in batch_grouped.iterrows():
+                fragment_frame = row['raw_data']
+                mobility = fragment_frame.get_inverse_mobility_along_scan_marginal()
+
+                charge = int(row['charge']) if pd.notna(row['charge']) else None
+                mono_mz = float(row['monoisotopic_mz']) if pd.notna(row['monoisotopic_mz']) else None
+                largest_peak_mz = float(row['largest_peak_mz'])
+                rt_sec = float(row['time']) * 60.0
+
+                mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
+
+                coord = py_dda.PyPrecursorCoord(
+                    precursor_id=int(precursor_id),
+                    mz=float(mz),
+                    rt_seconds=float(rt_sec),
+                    mobility=float(mobility),
+                    charge=int(charge) if charge is not None else 2,
+                )
+                coords.append(coord)
+
+                batch_data.append({
+                    'precursor_id': int(precursor_id),
+                    'charge': charge,
+                    'mono_mz': mono_mz,
+                    'largest_peak_mz': largest_peak_mz,
+                    'average_mz': float(row['average_mz']),
+                    'isolation_mz': float(row['isolation_mz']),
+                    'isolation_width': float(row['isolation_width']),
+                    'precursor_intensity': float(row['intensity']),
+                    'rt_seconds': rt_sec,
+                    'mobility': float(mobility),
+                    'fragment_frame': fragment_frame,
+                    'n_fragments_merged': len(row['collision_energy']),
+                    'collision_energies': [float(ce) for ce in row['collision_energy']],
+                })
+
+            # Extract MS1 signals for batch
+            ms1_signals = rust_dataset.extract_precursor_ms1_signals(
+                coords,
+                rt_window_sec=rt_window_sec,
+                mz_tol_ppm=mz_tol_ppm,
+                im_window=im_window,
+                n_isotopes=n_isotopes,
+                num_threads=num_threads,
+            )
+
+            # Build lookup for MS1 signals
+            ms1_lookup = {s.precursor_id: s for s in ms1_signals}
+
+            # Combine and write batch
+            for pdata in batch_data:
+                pid = pdata['precursor_id']
+                ms1 = ms1_lookup.get(pid)
+
+                # Calculate fragment moments
+                frag_frame = pdata['fragment_frame']
+                frag_mz_moments = calculate_moments(frag_frame.mz, frag_frame.intensity)
+                frag_im_moments = calculate_moments(frag_frame.mobility, frag_frame.intensity)
+
+                # Get MS1 data
+                if ms1 is not None:
+                    ms1_rt_apex = ms1.rt_moments.apex
+                    ms1_rt_fwhm = ms1.rt_moments.fwhm
+                    ms1_rt_skew = ms1.rt_moments.skewness
+                    ms1_im_apex = ms1.im_moments.apex
+                    ms1_im_fwhm = ms1.im_moments.fwhm
+                    ms1_im_skew = ms1.im_moments.skewness
+                    ms1_total_intensity = ms1.rt_moments.total_intensity
+                    ms1_isotope_intensities = list(ms1.isotope_intensity)
+                    ms1_rt_coords = np.array(ms1.rt_coords)
+                    ms1_rt_intensities = np.array(ms1.rt_intensities)
+                    ms1_im_coords = np.array(ms1.im_coords)
+                    ms1_im_intensities = np.array(ms1.im_intensities)
+                else:
+                    ms1_rt_apex = 0.0
+                    ms1_rt_fwhm = 0.0
+                    ms1_rt_skew = 0.0
+                    ms1_im_apex = 0.0
+                    ms1_im_fwhm = 0.0
+                    ms1_im_skew = 0.0
+                    ms1_total_intensity = 0.0
+                    ms1_isotope_intensities = [0.0] * n_isotopes
+                    ms1_rt_coords = np.array([])
+                    ms1_rt_intensities = np.array([])
+                    ms1_im_coords = np.array([])
+                    ms1_im_intensities = np.array([])
+
+                precursor = ExtractedPrecursor(
+                    precursor_id=pid,
+                    raw_file=raw_file_name,
+                    charge=pdata['charge'],
+                    mono_mz=pdata['mono_mz'],
+                    largest_peak_mz=pdata['largest_peak_mz'],
+                    average_mz=pdata['average_mz'],
+                    isolation_mz=pdata['isolation_mz'],
+                    isolation_width=pdata['isolation_width'],
+                    precursor_intensity=pdata['precursor_intensity'],
+                    rt_seconds=pdata['rt_seconds'],
+                    mobility=pdata['mobility'],
+                    fragment_frame=pdata['fragment_frame'],
+                    n_fragments_merged=pdata['n_fragments_merged'],
+                    collision_energies=pdata['collision_energies'],
+                    fragment_mz_mean=frag_mz_moments['mean'],
+                    fragment_mz_var=frag_mz_moments['variance'],
+                    fragment_im_mean=frag_im_moments['mean'],
+                    fragment_im_var=frag_im_moments['variance'],
+                    fragment_im_apex=frag_im_moments['apex'],
+                    fragment_im_fwhm=frag_im_moments['fwhm'],
+                    ms1_rt_apex=ms1_rt_apex,
+                    ms1_rt_fwhm=ms1_rt_fwhm,
+                    ms1_rt_skew=ms1_rt_skew,
+                    ms1_im_apex=ms1_im_apex,
+                    ms1_im_fwhm=ms1_im_fwhm,
+                    ms1_im_skew=ms1_im_skew,
+                    ms1_total_intensity=ms1_total_intensity,
+                    ms1_isotope_intensities=ms1_isotope_intensities,
+                    ms1_rt_coords=ms1_rt_coords,
+                    ms1_rt_intensities=ms1_rt_intensities,
+                    ms1_im_coords=ms1_im_coords,
+                    ms1_im_intensities=ms1_im_intensities,
+                )
+
+                # Write blob and record offset
+                record = precursor.to_index_dict()
+                blob_bytes = precursor.serialize_blob()
+                record["blob_offset"] = current_offset
+                record["blob_size"] = len(blob_bytes)
+                blob_file.write(blob_bytes)
+                current_offset += len(blob_bytes)
+                all_records.append(record)
+
+            # Clear batch memory
+            del coords, batch_data, ms1_signals, ms1_lookup
+            gc.collect()
+
+            if logger:
+                logger.info(f"    Batch complete, blob size: {current_offset / 1024 / 1024:.1f} MB")
+
+    # Write final index
+    if all_records:
+        index_df = pd.DataFrame(all_records)
+        index_df.to_parquet(index_path, index=False)
+
+        if logger:
+            logger.info(f"Wrote index: {index_path} ({len(index_df)} precursors)")
+            logger.info(f"Wrote blobs: {blobs_path} ({current_offset / 1024 / 1024:.1f} MB)")
+
+    return {
+        "n_precursors": len(all_records),
+        "blob_size_bytes": current_offset,
+        "n_batches": n_batches,
     }
 
 

@@ -89,6 +89,8 @@ def standardize_diann_sequence(modified_sequence: str) -> str:
     DIA-NN format: PEPTIDE(UniMod:35)K
     Standard format: PEPTIDE[UNIMOD:35]K
 
+    Also adds carbamidomethyl [UNIMOD:4] to bare cysteines (fixed mod).
+
     Args:
         modified_sequence: DIA-NN modified sequence
 
@@ -103,6 +105,9 @@ def standardize_diann_sequence(modified_sequence: str) -> str:
     # Handle case-insensitive UniMod -> UNIMOD
     result = re.sub(r'unimod', 'UNIMOD', result, flags=re.IGNORECASE)
 
+    # Add carbamidomethyl to bare cysteines (fixed mod not shown by DIA-NN)
+    result = add_carbamidomethyl_to_cysteine(result)
+
     return result
 
 
@@ -111,6 +116,8 @@ def standardize_sage_sequence(modified_sequence: str) -> str:
 
     Sage format: PEPTIDE[+15.9949]K or PEPTIDE[+57.021465]K
     Standard format: PEPTIDE[UNIMOD:35]K or PEPTIDE[UNIMOD:4]K
+
+    Also ensures any bare cysteines get carbamidomethyl (edge case).
 
     Args:
         modified_sequence: Sage modified sequence
@@ -136,7 +143,12 @@ def standardize_sage_sequence(modified_sequence: str) -> str:
         except ValueError:
             return match.group(0)
 
-    return re.sub(pattern, replace_mass, modified_sequence)
+    result = re.sub(pattern, replace_mass, modified_sequence)
+
+    # Add carbamidomethyl to any bare cysteines (edge case - Sage usually includes it)
+    result = add_carbamidomethyl_to_cysteine(result)
+
+    return result
 
 
 def standardize_fragpipe_sequence(peptide: str, modifications: str) -> str:
@@ -219,6 +231,8 @@ def standardize_fragpipe_modified_peptide(modified_peptide: str) -> str:
     FragPipe Modified Peptide format: M[147.0354]PEPTIDEK or n[42.0106]PEPTIDEK
     Standard format: M[UNIMOD:35]PEPTIDEK or [UNIMOD:1]PEPTIDEK
 
+    Also adds carbamidomethyl [UNIMOD:4] to bare cysteines (fixed mod).
+
     Args:
         modified_peptide: FragPipe Modified Peptide string
 
@@ -260,7 +274,34 @@ def standardize_fragpipe_modified_peptide(modified_peptide: str) -> str:
         except ValueError:
             return match.group(0)
 
-    return re.sub(pattern, replace_mass, result)
+    result = re.sub(pattern, replace_mass, result)
+
+    # Add carbamidomethyl to bare cysteines (fixed mod not shown by FragPipe)
+    result = add_carbamidomethyl_to_cysteine(result)
+
+    return result
+
+
+def add_carbamidomethyl_to_cysteine(sequence: str) -> str:
+    """Add carbamidomethyl modification to all bare cysteines.
+
+    Many search engines (FragPipe, DIA-NN) treat carbamidomethyl as a fixed
+    modification and don't include it in the modified sequence output.
+    This function adds [UNIMOD:4] to all C that don't already have a modification.
+
+    Args:
+        sequence: Modified sequence (may have some C modified, some bare)
+
+    Returns:
+        Sequence with all C having [UNIMOD:4]
+    """
+    if not sequence or not isinstance(sequence, str):
+        return ""
+
+    # Find all C that are NOT followed by [ (i.e., bare C)
+    # Replace with C[UNIMOD:4]
+    result = re.sub(r'C(?!\[)', 'C[UNIMOD:4]', sequence)
+    return result
 
 
 def remove_modifications(sequence: str) -> str:
