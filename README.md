@@ -30,8 +30,10 @@ Each dataset is processed with three independent search engines:
 | Engine | Approach | Strength |
 |--------|----------|----------|
 | **FragPipe** | Spectrum-centric | Gold standard for DDA |
-| **DIA-NN** | Peptide-centric | Best for DIA, deep learning rescoring |
-| **Sage** | Fast Rust engine | Independent validation, cheap at scale |
+| **DIA-NN** | Peptide-centric | Library-free search, neural network predictions |
+| **Sage** | Spectrum-centric | Fast Rust engine, independent validation |
+
+All engines process Bruker `.d` files directly. DIA-NN uses `--dda --fasta-search` flags for DDA library-free mode (library generation is slow but reusable).
 
 We store: full union, 2/3 agreement, 3/3 agreement, and engine-specific unique IDs. Disagreements are scientifically valuable.
 
@@ -106,19 +108,30 @@ dataset_metadata:
 
 ### Running the Pipeline
 
+The 5-step runner processes a dataset with checkpointing:
+
 ```bash
-# Phase 1: Triple-engine search
-snakemake process_fragpipe --cores 16  # Spectrum-centric
-snakemake process_diann --cores 16     # Peptide-centric
-snakemake process_sage --cores 16      # Fast Rust engine
-snakemake process_all --cores 16       # All three (recommended)
+# Full pipeline (download → search → stratify → extract → merge)
+.venv/bin/python runner/run_dataset.py PXD019086 --config config/config.yaml
 
-# Build precursor index (bridges raw data to search results)
-snakemake build_precursor_index --config accession=PXD019086
+# Test mode (1 file for quick validation)
+.venv/bin/python runner/run_dataset.py PXD019086 --test-mode --max-files 1
 
-# Create versioned snapshot
-snakemake create_snapshot --config version=v1.0
+# Use existing local data
+.venv/bin/python runner/run_dataset.py PXD019086 --local-data data/raw/PXD019086
 
+# Resume from checkpoint after failure
+.venv/bin/python runner/run_dataset.py PXD019086 --resume
+```
+
+Pipeline steps:
+1. **Download** - Fetch .d files from PRIDE (or link local data)
+2. **Search** - Run FragPipe, DIA-NN, Sage on .d files
+3. **Stratify** - Unify results, compute engine agreement
+4. **Extract** - Extract raw 4D signal via imspy
+5. **Merge** - Join IDs with raw features → `precursor_store.parquet`
+
+```bash
 # Phase 2: Train models
 snakemake train_model --config snapshot=v1.0 model=ccs_v1
 ```
@@ -178,9 +191,17 @@ claudius-proteomics/
 │   ├── RUNNER_OUTPUT_SCHEMA.md # Per-dataset output format
 │   └── BUGS_FOUND.md           # Bug documentation
 │
+├── runner/                    # 5-step pipeline runner
+│   ├── run_dataset.py         # Main entry point
+│   ├── state.py               # Checkpoint management
+│   └── steps/                 # Step implementations
+│
 ├── data/
-│   ├── raw/                    # Downloaded .d files
-│   └── processed/{accession}/  # Search results + precursor store
+│   ├── raw/{accession}/       # Step 1: Bruker .d files
+│   ├── processed/{accession}/ # Steps 2-3: Search results + consensus
+│   ├── extracted/{accession}/ # Step 4: Raw 4D features
+│   ├── merged/{accession}/    # Step 5: Final precursor_store.parquet
+│   └── checkpoints/           # Pipeline state (state.json)
 │
 ├── CLAUDIUS-PROTEOMICS.md      # Full project plan
 └── CLAUDE.md                   # Claude Code instructions

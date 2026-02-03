@@ -19,32 +19,28 @@ Primary target: CCS prediction from timsTOF data, benchmarking against Meier et 
 ## Common Commands
 
 ```bash
-# Show all available targets
-snakemake help
+# Runner Pipeline (5-step processing)
+.venv/bin/python runner/run_dataset.py PXD019086 --config config/config.yaml
 
-# Phase 1: Database building
-snakemake add_dataset --config accession=PXD019086 --cores 16
-snakemake add_all_datasets --cores 16
-snakemake create_snapshot --config version=v1.0
+# Test mode (limited files for quick validation)
+.venv/bin/python runner/run_dataset.py PXD019086 --test-mode --max-files 1
 
-# Search methods (triple orthogonal validation)
+# Use local data (skip download)
+.venv/bin/python runner/run_dataset.py PXD019086 --local-data data/raw/PXD019086
+
+# Resume from checkpoint
+.venv/bin/python runner/run_dataset.py PXD019086 --resume
+
+# Snakemake commands (legacy/alternative)
 snakemake process_fragpipe --cores 16  # FragPipe (spectrum-centric)
 snakemake process_diann --cores 16     # DIA-NN (peptide-centric)
 snakemake process_sage --cores 16      # Sage (fast, independent Rust engine)
-snakemake process_all --cores 16       # All three (recommended)
 
 # Phase 2: Model training
 snakemake train_model --config snapshot=v1.0 model=ccs_v1 --cores 16
-snakemake evaluate_model --config snapshot=v1.0 model=ccs_v1 --cores 16
 
 # HPC execution (Mogon2 SLURM)
 snakemake add_all_datasets --profile profiles/mogon2
-
-# Utilities
-snakemake db_stats
-snakemake list_snapshots
-snakemake prepare_fasta --config accession=PXD019086
-snakemake clean_temp
 ```
 
 ## Local Development Setup
@@ -56,18 +52,62 @@ pip install snakemake
 ./scripts/setup_imspy.sh  # Build imspy from source (requires Rust)
 ```
 
-Test mode is enabled by default in config (`test_mode.max_files: 3`).
+Test mode is enabled by default in config (`test_mode.max_files: 1`).
+
+## 5-Step Runner Pipeline
+
+The runner (`runner/run_dataset.py`) processes a PRIDE dataset through 5 steps with checkpointing:
+
+| Step | Name | Input | Output |
+|------|------|-------|--------|
+| 1 | **Download** | PRIDE accession | `data/raw/{acc}/*.d` |
+| 2 | **Search** | .d files + FASTA | `data/processed/{acc}/{engine}/` |
+| 3 | **Stratify** | Engine results | `precursor_index.parquet`, `consensus/` |
+| 4 | **Extract** | .d files + index | `data/extracted/{acc}/`, raw 4D features |
+| 5 | **Merge** | Index + features | `data/merged/{acc}/precursor_store.parquet` |
+
+### Folder Structure
+
+```
+data/
+├── raw/{accession}/                    # Step 1: Bruker .d folders
+├── processed/{accession}/              # Steps 2-3
+│   ├── fragpipe_output/                # FragPipe PSMs
+│   ├── diann/                          # DIA-NN results
+│   ├── sage/                           # Sage results
+│   ├── consensus/stratified/           # Precursors by engine agreement
+│   └── precursor_index.parquet         # Unified index
+├── extracted/{accession}/              # Step 4: Raw 4D signal
+│   └── raw_features.parquet
+├── merged/{accession}/                 # Step 5: Final output
+│   ├── precursor_store.parquet         # IDs + raw features joined
+│   └── manifest.json                   # QC metrics
+└── checkpoints/{accession}/            # Pipeline state
+    └── state.json
+```
 
 ## Architecture
 
 ### Technology Stack
-- **Orchestration**: Snakemake v8+
+- **Orchestration**: Snakemake v8+ / Python runner
 - **Raw processing**: rustims/imspy (Rust backend + Python bindings)
 - **Search engines**: FragPipe (spectrum-centric) + DIA-NN (peptide-centric) + Sage (fast Rust engine)
 - **Database**: DuckDB/Parquet (columnar, versioned snapshots)
 - **ML**: TensorFlow/keras via imspy-predictors
 - **Containers**: Singularity (HPC) / Docker (local)
 - **HPC**: SLURM (Mogon2 @ JGU Mainz)
+
+### Search Engine Configuration
+
+All three engines process Bruker `.d` folders directly (no mzML conversion needed):
+
+| Engine | Approach | Key Flags | Notes |
+|--------|----------|-----------|-------|
+| **FragPipe** | Spectrum-centric | `--no-fdr-filter` | FDR=1.0 to report all PSMs |
+| **DIA-NN** | Peptide-centric | `--dda --fasta-search` | DDA mode + library-free search |
+| **Sage** | Spectrum-centric | `report_psms: 1` | In config JSON |
+
+**DIA-NN note**: Library generation is slow (~40 min) but only needed once per FASTA. The library is reused for subsequent searches.
 
 ### Map-Reduce Pattern
 
