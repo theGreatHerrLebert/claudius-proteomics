@@ -65,7 +65,7 @@ class RunnerState:
     def __post_init__(self):
         # Initialize all steps if not present
         step_names = ["step1_download", "step2_search", "step3_stratify",
-                      "step4_extract", "step5_merge"]
+                      "step4_extract", "step5_merge", "step6_package"]
         for name in step_names:
             if name not in self.steps:
                 self.steps[name] = StepState()
@@ -158,7 +158,7 @@ class RunnerState:
     def get_next_step(self) -> Optional[str]:
         """Get the next step to run."""
         step_order = ["step1_download", "step2_search", "step3_stratify",
-                      "step4_extract", "step5_merge"]
+                      "step4_extract", "step5_merge", "step6_package"]
         for name in step_order:
             if not self.is_step_done(name):
                 return name
