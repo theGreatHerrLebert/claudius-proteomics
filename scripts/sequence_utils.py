@@ -45,6 +45,13 @@ MASS_TO_UNIMOD: Dict[int, Tuple[int, str]] = {
     # Deamidation
     1: (7, "Deamidated"),             # N/Q + 0.9840
 
+    # Pyro-glutamate (N-terminal)
+    -17: (28, "Gln->pyro-Glu"),       # Q - 17.0265 (N-term Q cyclization)
+    -18: (27, "Glu->pyro-Glu"),       # E - 18.0106 (N-term E water loss)
+
+    # Ammonia loss
+    -16: (385, "Ammonia-loss"),       # -17 rounded differently
+
     # TMT labels (approximate)
     229: (737, "TMT6plex"),           # TMT6plex + 229.1629
     304: (2016, "TMTpro"),            # TMTpro + 304.2071
@@ -135,6 +142,11 @@ def standardize_sage_sequence(modified_sequence: str) -> str:
         mass_str = match.group(1)
         try:
             mass = float(mass_str)
+            # First try the exact mass (preserving sign for negative mods like pyro-Glu)
+            unimod = mass_to_unimod(mass)
+            if unimod:
+                return unimod
+            # Then try absolute value for positive-only lookups
             unimod = mass_to_unimod(abs(mass))
             if unimod:
                 return unimod
@@ -247,27 +259,24 @@ def standardize_fragpipe_modified_peptide(modified_peptide: str) -> str:
     if result.startswith("n["):
         result = result[1:]  # Remove 'n' prefix
 
-    # Find all mass modifications: X[XXX.XXXX]
-    pattern = r'\[(\d+\.?\d*)\]'
+    # Find all mass modifications: X[XXX.XXXX] or X[-XXX.XXXX]
+    pattern = r'\[([+-]?\d+\.?\d*)\]'
 
     def replace_mass(match):
         mass_str = match.group(1)
         try:
             mass = float(mass_str)
-            # This is absolute mass, need to figure out the delta
-            # Common absolute masses:
-            # 147 = oxidized M (131 + 16)
-            # 160 = carbamidomethyl C (103 + 57)
             rounded = int(round(mass))
 
+            # First try absolute mass lookup (for FragPipe format like [147.0354])
             if rounded in ABSOLUTE_MASS_TO_UNIMOD:
                 unimod_id, _ = ABSOLUTE_MASS_TO_UNIMOD[rounded]
                 return f"[UNIMOD:{unimod_id}]"
 
-            # Try delta mass approach for some common ones
-            # N-term acetyl is usually shown as [42.XXXX]
-            if 41 <= rounded <= 43:
-                return "[UNIMOD:1]"
+            # Then try delta mass lookup (for masses like [57.0215] or [-17.0265])
+            if rounded in MASS_TO_UNIMOD:
+                unimod_id, _ = MASS_TO_UNIMOD[rounded]
+                return f"[UNIMOD:{unimod_id}]"
 
             # Keep original if no mapping found
             return match.group(0)
