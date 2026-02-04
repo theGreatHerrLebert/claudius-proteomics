@@ -196,14 +196,28 @@ def _standardize_fragpipe(df: pd.DataFrame) -> pd.DataFrame:
             mod_col = col
             break
 
-    if mod_col:
-        df["modified_unimod"] = df[mod_col].apply(
-            standardize_fragpipe_modified_peptide
-        )
-    elif "Peptide Sequence" in df.columns:
-        df["modified_unimod"] = df["Peptide Sequence"]
-    elif "Peptide" in df.columns:
-        df["modified_unimod"] = df["Peptide"]
+    # Get bare peptide column for fallback
+    bare_col = None
+    for col in ["Peptide", "Peptide Sequence"]:
+        if col in df.columns:
+            bare_col = col
+            break
+
+    if mod_col and bare_col:
+        # Use Modified Peptide when available, fall back to bare Peptide when NaN/empty
+        def standardize_with_fallback(row):
+            mod_seq = row[mod_col]
+            if pd.notna(mod_seq) and mod_seq:
+                result = standardize_fragpipe_modified_peptide(mod_seq)
+                if result:
+                    return result
+            # Fallback to bare peptide
+            return row[bare_col] if pd.notna(row[bare_col]) else ""
+        df["modified_unimod"] = df.apply(standardize_with_fallback, axis=1)
+    elif mod_col:
+        df["modified_unimod"] = df[mod_col].apply(standardize_fragpipe_modified_peptide)
+    elif bare_col:
+        df["modified_unimod"] = df[bare_col]
     else:
         raise ValueError(f"No peptide column found in FragPipe output. Columns: {list(df.columns[:10])}")
 
@@ -383,7 +397,17 @@ def _build_precursor_index(
 
         # Core identification columns
         sg_summary["sage_modified"] = sg_summary.get("modified_unimod", "")
-        sg_summary["sage_peptide"] = sg_summary.get("stripped_peptide", "")
+        # Sage doesn't have stripped_peptide - extract from peptide by removing modifications
+        import re
+        def strip_mods(seq):
+            if pd.isna(seq) or not seq:
+                return ""
+            # Remove anything in brackets: [+57.021465] or [UNIMOD:4]
+            return re.sub(r'\[[^\]]+\]', '', str(seq))
+        if "peptide" in sg_summary.columns:
+            sg_summary["sage_peptide"] = sg_summary["peptide"].apply(strip_mods)
+        else:
+            sg_summary["sage_peptide"] = ""
         sg_summary["sage_protein"] = sg_summary.get("proteins", "")
 
         # Quality/confidence scores
