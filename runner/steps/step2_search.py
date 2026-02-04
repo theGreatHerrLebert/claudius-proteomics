@@ -289,6 +289,9 @@ def _run_diann(
             "--threads", str(num_threads),
             "--predictor",  # Enable deep learning
             "--dda",  # DDA mode for DDA datasets
+            # Modifications to match FragPipe/Sage
+            "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
+            "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
         ]
 
         # Add input files
