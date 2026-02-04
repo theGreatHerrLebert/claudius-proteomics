@@ -211,6 +211,13 @@ class ExtractedPrecursor:
         return self.largest_peak_mz
 
     @property
+    def collision_energy(self) -> float:
+        """Average collision energy across all PASEF events for this precursor."""
+        if not self.collision_energies:
+            return 0.0
+        return float(np.mean(self.collision_energies))
+
+    @property
     def n_peaks(self) -> int:
         return len(self.fragment_frame.mz)
 
@@ -231,6 +238,7 @@ class ExtractedPrecursor:
             "precursor_intensity": self.precursor_intensity,
             "rt_seconds": self.rt_seconds,
             "mobility": self.mobility,
+            "collision_energy": self.collision_energy,  # Average CE across PASEF events
             "n_fragments_merged": self.n_fragments_merged,
             "n_peaks": self.n_peaks,
             "fragment_total_intensity": self.fragment_total_intensity,
@@ -573,6 +581,29 @@ def extract_precursors(
     if logger:
         logger.info(f"  Extracted {len(results)} precursors")
 
+        # Report collision energy statistics
+        ce_values = [p.collision_energy for p in results if p.collision_energy > 0]
+        if ce_values:
+            ce_arr = np.array(ce_values)
+            logger.info(f"  Collision energy: mean={np.mean(ce_arr):.1f} eV, "
+                       f"range=[{np.min(ce_arr):.1f}, {np.max(ce_arr):.1f}] eV")
+
+            # Check for CE variance in re-fragmented precursors
+            n_refragmented = sum(1 for p in results if p.n_fragments_merged > 1)
+            if n_refragmented > 0:
+                ce_ranges = []
+                for p in results:
+                    if p.n_fragments_merged > 1 and len(p.collision_energies) > 1:
+                        ce_range = max(p.collision_energies) - min(p.collision_energies)
+                        ce_ranges.append(ce_range)
+                if ce_ranges:
+                    max_range = max(ce_ranges)
+                    avg_range = np.mean(ce_ranges)
+                    logger.info(f"  Re-fragmented precursors: {n_refragmented}, "
+                               f"CE variance: avg={avg_range:.2f} eV, max={max_range:.2f} eV")
+                    if max_range > 5.0:
+                        logger.warning(f"    Note: Some precursors have CE spread > 5 eV - using average")
+
     return results
 
 
@@ -908,6 +939,14 @@ def extract_precursors_batched(
         if logger:
             logger.info(f"Wrote index: {index_path} ({len(index_df)} precursors)")
             logger.info(f"Wrote blobs: {blobs_path} ({current_offset / 1024 / 1024:.1f} MB)")
+
+            # Report collision energy statistics
+            if "collision_energy" in index_df.columns:
+                ce_values = index_df["collision_energy"].dropna()
+                ce_values = ce_values[ce_values > 0]
+                if len(ce_values) > 0:
+                    logger.info(f"Collision energy: mean={ce_values.mean():.1f} eV, "
+                               f"range=[{ce_values.min():.1f}, {ce_values.max():.1f}] eV")
 
     return {
         "n_precursors": len(all_records),
