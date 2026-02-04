@@ -148,52 +148,109 @@ def _merge_datasets(
     precursor_index: pd.DataFrame,
     raw_features: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Merge precursor index with raw features."""
+    """Merge precursor index with raw features.
+
+    With the new FragPipe-anchored Step 3, both DataFrames should have:
+    - precursor_id: The timsTOF precursor ID
+    - raw_file: The .d file name
+
+    This enables a clean join without fallback to concat.
+    """
 
     if raw_features.empty:
         # No raw features - use precursor index only
         merged = precursor_index.copy()
-        # Add placeholder columns for raw data
-        merged["raw_file"] = None
-        merged["precursor_id"] = None
         return merged
 
-    # Create join key from sequence + charge
+    if precursor_index.empty:
+        # No precursor index - use raw features only
+        merged = raw_features.copy()
+        merged['n_engines'] = 0
+        return merged
+
     precursor_index = precursor_index.copy()
     raw_features = raw_features.copy()
 
-    # Normalize join keys
-    if "sequence_normalized" not in raw_features.columns:
-        # Need to create normalized sequence from raw data
-        # This would require re-matching - for now, join on precursor_id if available
-        pass
+    # Normalize raw_file in both DataFrames
+    precursor_index['raw_file'] = precursor_index['raw_file'].apply(
+        lambda x: str(x).replace('.d', '') if pd.notna(x) else ''
+    )
+    raw_features['raw_file'] = raw_features['raw_file'].apply(
+        lambda x: str(x).replace('.d', '') if pd.notna(x) else ''
+    )
 
-    # Try joining on (raw_file, precursor_id) if available in both
-    if "precursor_id" in raw_features.columns and "precursor_id" in precursor_index.columns:
+    # Check if we can join on (raw_file, precursor_id)
+    has_precursor_id_both = (
+        'precursor_id' in precursor_index.columns and
+        'precursor_id' in raw_features.columns
+    )
+
+    if has_precursor_id_both:
+        print(f"    Joining on (raw_file, precursor_id)")
+
+        # Columns that exist in precursor_index but not in raw_features
+        # These are the engine columns we want to add
+        raw_cols = set(raw_features.columns)
+        idx_cols = set(precursor_index.columns)
+        engine_cols = [c for c in precursor_index.columns
+                       if c not in raw_cols or c in ['raw_file', 'precursor_id']]
+
+        # Merge: raw_features LEFT JOIN precursor_index
+        # This keeps all raw precursors and adds engine IDs where matched
+        merged = raw_features.merge(
+            precursor_index[engine_cols],
+            on=['raw_file', 'precursor_id'],
+            how='left',
+            suffixes=('', '_idx'),
+        )
+
+        # Fill n_engines with 0 for unmatched raw precursors
+        if 'n_engines' in merged.columns:
+            merged['n_engines'] = merged['n_engines'].fillna(0).astype(int)
+        else:
+            merged['n_engines'] = 0
+
+        # Check for precursors in index but not in raw (should be rare)
+        idx_keys = set(zip(precursor_index['raw_file'], precursor_index['precursor_id']))
+        raw_keys = set(zip(raw_features['raw_file'], raw_features['precursor_id']))
+        orphan_idx = idx_keys - raw_keys
+
+        if orphan_idx:
+            print(f"    Warning: {len(orphan_idx)} precursors in index not found in raw features")
+
+    elif 'sequence_normalized' in raw_features.columns and 'sequence_normalized' in precursor_index.columns:
+        # Fallback: Join on sequence + charge
+        print(f"    Joining on (sequence_normalized, charge)")
         merged = raw_features.merge(
             precursor_index,
-            on=["raw_file", "precursor_id"],
-            how="outer",
-            suffixes=("", "_idx"),
+            on=['sequence_normalized', 'charge'],
+            how='outer',
+            suffixes=('', '_idx'),
         )
-    elif "sequence_normalized" in raw_features.columns:
-        # Join on sequence + charge
-        merged = raw_features.merge(
-            precursor_index,
-            on=["sequence_normalized", "charge"],
-            how="outer",
-            suffixes=("", "_idx"),
-        )
+
+        if 'n_engines' in merged.columns:
+            merged['n_engines'] = merged['n_engines'].fillna(0).astype(int)
+        else:
+            merged['n_engines'] = 0
+
     else:
-        # Cannot merge - return combined
+        # Last resort: concat (this should not happen with proper pipeline)
+        print(f"    Warning: Cannot find join keys, concatenating DataFrames")
         merged = pd.concat([raw_features, precursor_index], ignore_index=True)
 
-    # Clean up duplicate columns
-    for col in merged.columns:
-        if col.endswith("_idx"):
+        if 'n_engines' not in merged.columns:
+            merged['n_engines'] = 0
+
+    # Clean up duplicate columns from merge
+    for col in list(merged.columns):
+        if col.endswith('_idx'):
             base_col = col[:-4]
             if base_col in merged.columns:
+                # Prefer non-idx column, drop _idx
                 merged.drop(columns=[col], inplace=True)
+            else:
+                # Rename _idx to base
+                merged.rename(columns={col: base_col}, inplace=True)
 
     return merged
 

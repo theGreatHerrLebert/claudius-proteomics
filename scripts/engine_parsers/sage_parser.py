@@ -102,6 +102,15 @@ class SageParser(BaseParser):
         peptide_col = df.get("peptide", pd.Series(dtype=str))
         df["modified_std"] = peptide_col.apply(standardize_sage_sequence)
 
+        # Strip modifications to get plain peptide sequence
+        import re
+        def strip_mods(seq):
+            if pd.isna(seq) or not seq:
+                return ""
+            # Remove anything in brackets: [+57.021465] or [UNIMOD:4]
+            return re.sub(r'\[[^\]]+\]', '', str(seq))
+        df["stripped_peptide"] = peptide_col.apply(strip_mods)
+
         # Extract raw_file from filename
         df["raw_file"] = df.get("filename", "").apply(
             lambda x: Path(x).stem.replace(".d", "") if pd.notna(x) else ""
