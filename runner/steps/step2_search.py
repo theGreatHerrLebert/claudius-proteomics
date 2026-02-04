@@ -291,6 +291,7 @@ def _run_diann(
             "--dda",  # DDA mode for DDA datasets
             # Modifications to match FragPipe/Sage
             "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
+            "--var-mod", "UniMod:1,42.010565,*n",  # N-term Acetyl
             "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
         ]
 
