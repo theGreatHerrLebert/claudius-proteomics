@@ -19,7 +19,7 @@ Primary target: CCS prediction from timsTOF data, benchmarking against Meier et 
 ## Common Commands
 
 ```bash
-# Runner Pipeline (5-step processing)
+# Runner Pipeline (6-step processing)
 .venv/bin/python runner/run_dataset.py PXD019086 --config config/config.yaml
 
 # Test mode (limited files for quick validation)
@@ -30,6 +30,13 @@ Primary target: CCS prediction from timsTOF data, benchmarking against Meier et 
 
 # Resume from checkpoint
 .venv/bin/python runner/run_dataset.py PXD019086 --resume
+
+# Create distributable archive (step 6)
+.venv/bin/python runner/run_dataset.py PXD019086 --package --package-version 1.0
+
+# Collection management
+python scripts/add_to_collection.py --archive data/packages/PXD019086_v1.0.zip \
+    --collection /path/to/collection --study meier_2021_ccs
 
 # Snakemake commands (legacy/alternative)
 snakemake process_fragpipe --cores 16  # FragPipe (spectrum-centric)
@@ -54,9 +61,9 @@ pip install snakemake
 
 Test mode is enabled by default in config (`test_mode.max_files: 1`).
 
-## 5-Step Runner Pipeline
+## 6-Step Runner Pipeline
 
-The runner (`runner/run_dataset.py`) processes a PRIDE dataset through 5 steps with checkpointing:
+The runner (`runner/run_dataset.py`) processes a PRIDE dataset through 6 steps with checkpointing:
 
 | Step | Name | Input | Output |
 |------|------|-------|--------|
@@ -65,6 +72,7 @@ The runner (`runner/run_dataset.py`) processes a PRIDE dataset through 5 steps w
 | 3 | **Stratify** | Engine results | `precursor_index.parquet`, `consensus/` |
 | 4 | **Extract** | .d files + index | `data/extracted/{acc}/`, raw 4D features |
 | 5 | **Merge** | Index + features | `data/merged/{acc}/precursor_store.parquet` |
+| 6 | **Package** | All outputs | `data/packages/{acc}_v{ver}.zip` (optional, `--package`) |
 
 ### Folder Structure
 
@@ -78,12 +86,32 @@ data/
 │   ├── consensus/stratified/           # Precursors by engine agreement
 │   └── precursor_index.parquet         # Unified index
 ├── extracted/{accession}/              # Step 4: Raw 4D signal
-│   └── raw_features.parquet
+│   └── {raw_file}.d/blobs.bin          # Raw 4D data blobs
 ├── merged/{accession}/                 # Step 5: Final output
 │   ├── precursor_store.parquet         # IDs + raw features joined
 │   └── manifest.json                   # QC metrics
+├── packages/                           # Step 6: Distributable archives
+│   └── {accession}_v{version}.zip
 └── checkpoints/{accession}/            # Pipeline state
     └── state.json
+```
+
+### Archive Format (Step 6)
+
+Self-contained zip archive for distribution/upload:
+```
+{accession}_v{version}.zip
+└── {accession}/
+    ├── manifest.json              # Metadata, QC, versions
+    ├── precursor_store.parquet    # Main data (IDs + features)
+    ├── precursor_index.parquet    # Engine-level details
+    ├── consensus/                 # Stratified results
+    ├── extracted/{raw}.d/         # Raw 4D blobs + index
+    ├── engines/                   # Search engine outputs
+    │   ├── fragpipe/              # Configs + combined + per-file results
+    │   ├── diann/                 # report.parquet + log + stats
+    │   └── sage/                  # results + fragments + settings
+    └── summaries/                 # Step summaries
 ```
 
 ## Architecture
@@ -184,8 +212,11 @@ Interactive precursor browser at `dashboard/`:
 - **Frontend**: React + TypeScript + Tailwind + Deck.gl (`dashboard/frontend/`)
 
 ```bash
-# Run backend (use venv python directly - no activate script)
-.venv/bin/python dashboard/backend/main.py --store data/processed/PXD019086/precursor_index_v3.parquet --port 8000
+# Run backend - Single dataset mode
+.venv/bin/python dashboard/backend/main.py --store data/merged/PXD019086/precursor_store.parquet --port 8000
+
+# Run backend - Collection mode (browse multiple datasets)
+.venv/bin/python dashboard/backend/main.py --collection /path/to/san_jose_collection/ --port 8000
 
 # Run frontend - Option 1: Serve pre-built files (avoids file watcher limit)
 cd dashboard/frontend/dist && python3 -m http.server 5173
@@ -196,6 +227,12 @@ cd dashboard/frontend && nvm use 22 && npm run dev  # http://localhost:5173
 # If dev server fails with ENOSPC (file watcher limit), increase the limit:
 sudo sysctl fs.inotify.max_user_watches=524288
 ```
+
+**Collection mode endpoints:**
+- `GET /studies` - List all studies
+- `GET /studies/{id}/datasets` - List datasets in a study
+- `POST /datasets/{accession}/load` - Load dataset into memory
+- `GET /collection` - Collection metadata
 
 Open http://localhost:5173 in browser to access the precursor browser.
 
@@ -217,6 +254,7 @@ Open http://localhost:5173 in browser to access the precursor browser.
 |--------|---------|
 | `run_fragpipe.py` | FragPipe wrapper with San José mode (FDR override) |
 | `build_precursor_index.py` | Bridges raw timsTOF data to search engine results |
+| `add_to_collection.py` | Add archives to collection, rebuild manifest |
 | `sequence_utils.py` | UNIMOD normalization across engines (FragPipe/DIA-NN/Sage) |
 | `fragment_matching.py` | Theoretical b/y ion matching for spectrum annotation |
 | `build_training_spectra.py` | Adds normalized intensities and fragment annotations |

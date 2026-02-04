@@ -92,8 +92,8 @@ def load_raw_precursors(
                     im_lookup = ensure_calibration(str(d_file), verbose=False)
 
                 # Create calibrated dataset
-                from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
-                rust_dataset = PyTimsDatasetDDARust.with_calibration(
+                from imspy_connector import py_dda
+                rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
                     str(d_file), False, im_lookup.tolist()
                 )
                 # Also load Python wrapper for metadata access
