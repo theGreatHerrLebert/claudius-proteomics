@@ -13,6 +13,7 @@ Collection mode:
 
 import json
 import re
+import struct
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import numpy as np
@@ -23,6 +24,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pyarrow.parquet as pq
 import yaml
+
+import gzip
 
 
 # Mass delta to UNIMOD mapping (for standardizing modification display)
@@ -99,6 +102,7 @@ app.add_middleware(
 # Global store reference (single dataset mode)
 store_path: Optional[Path] = None
 parquet_file: Optional[pq.ParquetFile] = None
+blob_dir: Optional[Path] = None  # Directory containing extracted/{raw_file}.d/blobs.bin
 
 # Global collection reference (collection mode)
 collection_path: Optional[Path] = None
@@ -487,6 +491,69 @@ async def list_precursors(
     return results
 
 
+def read_blob(raw_file: str, offset: int, size: int) -> Optional[dict]:
+    """Read and decompress a precursor blob from the blobs.bin file.
+
+    Returns dict with xic, mobilogram, isotope, and fragment data.
+    """
+    if blob_dir is None:
+        return None
+
+    # Find blob file for this raw file
+    raw_file_clean = raw_file.replace('.d', '')
+    blob_path = blob_dir / f"{raw_file_clean}.d" / "blobs.bin"
+
+    if not blob_path.exists():
+        # Try with .d suffix
+        blob_path = blob_dir / f"{raw_file}.d" / "blobs.bin" if not raw_file.endswith('.d') else blob_dir / raw_file / "blobs.bin"
+
+    if not blob_path.exists():
+        return None
+
+    try:
+        with open(blob_path, 'rb') as f:
+            f.seek(offset)
+            compressed = f.read(size)
+
+        # Decompress with gzip
+        combined = gzip.decompress(compressed)
+
+        # Parse: [4 bytes metadata_len][metadata JSON][npz arrays]
+        metadata_len = int.from_bytes(combined[:4], "little")
+        metadata_bytes = combined[4:4+metadata_len]
+        metadata = json.loads(metadata_bytes.decode("utf-8"))
+
+        # Extract arrays
+        import io
+        npz_bytes = combined[4+metadata_len:]
+        npz_buffer = io.BytesIO(npz_bytes)
+        arrays = np.load(npz_buffer)
+
+        # Build result from actual blob structure
+        result = {
+            # Fragment spectrum (frag_* arrays)
+            "fragment_mz": arrays["frag_mz"].tolist() if "frag_mz" in arrays else [],
+            "fragment_intensity": arrays["frag_intensity"].tolist() if "frag_intensity" in arrays else [],
+            "fragment_mobility": arrays["frag_mobility"].tolist() if "frag_mobility" in arrays else [],
+            "fragment_scan": arrays["frag_scan"].tolist() if "frag_scan" in arrays else [],
+            # XIC (ms1_rt_* arrays)
+            "xic_rt": arrays["ms1_rt_coords"].tolist() if "ms1_rt_coords" in arrays else [],
+            "xic_intensity": arrays["ms1_rt_intensities"].tolist() if "ms1_rt_intensities" in arrays else [],
+            # Mobilogram (ms1_im_* arrays)
+            "mobilogram_im": arrays["ms1_im_coords"].tolist() if "ms1_im_coords" in arrays else [],
+            "mobilogram_intensity": arrays["ms1_im_intensities"].tolist() if "ms1_im_intensities" in arrays else [],
+            # Isotope envelope (from metadata)
+            "isotope_mz": [],  # Not stored separately, would need to compute from mono_mz
+            "isotope_intensity": metadata.get("ms1_isotope_intensities", []),
+        }
+
+        return result
+
+    except Exception as e:
+        print(f"Error reading blob: {e}")
+        return None
+
+
 @app.get("/precursor/{precursor_id}", response_model=PrecursorDetail)
 async def get_precursor(precursor_id: int):
     """Get full detail for a single precursor."""
@@ -516,33 +583,68 @@ async def get_precursor(precursor_id: int):
             return [int(x) for x in val]
         return []
 
-    # Handle missing fragment_scan column for older stores
-    fragment_scan = to_int_list(row.get('fragment_scan')) if 'fragment_scan' in row else []
+    def safe_str(val):
+        if val is None or (isinstance(val, float) and np.isnan(val)):
+            return None
+        return str(val) if val else None
+
+    # Try to read blob data if available
+    blob_data = None
+    if pd.notna(row.get('blob_offset')) and pd.notna(row.get('blob_size')) and pd.notna(row.get('raw_file')):
+        blob_data = read_blob(
+            str(row['raw_file']),
+            int(row['blob_offset']),
+            int(row['blob_size'])
+        )
+
+    # Use blob data if available, otherwise try parquet columns, otherwise empty
+    if blob_data:
+        fragment_mz = blob_data.get("fragment_mz", [])
+        fragment_intensity = blob_data.get("fragment_intensity", [])
+        fragment_mobility = blob_data.get("fragment_mobility", [])
+        fragment_scan = blob_data.get("fragment_scan", [])
+        xic_rt = blob_data.get("xic_rt", [])
+        xic_intensity = blob_data.get("xic_intensity", [])
+        mobilogram_im = blob_data.get("mobilogram_im", [])
+        mobilogram_intensity = blob_data.get("mobilogram_intensity", [])
+        isotope_mz = blob_data.get("isotope_mz", [])
+        isotope_intensity = blob_data.get("isotope_intensity", [])
+    else:
+        fragment_mz = to_list(row.get('fragment_mz'))
+        fragment_intensity = to_list(row.get('fragment_intensity'))
+        fragment_mobility = to_list(row.get('fragment_mobility'))
+        fragment_scan = to_int_list(row.get('fragment_scan')) if 'fragment_scan' in row else []
+        xic_rt = to_list(row.get('xic_rt'))
+        xic_intensity = to_list(row.get('xic_intensity'))
+        mobilogram_im = to_list(row.get('mobilogram_im'))
+        mobilogram_intensity = to_list(row.get('mobilogram_intensity'))
+        isotope_mz = to_list(row.get('isotope_mz'))
+        isotope_intensity = to_list(row.get('isotope_intensity'))
 
     return PrecursorDetail(
         precursor_id=int(row['precursor_id']),
-        mz=float(row['mz']),
-        charge=int(row['charge']),
-        rt_seconds=float(row['rt_seconds']),
-        mobility=float(row['mobility']),
-        n_engines=int(row['n_engines']),
-        fragpipe_peptide=row['fragpipe_peptide'] if row['fragpipe_peptide'] else None,
-        sage_peptide=row['sage_peptide'] if row['sage_peptide'] else None,
-        diann_peptide=row['diann_peptide'] if row['diann_peptide'] else None,
-        fragment_mz=to_list(row['fragment_mz']),
-        fragment_intensity=to_list(row['fragment_intensity']),
-        fragment_mobility=to_list(row['fragment_mobility']),
+        mz=float(row['mz']) if pd.notna(row.get('mz')) else 0.0,
+        charge=int(row['charge']) if pd.notna(row.get('charge')) else 0,
+        rt_seconds=float(row['rt_seconds']) if pd.notna(row.get('rt_seconds')) else 0.0,
+        mobility=float(row['mobility']) if pd.notna(row.get('mobility')) else 0.0,
+        n_engines=int(row['n_engines']) if pd.notna(row.get('n_engines')) else 0,
+        fragpipe_peptide=safe_str(row.get('fragpipe_peptide')),
+        sage_peptide=safe_str(row.get('sage_peptide')),
+        diann_peptide=safe_str(row.get('diann_peptide')),
+        fragment_mz=fragment_mz,
+        fragment_intensity=fragment_intensity,
+        fragment_mobility=fragment_mobility,
         fragment_scan=fragment_scan,
-        xic_rt=to_list(row['xic_rt']),
-        xic_intensity=to_list(row['xic_intensity']),
-        mobilogram_im=to_list(row['mobilogram_im']),
-        mobilogram_intensity=to_list(row['mobilogram_intensity']),
-        isotope_mz=to_list(row['isotope_mz']),
-        isotope_intensity=to_list(row['isotope_intensity']),
-        raw_rt=to_list(row['raw_rt']),
-        raw_mz=to_list(row['raw_mz']),
-        raw_mobility=to_list(row['raw_mobility']),
-        raw_intensity=to_list(row['raw_intensity']),
+        xic_rt=xic_rt,
+        xic_intensity=xic_intensity,
+        mobilogram_im=mobilogram_im,
+        mobilogram_intensity=mobilogram_intensity,
+        isotope_mz=isotope_mz,
+        isotope_intensity=isotope_intensity,
+        raw_rt=[],  # Not stored in blob format
+        raw_mz=[],
+        raw_mobility=[],
+        raw_intensity=[],
     )
 
 
@@ -799,6 +901,7 @@ Modes:
         """,
     )
     parser.add_argument("--store", help="Path to Parquet store (single dataset mode)")
+    parser.add_argument("--blob-dir", help="Path to extracted/ directory containing blobs")
     parser.add_argument("--collection", help="Path to collection root (collection mode)")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--host", default="127.0.0.1")
@@ -820,6 +923,20 @@ Modes:
             parquet_file = pq.ParquetFile(str(p))
             store_path = p
             print(f"Loaded store: {p} ({parquet_file.metadata.num_rows} precursors)")
+
+            # Set blob directory - try to auto-detect from store path
+            if args.blob_dir:
+                blob_dir = Path(args.blob_dir)
+            else:
+                # Auto-detect: if store is in PXD019086/, look for PXD019086/extracted/
+                blob_dir = p.parent / "extracted"
+
+            if blob_dir.exists():
+                print(f"Blob directory: {blob_dir}")
+                print("  Blob reading enabled (gzip format)")
+            else:
+                blob_dir = None
+                print(f"Warning: Blob directory not found: {p.parent / 'extracted'}")
         else:
             print(f"Warning: Store not found: {p}")
 

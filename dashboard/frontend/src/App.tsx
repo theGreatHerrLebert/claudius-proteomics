@@ -9,8 +9,6 @@ import {
   getStats,
   getRawFiles,
   getAppStatus,
-  getActiveDataset,
-  type AppStatus,
 } from './api';
 
 const queryClient = new QueryClient();
@@ -64,6 +62,41 @@ function DatasetView({
   });
   const [page, setPage] = useState(0);
   const pageSize = 100;
+
+  // Resizable panel state
+  const [tableWidth, setTableWidth] = useState(60); // percentage
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Handle resize drag
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const container = document.getElementById('main-content');
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+      setTableWidth(Math.min(Math.max(newWidth, 20), 80)); // Clamp between 20-80%
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   // Fetch precursor list
   const {
@@ -217,9 +250,12 @@ function DatasetView({
       </header>
 
       {/* Main content */}
-      <div className="flex-1 flex min-h-0">
-        {/* Table panel - 1/3 of page */}
-        <div className="w-1/3 flex-none border-r border-gray-700 flex flex-col overflow-x-auto">
+      <div id="main-content" className={`flex-1 flex min-h-0 ${isResizing ? 'select-none' : ''}`}>
+        {/* Table panel - resizable */}
+        <div
+          className="flex-none border-r border-gray-700 flex flex-col overflow-x-auto"
+          style={{ width: `${tableWidth}%` }}
+        >
           <div className="flex-1 min-h-0">
             <PrecursorTable
               data={precursors || []}
@@ -248,6 +284,17 @@ function DatasetView({
             >
               Next
             </button>
+          </div>
+        </div>
+
+        {/* Resize handle */}
+        <div
+          className="w-2 bg-gray-600 hover:bg-blue-500 cursor-col-resize flex-none transition-colors active:bg-blue-600"
+          onMouseDown={handleMouseDown}
+          title="Drag to resize"
+        >
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="h-8 w-0.5 bg-gray-400 rounded" />
           </div>
         </div>
 
