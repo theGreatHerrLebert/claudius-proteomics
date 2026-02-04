@@ -1,19 +1,65 @@
-import { useState } from 'react';
-import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import PrecursorTable from './components/PrecursorTable';
 import PrecursorViz from './components/PrecursorViz';
-import { listPrecursors, getPrecursor, getStats, getRawFiles } from './api';
+import CollectionBrowser from './components/CollectionBrowser';
+import {
+  listPrecursors,
+  getPrecursor,
+  getStats,
+  getRawFiles,
+  getAppStatus,
+  getActiveDataset,
+  type AppStatus,
+} from './api';
 
 const queryClient = new QueryClient();
 
-function Dashboard() {
+type ViewMode = 'collection' | 'dataset';
+
+interface BreadcrumbProps {
+  mode: ViewMode;
+  activeDataset: string | null;
+  onNavigateToCollection: () => void;
+}
+
+function Breadcrumb({ mode, activeDataset, onNavigateToCollection }: BreadcrumbProps) {
+  if (mode === 'collection') {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-white font-medium">Collection</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <button
+        onClick={onNavigateToCollection}
+        className="text-blue-400 hover:text-blue-300"
+      >
+        Collection
+      </button>
+      <span className="text-gray-500">/</span>
+      <span className="text-white font-medium">{activeDataset}</span>
+    </div>
+  );
+}
+
+function DatasetView({
+  activeDataset,
+  onNavigateToCollection,
+}: {
+  activeDataset: string | null;
+  onNavigateToCollection: () => void;
+}) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filters, setFilters] = useState({
     minEngines: 0,
     charge: undefined as number | undefined,
     rawFile: undefined as string | undefined,
-    hasMs1: false,  // Filter for precursors with MS1 signal data
-    sortBy: 'n_engines',  // Sort by engines first
+    hasMs1: false,
+    sortBy: 'n_engines',
     sortDesc: true,
   });
   const [page, setPage] = useState(0);
@@ -24,7 +70,7 @@ function Dashboard() {
     data: precursors,
     isLoading: isLoadingList,
   } = useQuery({
-    queryKey: ['precursors', filters, page],
+    queryKey: ['precursors', filters, page, activeDataset],
     queryFn: () =>
       listPrecursors({
         offset: page * pageSize,
@@ -47,13 +93,13 @@ function Dashboard() {
 
   // Fetch stats
   const { data: stats } = useQuery({
-    queryKey: ['stats'],
+    queryKey: ['stats', activeDataset],
     queryFn: getStats,
   });
 
   // Fetch available raw files
   const { data: rawFiles } = useQuery({
-    queryKey: ['raw_files'],
+    queryKey: ['raw_files', activeDataset],
     queryFn: getRawFiles,
   });
 
@@ -61,7 +107,11 @@ function Dashboard() {
     <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
       {/* Header */}
       <header className="flex-none h-14 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-6">
-        <h1 className="text-lg font-semibold text-white">Precursor Browser</h1>
+        <Breadcrumb
+          mode="dataset"
+          activeDataset={activeDataset}
+          onNavigateToCollection={onNavigateToCollection}
+        />
 
         {stats && (
           <div className="flex items-center gap-4 text-sm text-gray-400">
@@ -207,6 +257,80 @@ function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+function Dashboard() {
+  const [viewMode, setViewMode] = useState<ViewMode>('dataset');
+  const [activeDataset, setActiveDataset] = useState<string | null>(null);
+  const [isCollectionMode, setIsCollectionMode] = useState(false);
+  const queryClientHook = useQueryClient();
+
+  // Check app status on mount
+  const { data: appStatus, isLoading: isLoadingStatus } = useQuery({
+    queryKey: ['appStatus'],
+    queryFn: getAppStatus,
+    retry: false,
+  });
+
+  // Update state when app status loads
+  useEffect(() => {
+    if (appStatus) {
+      setIsCollectionMode(appStatus.mode === 'collection');
+      setActiveDataset(appStatus.active_dataset);
+      // If collection mode but no dataset loaded, show collection browser
+      if (appStatus.mode === 'collection' && !appStatus.store_loaded) {
+        setViewMode('collection');
+      } else {
+        setViewMode('dataset');
+      }
+    }
+  }, [appStatus]);
+
+  const handleDatasetLoaded = (accession: string) => {
+    setActiveDataset(accession);
+    setViewMode('dataset');
+    // Invalidate queries to refresh with new data
+    queryClientHook.invalidateQueries({ queryKey: ['precursors'] });
+    queryClientHook.invalidateQueries({ queryKey: ['stats'] });
+    queryClientHook.invalidateQueries({ queryKey: ['raw_files'] });
+  };
+
+  const handleNavigateToCollection = () => {
+    setViewMode('collection');
+  };
+
+  if (isLoadingStatus) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    );
+  }
+
+  // Collection mode views
+  if (isCollectionMode) {
+    if (viewMode === 'collection') {
+      return (
+        <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
+          <CollectionBrowser onDatasetLoaded={handleDatasetLoaded} />
+        </div>
+      );
+    }
+    return (
+      <DatasetView
+        activeDataset={activeDataset}
+        onNavigateToCollection={handleNavigateToCollection}
+      />
+    );
+  }
+
+  // Single dataset mode (legacy)
+  return (
+    <DatasetView
+      activeDataset={null}
+      onNavigateToCollection={() => {}}
+    />
   );
 }
 

@@ -84,6 +84,30 @@ export default function PrecursorTable({
         },
         size: 65,
       }),
+      columnHelper.accessor('fragpipe_pep', {
+        header: 'FP PEP',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toExponential(1) : '-';
+        },
+        size: 60,
+      }),
+      columnHelper.accessor('fragpipe_hyperscore', {
+        header: 'FP Score',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toFixed(1) : '-';
+        },
+        size: 65,
+      }),
+      columnHelper.accessor('fragpipe_rt', {
+        header: 'FP RT',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? (val / 60).toFixed(1) : '-';
+        },
+        size: 55,
+      }),
       // Sage columns
       columnHelper.accessor('sage_modified', {
         header: 'Sage',
@@ -105,6 +129,30 @@ export default function PrecursorTable({
           return val !== null ? val.toExponential(1) : '-';
         },
         size: 60,
+      }),
+      columnHelper.accessor('sage_pep', {
+        header: 'S PEP',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toExponential(1) : '-';
+        },
+        size: 60,
+      }),
+      columnHelper.accessor('sage_hyperscore', {
+        header: 'S Score',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toFixed(1) : '-';
+        },
+        size: 65,
+      }),
+      columnHelper.accessor('sage_rt', {
+        header: 'S RT',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? (val / 60).toFixed(1) : '-';
+        },
+        size: 55,
       }),
       columnHelper.accessor('sage_match_tier', {
         header: 'S Tier',
@@ -138,6 +186,22 @@ export default function PrecursorTable({
           return val !== null ? val.toExponential(1) : '-';
         },
         size: 60,
+      }),
+      columnHelper.accessor('diann_pep', {
+        header: 'D PEP',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toExponential(1) : '-';
+        },
+        size: 60,
+      }),
+      columnHelper.accessor('diann_rt', {
+        header: 'D RT',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? (val / 60).toFixed(1) : '-';
+        },
+        size: 55,
       }),
       columnHelper.accessor('diann_match_tier', {
         header: 'D Tier',

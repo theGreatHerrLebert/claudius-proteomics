@@ -130,6 +130,13 @@ Pipeline steps:
 3. **Stratify** - Unify results, compute engine agreement
 4. **Extract** - Extract raw 4D signal via imspy
 5. **Merge** - Join IDs with raw features → `precursor_store.parquet`
+6. **Package** (optional) - Create distributable archive
+
+```bash
+# Create self-contained archive for sharing/upload
+.venv/bin/python runner/run_dataset.py PXD019086 --package --package-version 1.0
+# Output: data/packages/PXD019086_v1.0.zip (~2.8 GB)
+```
 
 ```bash
 # Phase 2: Train models
@@ -141,9 +148,14 @@ snakemake train_model --config snapshot=v1.0 model=ccs_v1
 Browse precursors with full 4D visualization:
 
 ```bash
-# Backend (FastAPI)
+# Single dataset mode
 .venv/bin/python dashboard/backend/main.py \
-    --store data/processed/PXD019086/precursor_index_v3.parquet \
+    --store data/merged/PXD019086/precursor_store.parquet \
+    --port 8000
+
+# Collection mode (browse multiple datasets)
+.venv/bin/python dashboard/backend/main.py \
+    --collection /path/to/san_jose_collection/ \
     --port 8000
 
 # Frontend (React + TypeScript)
@@ -151,6 +163,36 @@ cd dashboard/frontend && npm run dev  # http://localhost:5173
 ```
 
 Features: fragment spectrum, IM vs m/z scatter, XIC, mobilogram, isotope envelope.
+
+### Collection Management
+
+Organize processed datasets into study-based collections:
+
+```bash
+# Create collection with studies.yaml
+mkdir my_collection
+cp config/studies.yaml.example my_collection/studies.yaml
+# Edit studies.yaml to define your studies
+
+# Add dataset archive to collection
+python scripts/add_to_collection.py \
+    --archive data/packages/PXD019086_v1.0.zip \
+    --collection my_collection/ \
+    --study meier_2021_ccs
+
+# Rebuild manifest from existing files
+python scripts/add_to_collection.py --collection my_collection/ --rebuild
+```
+
+Collection structure:
+```
+my_collection/
+├── studies.yaml                # Study definitions
+├── collection_manifest.json    # Auto-generated index
+├── meier_2021_ccs/            # Study folder
+│   └── PXD019086_v1.0/        # Extracted dataset
+└── archives/                   # Original zip backups
+```
 
 ## Project Structure
 
@@ -176,6 +218,7 @@ claudius-proteomics/
 ├── scripts/
 │   ├── run_fragpipe.py         # FragPipe wrapper (San José mode)
 │   ├── build_precursor_index.py # Unified precursor index
+│   ├── add_to_collection.py    # Collection management
 │   ├── sequence_utils.py       # UNIMOD normalization
 │   ├── fragment_matching.py    # Theoretical fragment matching
 │   ├── precursor_store.py      # Parquet store utilities
@@ -191,16 +234,17 @@ claudius-proteomics/
 │   ├── RUNNER_OUTPUT_SCHEMA.md # Per-dataset output format
 │   └── BUGS_FOUND.md           # Bug documentation
 │
-├── runner/                    # 5-step pipeline runner
+├── runner/                    # 6-step pipeline runner
 │   ├── run_dataset.py         # Main entry point
 │   ├── state.py               # Checkpoint management
-│   └── steps/                 # Step implementations
+│   └── steps/                 # Step implementations (step1-6)
 │
 ├── data/
 │   ├── raw/{accession}/       # Step 1: Bruker .d files
 │   ├── processed/{accession}/ # Steps 2-3: Search results + consensus
 │   ├── extracted/{accession}/ # Step 4: Raw 4D features
 │   ├── merged/{accession}/    # Step 5: Final precursor_store.parquet
+│   ├── packages/              # Step 6: Distributable archives
 │   └── checkpoints/           # Pipeline state (state.json)
 │
 ├── CLAUDIUS-PROTEOMICS.md      # Full project plan

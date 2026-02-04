@@ -300,7 +300,15 @@ def _build_precursor_index(
     sg_df: Optional[pd.DataFrame],
     processed_dir: Path,
 ) -> pd.DataFrame:
-    """Build unified precursor index with all engine IDs using efficient merges."""
+    """Build unified precursor index with all engine IDs using efficient merges.
+
+    Schema (37 columns total):
+    - Join keys: sequence_normalized, charge
+    - FragPipe (10): peptide, modified, protein, probability, pep, hyperscore, qvalue, rt, mz, mobility
+    - DIA-NN (13): peptide, modified, protein, qvalue, pep, global_qvalue, pg_qvalue, rt, mz, mobility, ccs
+    - Sage (12): peptide, modified, protein, qvalue, pep, hyperscore, peptide_qvalue, protein_qvalue, rt, mz, mobility
+    - Derived: n_engines
+    """
 
     # Prepare each engine's data with consistent column names
     dfs_to_merge = []
@@ -308,35 +316,101 @@ def _build_precursor_index(
     if fp_df is not None and not fp_df.empty:
         fp_summary = fp_df.groupby(["sequence_normalized", "Charge"]).first().reset_index()
         fp_summary = fp_summary.rename(columns={"Charge": "charge"})
+
+        # Core identification columns
         fp_summary["fragpipe_modified"] = fp_summary.get("modified_unimod", "")
         fp_summary["fragpipe_peptide"] = fp_summary.get("Peptide Sequence", fp_summary.get("Peptide", ""))
         fp_summary["fragpipe_protein"] = fp_summary.get("Protein", "")
+
+        # Quality/confidence scores
         fp_summary["fragpipe_probability"] = fp_summary.get("Probability")
-        fp_cols = ["sequence_normalized", "charge", "fragpipe_modified",
-                   "fragpipe_peptide", "fragpipe_protein", "fragpipe_probability"]
+        fp_summary["fragpipe_pep"] = 1.0 - fp_summary.get("Probability", 0.0)  # PEP = 1 - Probability
+        fp_summary["fragpipe_hyperscore"] = fp_summary.get("Hyperscore")
+        fp_summary["fragpipe_qvalue"] = fp_summary.get("Qvalue")
+
+        # Coordinates (RT already in seconds)
+        fp_summary["fragpipe_rt"] = fp_summary.get("Retention")
+        fp_summary["fragpipe_mz"] = fp_summary.get("Calibrated Observed M/Z", fp_summary.get("Observed M/Z"))
+        fp_summary["fragpipe_mobility"] = fp_summary.get("Ion Mobility")
+
+        fp_cols = [
+            "sequence_normalized", "charge",
+            "fragpipe_modified", "fragpipe_peptide", "fragpipe_protein",
+            "fragpipe_probability", "fragpipe_pep", "fragpipe_hyperscore", "fragpipe_qvalue",
+            "fragpipe_rt", "fragpipe_mz", "fragpipe_mobility",
+        ]
         fp_summary = fp_summary[[c for c in fp_cols if c in fp_summary.columns]]
         dfs_to_merge.append(("fragpipe", fp_summary))
 
     if dn_df is not None and not dn_df.empty:
         dn_summary = dn_df.groupby(["sequence_normalized", "Precursor.Charge"]).first().reset_index()
         dn_summary = dn_summary.rename(columns={"Precursor.Charge": "charge"})
+
+        # Core identification columns
         dn_summary["diann_modified"] = dn_summary.get("modified_unimod", "")
         dn_summary["diann_peptide"] = dn_summary.get("Stripped.Sequence", "")
         dn_summary["diann_protein"] = dn_summary.get("Protein.Ids", "")
+
+        # Quality/confidence scores
         dn_summary["diann_qvalue"] = dn_summary.get("Q.Value")
-        dn_cols = ["sequence_normalized", "charge", "diann_modified",
-                   "diann_peptide", "diann_protein", "diann_qvalue"]
+        dn_summary["diann_pep"] = dn_summary.get("PEP")
+        dn_summary["diann_global_qvalue"] = dn_summary.get("Global.Q.Value")
+        dn_summary["diann_pg_qvalue"] = dn_summary.get("PG.Q.Value")
+
+        # Coordinates (convert RT from minutes to seconds)
+        rt_minutes = dn_summary.get("RT")
+        if rt_minutes is not None:
+            dn_summary["diann_rt"] = rt_minutes * 60.0
+        else:
+            dn_summary["diann_rt"] = None
+        dn_summary["diann_mz"] = dn_summary.get("Precursor.Mz")
+        dn_summary["diann_mobility"] = dn_summary.get("IM")
+
+        # DIA-NN specific: predicted CCS
+        dn_summary["diann_ccs"] = dn_summary.get("CCS")
+
+        dn_cols = [
+            "sequence_normalized", "charge",
+            "diann_modified", "diann_peptide", "diann_protein",
+            "diann_qvalue", "diann_pep", "diann_global_qvalue", "diann_pg_qvalue",
+            "diann_rt", "diann_mz", "diann_mobility", "diann_ccs",
+        ]
         dn_summary = dn_summary[[c for c in dn_cols if c in dn_summary.columns]]
         dfs_to_merge.append(("diann", dn_summary))
 
     if sg_df is not None and not sg_df.empty:
         sg_summary = sg_df.groupby(["sequence_normalized", "charge"]).first().reset_index()
+
+        # Core identification columns
         sg_summary["sage_modified"] = sg_summary.get("modified_unimod", "")
         sg_summary["sage_peptide"] = sg_summary.get("stripped_peptide", "")
         sg_summary["sage_protein"] = sg_summary.get("proteins", "")
+
+        # Quality/confidence scores
         sg_summary["sage_qvalue"] = sg_summary.get("spectrum_q")
-        sg_cols = ["sequence_normalized", "charge", "sage_modified",
-                   "sage_peptide", "sage_protein", "sage_qvalue"]
+        sg_summary["sage_pep"] = sg_summary.get("posterior_error").apply(
+            lambda x: np.exp(x) if pd.notna(x) else np.nan
+        ) if "posterior_error" in sg_summary.columns else np.nan
+        sg_summary["sage_hyperscore"] = sg_summary.get("hyperscore")
+        sg_summary["sage_peptide_qvalue"] = sg_summary.get("peptide_q")
+        sg_summary["sage_protein_qvalue"] = sg_summary.get("protein_q")
+
+        # Coordinates (RT already in seconds)
+        sg_summary["sage_rt"] = sg_summary.get("rt")
+        # Calculate m/z from experimental mass: mz = (M + z*H+) / z
+        PROTON_MASS = 1.007276
+        if "expmass" in sg_summary.columns:
+            sg_summary["sage_mz"] = (sg_summary["expmass"] + sg_summary["charge"] * PROTON_MASS) / sg_summary["charge"]
+        else:
+            sg_summary["sage_mz"] = None
+        sg_summary["sage_mobility"] = sg_summary.get("ion_mobility")
+
+        sg_cols = [
+            "sequence_normalized", "charge",
+            "sage_modified", "sage_peptide", "sage_protein",
+            "sage_qvalue", "sage_pep", "sage_hyperscore", "sage_peptide_qvalue", "sage_protein_qvalue",
+            "sage_rt", "sage_mz", "sage_mobility",
+        ]
         sg_summary = sg_summary[[c for c in sg_cols if c in sg_summary.columns]]
         dfs_to_merge.append(("sage", sg_summary))
 

@@ -334,7 +334,7 @@ def extract_precursors(
     dataset: TimsDatasetDDA,
     raw_file_name: str,
     num_threads: int = 16,
-    rt_window_sec: float = 6.0,
+    rt_window_sec: float = 15.0,
     mz_tol_ppm: float = 20.0,
     im_window: float = 0.1,
     n_isotopes: int = 5,
@@ -632,7 +632,7 @@ def extract_precursors_batched(
     output_dir: Path,
     batch_size: int = 10000,
     num_threads: int = 16,
-    rt_window_sec: float = 6.0,
+    rt_window_sec: float = 15.0,
     mz_tol_ppm: float = 20.0,
     im_window: float = 0.1,
     n_isotopes: int = 5,
@@ -947,7 +947,7 @@ def main():
     parser.add_argument("--threads", type=int, default=16, help="Number of threads")
     parser.add_argument("--no-blobs", action="store_true", help="Skip blob writing")
     parser.add_argument("--no-bruker-sdk", action="store_true", help="Don't use Bruker SDK")
-    parser.add_argument("--rt-window", type=float, default=6.0, help="RT window for MS1 (seconds, ±3s around apex)")
+    parser.add_argument("--rt-window", type=float, default=15.0, help="RT window for MS1 (seconds, ±7.5s around apex)")
     parser.add_argument("--mz-tol", type=float, default=20.0, help="m/z tolerance for MS1 (ppm)")
     parser.add_argument("--im-window", type=float, default=0.1, help="IM window for MS1 (1/K0)")
     parser.add_argument("--log", type=Path, help="Log file path")

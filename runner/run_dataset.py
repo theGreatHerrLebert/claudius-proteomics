@@ -5,6 +5,14 @@ San José Runner - Main Entry Point
 Processes a PRIDE dataset through the 6-step pipeline with checkpointing.
 Designed for SLURM cluster submission.
 
+Steps:
+1. Download - Fetch raw data from PRIDE
+2. Search - Run FragPipe, DIA-NN, Sage
+3. Stratify - Merge and stratify search results
+4. Extract - Extract raw 4D signal with quality metrics
+5. Merge - Final merge of search + raw data
+6. Package - Create distributable archive (optional, requires --package)
+
 Usage:
     # Local execution
     python runner/run_dataset.py PXD019086 --config config/config.yaml
@@ -17,6 +25,9 @@ Usage:
 
     # Run specific steps
     python runner/run_dataset.py PXD019086 --steps 1 2 3
+
+    # Create distributable archive
+    python runner/run_dataset.py PXD019086 --package --package-version 1.0
 """
 
 import argparse
@@ -38,6 +49,7 @@ from runner.steps import (
     run_step3_stratify,
     run_step4_extract,
     run_step5_merge,
+    run_step6_package,
 )
 
 
@@ -51,6 +63,8 @@ def run_dataset(
     steps: Optional[List[int]] = None,
     num_threads: int = 16,
     local_data_path: Optional[Path] = None,
+    package: bool = False,
+    package_version: str = "1.0",
 ) -> bool:
     """
     Run the San José pipeline for a single dataset.
@@ -65,6 +79,8 @@ def run_dataset(
         steps: List of step numbers to run (default: all)
         num_threads: Number of threads
         local_data_path: Path to local data (skip download)
+        package: If True, run step 6 to create distributable archive
+        package_version: Version string for archive (default: 1.0)
 
     Returns:
         True if all steps completed successfully
@@ -90,6 +106,8 @@ def run_dataset(
 
     # Determine which steps to run
     all_steps = [1, 2, 3, 4, 5]
+    if package:
+        all_steps.append(6)
     if steps:
         steps_to_run = [s for s in steps if s in all_steps]
     else:
@@ -105,8 +123,9 @@ def run_dataset(
     success = True
     step_summaries = []
 
+    step_names = ["download", "search", "stratify", "extract", "merge", "package"]
     for step_num in steps_to_run:
-        step_name = f"step{step_num}_" + ["download", "search", "stratify", "extract", "merge"][step_num - 1]
+        step_name = f"step{step_num}_{step_names[step_num - 1]}"
 
         # Skip if already completed
         if state.is_step_done(step_name):
@@ -128,6 +147,7 @@ def run_dataset(
                 state=state,
                 num_threads=num_threads,
                 local_data_path=local_data_path,
+                package_version=package_version,
             )
             step_summaries.append(summary)
 
@@ -190,6 +210,7 @@ def _run_step(
     state: RunnerState,
     num_threads: int,
     local_data_path: Optional[Path] = None,
+    package_version: str = "1.0",
 ) -> StepSummary:
     """Run a single pipeline step."""
 
@@ -233,6 +254,14 @@ def _run_step(
             accession=accession,
             config=config,
             output_base_dir=output_base_dir,
+        )
+
+    elif step_num == 6:
+        return run_step6_package(
+            accession=accession,
+            config=config,
+            output_base_dir=output_base_dir,
+            version=package_version,
         )
 
     else:
@@ -309,6 +338,16 @@ Examples:
         type=Path,
         help="Path to local data (skip download)",
     )
+    parser.add_argument(
+        "--package", "-p",
+        action="store_true",
+        help="Create distributable archive after processing (step 6)",
+    )
+    parser.add_argument(
+        "--package-version",
+        default="1.0",
+        help="Version string for archive (default: 1.0)",
+    )
 
     args = parser.parse_args()
 
@@ -335,6 +374,8 @@ Examples:
         steps=args.steps,
         num_threads=args.threads,
         local_data_path=args.local_data,
+        package=args.package,
+        package_version=args.package_version,
     )
 
     sys.exit(0 if success else 1)
