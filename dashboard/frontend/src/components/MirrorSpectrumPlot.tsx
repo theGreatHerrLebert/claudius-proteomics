@@ -26,10 +26,10 @@ export default function MirrorSpectrumPlot({
       return null;
     }
 
-    // Calculate m/z range from both experimental and matched
+    // Calculate m/z range from experimental spectrum and theoretical fragments
     const allMz = [
       ...mz,
-      ...sageFragments.map(f => f.mz_experimental),
+      ...sageFragments.map(f => f.mz_calculated),
     ];
     const minMz = Math.min(...allMz);
     const maxMz = Math.max(...allMz);
@@ -38,7 +38,8 @@ export default function MirrorSpectrumPlot({
 
     // Calculate intensity ranges
     const maxExpInt = mz.length > 0 ? Math.max(...intensity) : 1;
-    const maxMatchedInt = sageFragments.length > 0
+    // Use Sage intensities for the theoretical panel (normalized display)
+    const maxFragInt = sageFragments.length > 0
       ? Math.max(...sageFragments.map(f => f.intensity))
       : 1;
 
@@ -47,7 +48,7 @@ export default function MirrorSpectrumPlot({
       maxMz: maxMz + mzPadding,
       mzRange: mzRange + 2 * mzPadding,
       maxExpInt,
-      maxMatchedInt,
+      maxFragInt,
     };
   }, [mz, intensity, sageFragments]);
 
@@ -75,7 +76,7 @@ export default function MirrorSpectrumPlot({
   // Scale functions
   const xScale = (m: number) => margin.left + ((m - plotData.minMz) / plotData.mzRange) * plotW;
   const yScaleExp = (i: number) => centerY - (i / plotData.maxExpInt) * halfPlotH * 0.9;
-  const yScaleMatched = (i: number) => centerY + (i / plotData.maxMatchedInt) * halfPlotH * 0.9;
+  const yScaleFrag = (i: number) => centerY + (i / plotData.maxFragInt) * halfPlotH * 0.9;
 
   // Build ion label
   const getIonLabel = (frag: SageMatchedFragment) => {
@@ -91,15 +92,16 @@ export default function MirrorSpectrumPlot({
     <div className="h-full relative">
       {/* Title and legend */}
       <div className="absolute top-1 left-2 text-xs text-gray-400 z-10 flex items-center gap-4">
-        <span>Mirror Spectrum ({mz.length} peaks)</span>
+        <span>Spectrum ({mz.length} peaks)</span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: bIonColor }}></span>
-          <span>b ions ({nBIons})</span>
+          <span>b ({nBIons})</span>
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: yIonColor }}></span>
-          <span>y ions ({nYIons})</span>
+          <span>y ({nYIons})</span>
         </span>
+        <span className="text-yellow-500">(theoretical)</span>
       </div>
       {peptide && (
         <div className="absolute top-1 right-2 text-xs text-green-400 z-10 font-mono">
@@ -139,7 +141,7 @@ export default function MirrorSpectrumPlot({
           0
         </text>
         <text x={margin.left - 5} y={margin.top + plotH - 5} fill="#9ca3af" fontSize={8} textAnchor="end">
-          {formatAxisValue(plotData.maxMatchedInt)}
+          {formatAxisValue(plotData.maxFragInt)}
         </text>
 
         {/* Y-axis title - Experimental */}
@@ -154,7 +156,7 @@ export default function MirrorSpectrumPlot({
           Exp
         </text>
 
-        {/* Y-axis title - Matched */}
+        {/* Y-axis title - Theoretical */}
         <text
           x={15}
           y={centerY + halfPlotH / 2}
@@ -195,16 +197,16 @@ export default function MirrorSpectrumPlot({
           );
         })}
 
-        {/* Matched fragments (bottom panel, pointing down, with labels) */}
+        {/* Theoretical b/y ions (bottom panel, pointing down, with labels) */}
         {sageFragments.map((frag, i) => {
-          const x = xScale(frag.mz_experimental);
+          const x = xScale(frag.mz_calculated);
           const y1 = centerY;
-          const y2 = yScaleMatched(frag.intensity);
+          const y2 = yScaleFrag(frag.intensity);
           const color = frag.fragment_type === 'b' ? bIonColor : yIonColor;
           const label = getIonLabel(frag);
 
           return (
-            <g key={`match-${i}`}>
+            <g key={`frag-${i}`}>
               <line
                 x1={x}
                 y1={y1}
