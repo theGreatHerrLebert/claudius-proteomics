@@ -713,6 +713,9 @@ async def get_precursor(precursor_id: int):
         isotope_mz = to_list(row.get('isotope_mz'))
         isotope_intensity = to_list(row.get('isotope_intensity'))
 
+    # Get Sage modified sequence (standardize format)
+    sage_modified = standardize_modified_sequence(safe_str(row.get('sage_modified')))
+
     # Get Sage matched fragments if available (exact psm_id match only)
     sage_matched_fragments = None
     sage_psm_id = row.get('sage_psm_id')
