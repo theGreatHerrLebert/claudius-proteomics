@@ -4,7 +4,7 @@ Sage Results Parser
 Parses Sage results.sage.parquet files into standardized format.
 
 Key features:
-- PRECURSOR_ID: Sage scannr IS the timsTOF precursor_id, enabling direct join
+- PRECURSOR_ID: Sage scannr+1 = raw precursor_id (raw extraction is 1-indexed)
 - m/z CALCULATION: Sage reports experimental mass, we calculate m/z from mass and charge
   Formula: mz = (expmass + charge * 1.007276) / charge
 - RT CONVERSION: Sage reports RT in MINUTES, we convert to SECONDS at parse time
@@ -42,7 +42,7 @@ class SageParser(BaseParser):
 
     @property
     def has_precursor_id(self) -> bool:
-        """Sage scannr IS the timsTOF precursor_id."""
+        """Sage scannr+1 = raw precursor_id (1-indexed raw extraction)."""
         return True
 
     def find_result_files(self, base_dir: Path, accession: str) -> list[Path]:
@@ -129,10 +129,10 @@ class SageParser(BaseParser):
         rt_seconds = rt_minutes * 60.0 if rt_minutes is not None else None
 
         # Build result DataFrame with standardized columns
-        # precursor_id from scannr enables direct join to raw data
+        # precursor_id = scannr + 1 (raw extraction uses 1-based indexing)
         result = pd.DataFrame({
             "raw_file": df["raw_file"],
-            "precursor_id": df.get("scannr"),  # scannr IS precursor_id for direct join
+            "precursor_id": df.get("scannr") + 1,  # scannr+1 = raw precursor_id
             "sage_psm_id": df.get("psm_id"),  # Links to matched_fragments.sage.parquet
             "sage_peptide": df.get("stripped_peptide"),
             "sage_modified": df["modified_std"],
