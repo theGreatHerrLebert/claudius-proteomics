@@ -423,7 +423,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
           </div>
           <div>
             <span className="text-gray-500">Sage: </span>
-            <span className="font-mono text-green-400">{precursor.sage_peptide || '-'}</span>
+            <span className="font-mono text-green-400">{precursor.sage_modified || precursor.sage_peptide || '-'}</span>
           </div>
           <div>
             <span className="text-gray-500">DIA-NN: </span>
@@ -440,7 +440,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
             mz={precursor.fragment_mz}
             intensity={precursor.fragment_intensity}
             sageFragments={precursor.sage_matched_fragments}
-            peptide={precursor.sage_peptide}
+            peptide={precursor.sage_modified || precursor.sage_peptide}
           />
         ) : (
           <SpectrumPlot
