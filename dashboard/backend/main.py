@@ -107,8 +107,6 @@ blob_dir: Optional[Path] = None  # Directory containing extracted/{raw_file}.d/b
 
 # Sage fragment data (loaded from engines/sage/)
 sage_fragments_by_psm: Dict[int, List[Dict]] = {}  # psm_id -> list of fragment dicts
-sage_scannr_to_psm: Dict[int, int] = {}  # scannr -> psm_id (primary lookup)
-sage_peptide_to_psm: Dict[str, int] = {}  # "peptide_unimod_charge" -> psm_id (fallback lookup)
 sage_data_loaded: bool = False
 
 # Global collection reference (collection mode)
@@ -116,18 +114,6 @@ collection_path: Optional[Path] = None
 collection_manifest: Optional[Dict[str, Any]] = None
 studies_config: Optional[Dict[str, Any]] = None
 active_dataset: Optional[str] = None  # Currently loaded dataset accession
-
-
-def normalize_sage_to_unimod(peptide: str) -> str:
-    """Convert Sage mass delta format [+57.021465] to UNIMOD format [UNIMOD:4]."""
-    if not peptide:
-        return peptide
-    result = peptide
-    result = re.sub(r'\[\+57\.02\d*\]', '[UNIMOD:4]', result)   # Carbamidomethyl
-    result = re.sub(r'\[\+15\.99\d*\]', '[UNIMOD:35]', result)  # Oxidation
-    result = re.sub(r'\[\+42\.01\d*\]', '[UNIMOD:1]', result)   # Acetyl
-    result = re.sub(r'\[\+79\.96\d*\]', '[UNIMOD:21]', result)  # Phospho
-    return result
 
 
 def load_sage_fragments(sage_dir: Path) -> bool:
@@ -138,17 +124,15 @@ def load_sage_fragments(sage_dir: Path) -> bool:
 
     Looks for:
     - matched_fragments.sage.parquet
-    - results.sage.parquet (for scannr -> psm_id lookup)
 
-    Builds lookup dicts:
+    Builds lookup dict:
     - sage_fragments_by_psm: psm_id -> list of fragment dicts
-    - sage_scannr_to_psm: scannr -> psm_id (primary, links to precursor_store.sage_scannr)
-    - sage_peptide_to_psm: "peptide_unimod_charge" -> psm_id (fallback)
+
+    The precursor_store must have sage_psm_id column for exact matching.
     """
-    global sage_fragments_by_psm, sage_scannr_to_psm, sage_peptide_to_psm, sage_data_loaded
+    global sage_fragments_by_psm, sage_data_loaded
 
     fragments_path = sage_dir / "matched_fragments.sage.parquet"
-    results_path = sage_dir / "results.sage.parquet"
 
     if not fragments_path.exists():
         print(f"  Sage fragments not found at {fragments_path}")
@@ -174,22 +158,6 @@ def load_sage_fragments(sage_dir: Path) -> bool:
                 })
             sage_fragments_by_psm[psm_id] = fragments
         print(f"    Loaded fragments for {len(sage_fragments_by_psm)} PSMs")
-
-        # Build scannr -> psm_id lookup from results (primary lookup)
-        if results_path.exists():
-            print(f"  Building scannr lookup from {results_path}")
-            results_df = pq.read_table(str(results_path)).to_pandas()
-
-            # Primary: scannr -> psm_id (links to precursor_store.sage_scannr)
-            sage_scannr_to_psm = dict(zip(results_df['scannr'], results_df['psm_id']))
-            print(f"    Built scannr lookup for {len(sage_scannr_to_psm)} PSMs")
-
-            # Fallback: peptide+charge -> psm_id (for data without sage_scannr)
-            results_df['peptide_norm'] = results_df['peptide'].apply(normalize_sage_to_unimod)
-            results_df['lookup_key'] = results_df['peptide_norm'] + '_' + results_df['charge'].astype(str)
-            best_psms = results_df.sort_values('posterior_error').drop_duplicates('lookup_key', keep='first')
-            sage_peptide_to_psm = dict(zip(best_psms['lookup_key'], best_psms['psm_id']))
-            print(f"    Built fallback peptide lookup for {len(sage_peptide_to_psm)} peptide+charge combos")
 
         sage_data_loaded = True
         return True
@@ -745,25 +713,12 @@ async def get_precursor(precursor_id: int):
         isotope_mz = to_list(row.get('isotope_mz'))
         isotope_intensity = to_list(row.get('isotope_intensity'))
 
-    # Get Sage matched fragments if available
+    # Get Sage matched fragments if available (exact psm_id match only)
     sage_matched_fragments = None
-    sage_modified = safe_str(row.get('sage_modified'))
     sage_psm_id = row.get('sage_psm_id')
-    sage_scannr = row.get('sage_scannr')
-    if sage_data_loaded:
-        psm_id = None
-        # Primary: use sage_psm_id directly (best, from updated index)
-        if pd.notna(sage_psm_id):
-            psm_id = int(sage_psm_id)
-        # Fallback 1: use sage_scannr -> psm_id lookup
-        elif pd.notna(sage_scannr) and sage_scannr_to_psm:
-            psm_id = sage_scannr_to_psm.get(int(sage_scannr))
-        # Fallback 2: peptide+charge lookup (may match wrong spectrum)
-        elif sage_modified and sage_peptide_to_psm:
-            lookup_key = f"{sage_modified}_{precursor_charge}"
-            psm_id = sage_peptide_to_psm.get(lookup_key)
-
-        if psm_id is not None and psm_id in sage_fragments_by_psm:
+    if sage_data_loaded and pd.notna(sage_psm_id):
+        psm_id = int(sage_psm_id)
+        if psm_id in sage_fragments_by_psm:
             sage_matched_fragments = [
                 SageMatchedFragment(**frag) for frag in sage_fragments_by_psm[psm_id]
             ]
