@@ -64,7 +64,12 @@ class FragPipeAnchoredMerger:
         merged = self._join_fragpipe_direct(raw_precursors, fragpipe_df)
         print(f"  After FragPipe join: {(merged['fragpipe_peptide'].notna()).sum()} identified")
 
-        # Step 2 & 3: Match DIA-NN using tiered strategy
+        # Step 2: Join Sage directly by precursor_id (scannr = precursor_id)
+        if not sage_df.empty:
+            merged = self._join_sage_direct(merged, sage_df)
+            print(f"  After Sage join: {(merged['sage_peptide'].notna()).sum()} identified")
+
+        # Step 3: Match DIA-NN using tiered strategy (no direct precursor_id)
         if not diann_df.empty:
             merged = self._match_engine(
                 merged, diann_df,
@@ -75,19 +80,6 @@ class FragPipeAnchoredMerger:
                 mz_col="diann_mz",
                 rt_col="diann_rt",
                 im_col="diann_mobility",
-            )
-
-        # Step 2 & 3: Match Sage using tiered strategy
-        if not sage_df.empty:
-            merged = self._match_engine(
-                merged, sage_df,
-                engine_name="sage",
-                peptide_col="sage_peptide",
-                modified_col="sage_modified",
-                charge_col="sage_charge",
-                mz_col="sage_mz",
-                rt_col="sage_rt",
-                im_col="sage_mobility",
             )
 
         # Step 4: Calculate consensus
@@ -134,6 +126,46 @@ class FragPipeAnchoredMerger:
         # Track stats
         self.stats["fragpipe"] = {
             "direct_join": (merged["fragpipe_peptide"].notna()).sum(),
+        }
+
+        return merged
+
+    def _join_sage_direct(
+        self,
+        merged_df: pd.DataFrame,
+        sage_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Join Sage results directly by precursor_id.
+
+        Sage's scannr field corresponds to timsTOF precursor_id, enabling
+        direct join to raw data (confirmed: 100% intersection with
+        pasef_meta_data.precursor_id).
+
+        Args:
+            merged_df: Current merged DataFrame (with raw + FragPipe)
+            sage_df: Sage PSM results (with precursor_id from scannr)
+
+        Returns:
+            Merged DataFrame with Sage columns added
+        """
+        if sage_df.empty:
+            return merged_df
+
+        # Direct join on (raw_file, precursor_id)
+        # Sage df has precursor_id column (from scannr)
+        sage_cols = [c for c in sage_df.columns if c.startswith("sage_")]
+        join_cols = ["raw_file", "precursor_id"]
+        sage_subset = sage_df[join_cols + sage_cols].copy()
+
+        merged = merged_df.merge(
+            sage_subset,
+            on=join_cols,
+            how="left"
+        )
+
+        # Track stats
+        self.stats["sage"] = {
+            "direct_join": (merged["sage_peptide"].notna()).sum(),
         }
 
         return merged
