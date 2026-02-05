@@ -71,11 +71,22 @@ export interface RawFileInfo {
   count: number;
 }
 
+export interface SageMatchedFragment {
+  fragment_type: string;  // "b" or "y"
+  ion_number: number;     // fragment_ordinals (1, 2, 3...)
+  charge: number;         // fragment_charge
+  mz_experimental: number;
+  mz_calculated: number;
+  intensity: number;
+}
+
 export interface PrecursorDetail extends PrecursorSummary {
+  sage_modified: string | null;
   fragment_mz: number[];
   fragment_intensity: number[];
   fragment_mobility: number[];
   fragment_scan: number[];
+  sage_matched_fragments: SageMatchedFragment[] | null;
   xic_rt: number[];
   xic_intensity: number[];
   mobilogram_im: number[];
