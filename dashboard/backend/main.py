@@ -107,6 +107,7 @@ blob_dir: Optional[Path] = None  # Directory containing extracted/{raw_file}.d/b
 
 # Sage fragment data (loaded from engines/sage/)
 sage_fragments_by_psm: Dict[int, List[Dict]] = {}  # psm_id -> list of fragment dicts
+sage_scannr_to_psm: Dict[int, int] = {}  # scannr -> psm_id (primary lookup)
 sage_peptide_to_psm: Dict[str, int] = {}  # "peptide_unimod_charge" -> psm_id (fallback lookup)
 sage_data_loaded: bool = False
 
@@ -137,16 +138,14 @@ def load_sage_fragments(sage_dir: Path) -> bool:
 
     Looks for:
     - matched_fragments.sage.parquet
-    - results.sage.parquet (for fallback peptide+charge lookup)
+    - results.sage.parquet (for scannr -> psm_id lookup)
 
     Builds lookup dicts:
     - sage_fragments_by_psm: psm_id -> list of fragment dicts
+    - sage_scannr_to_psm: scannr -> psm_id (primary, links to precursor_store.sage_scannr)
     - sage_peptide_to_psm: "peptide_unimod_charge" -> psm_id (fallback)
-
-    The precursor_store.parquet should have sage_psm_id column linking
-    to these fragments. If not (older data), falls back to peptide+charge matching.
     """
-    global sage_fragments_by_psm, sage_peptide_to_psm, sage_data_loaded
+    global sage_fragments_by_psm, sage_scannr_to_psm, sage_peptide_to_psm, sage_data_loaded
 
     fragments_path = sage_dir / "matched_fragments.sage.parquet"
     results_path = sage_dir / "results.sage.parquet"
@@ -176,21 +175,21 @@ def load_sage_fragments(sage_dir: Path) -> bool:
             sage_fragments_by_psm[psm_id] = fragments
         print(f"    Loaded fragments for {len(sage_fragments_by_psm)} PSMs")
 
-        # Build fallback peptide+charge -> psm_id lookup from results
+        # Build scannr -> psm_id lookup from results (primary lookup)
         if results_path.exists():
-            print(f"  Building fallback peptide lookup from {results_path}")
+            print(f"  Building scannr lookup from {results_path}")
             results_df = pq.read_table(str(results_path)).to_pandas()
 
-            # Normalize peptide format to UNIMOD
+            # Primary: scannr -> psm_id (links to precursor_store.sage_scannr)
+            sage_scannr_to_psm = dict(zip(results_df['scannr'], results_df['psm_id']))
+            print(f"    Built scannr lookup for {len(sage_scannr_to_psm)} PSMs")
+
+            # Fallback: peptide+charge -> psm_id (for data without sage_scannr)
             results_df['peptide_norm'] = results_df['peptide'].apply(normalize_sage_to_unimod)
-
-            # Create key: peptide_norm + "_" + charge
             results_df['lookup_key'] = results_df['peptide_norm'] + '_' + results_df['charge'].astype(str)
-
-            # For each unique key, take the PSM with lowest posterior_error (best match)
             best_psms = results_df.sort_values('posterior_error').drop_duplicates('lookup_key', keep='first')
             sage_peptide_to_psm = dict(zip(best_psms['lookup_key'], best_psms['psm_id']))
-            print(f"    Built fallback lookup for {len(sage_peptide_to_psm)} peptide+charge combos")
+            print(f"    Built fallback peptide lookup for {len(sage_peptide_to_psm)} peptide+charge combos")
 
         sage_data_loaded = True
         return True
@@ -749,14 +748,14 @@ async def get_precursor(precursor_id: int):
     # Get Sage matched fragments if available
     sage_matched_fragments = None
     sage_modified = safe_str(row.get('sage_modified'))
-    sage_psm_id = row.get('sage_psm_id')
+    sage_scannr = row.get('sage_scannr')
     if sage_data_loaded:
         psm_id = None
-        # Try direct psm_id lookup first (new data format)
-        if pd.notna(sage_psm_id):
-            psm_id = int(sage_psm_id)
-        # Fallback to peptide+charge lookup (old data format)
-        elif sage_modified and sage_peptide_to_psm:
+        # Primary: use sage_scannr -> psm_id lookup (reliable, scan-level linkage)
+        if pd.notna(sage_scannr) and sage_scannr_to_psm:
+            psm_id = sage_scannr_to_psm.get(int(sage_scannr))
+        # Fallback: peptide+charge lookup (may match wrong spectrum)
+        if psm_id is None and sage_modified and sage_peptide_to_psm:
             lookup_key = f"{sage_modified}_{precursor_charge}"
             psm_id = sage_peptide_to_psm.get(lookup_key)
 
