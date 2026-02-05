@@ -92,7 +92,7 @@ export default function MirrorSpectrumPlot({
     <div className="h-full relative">
       {/* Title and legend */}
       <div className="absolute top-1 left-2 text-xs text-gray-400 z-10 flex items-center gap-4">
-        <span>Spectrum ({mz.length} peaks)</span>
+        <span>Merged MS2 ({mz.length} peaks)</span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: bIonColor }}></span>
           <span>b ({nBIons})</span>
@@ -101,7 +101,7 @@ export default function MirrorSpectrumPlot({
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: yIonColor }}></span>
           <span>y ({nYIons})</span>
         </span>
-        <span className="text-yellow-500">(theoretical)</span>
+        <span className="text-yellow-500">theoretical</span>
       </div>
       {peptide && (
         <div className="absolute top-1 right-2 text-xs text-green-400 z-10 font-mono">
