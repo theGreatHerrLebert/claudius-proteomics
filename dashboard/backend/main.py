@@ -26,6 +26,7 @@ import pyarrow.parquet as pq
 import yaml
 
 import gzip
+import re
 
 
 # Mass delta to UNIMOD mapping (for standardizing modification display)
@@ -104,11 +105,109 @@ store_path: Optional[Path] = None
 parquet_file: Optional[pq.ParquetFile] = None
 blob_dir: Optional[Path] = None  # Directory containing extracted/{raw_file}.d/blobs.bin
 
+# Sage fragment data (loaded from engines/sage/)
+sage_fragments_by_psm: Dict[int, List[Dict]] = {}  # psm_id -> list of fragment dicts
+sage_peptide_to_psm: Dict[str, int] = {}  # "peptide_unimod_charge" -> psm_id (fallback lookup)
+sage_data_loaded: bool = False
+
 # Global collection reference (collection mode)
 collection_path: Optional[Path] = None
 collection_manifest: Optional[Dict[str, Any]] = None
 studies_config: Optional[Dict[str, Any]] = None
 active_dataset: Optional[str] = None  # Currently loaded dataset accession
+
+
+def normalize_sage_to_unimod(peptide: str) -> str:
+    """Convert Sage mass delta format [+57.021465] to UNIMOD format [UNIMOD:4]."""
+    if not peptide:
+        return peptide
+    result = peptide
+    result = re.sub(r'\[\+57\.02\d*\]', '[UNIMOD:4]', result)   # Carbamidomethyl
+    result = re.sub(r'\[\+15\.99\d*\]', '[UNIMOD:35]', result)  # Oxidation
+    result = re.sub(r'\[\+42\.01\d*\]', '[UNIMOD:1]', result)   # Acetyl
+    result = re.sub(r'\[\+79\.96\d*\]', '[UNIMOD:21]', result)  # Phospho
+    return result
+
+
+def load_sage_fragments(sage_dir: Path) -> bool:
+    """Load Sage matched fragments for fragment annotation.
+
+    Args:
+        sage_dir: Path to directory containing Sage output files
+
+    Looks for:
+    - matched_fragments.sage.parquet
+    - results.sage.parquet (for fallback peptide+charge lookup)
+
+    Builds lookup dicts:
+    - sage_fragments_by_psm: psm_id -> list of fragment dicts
+    - sage_peptide_to_psm: "peptide_unimod_charge" -> psm_id (fallback)
+
+    The precursor_store.parquet should have sage_psm_id column linking
+    to these fragments. If not (older data), falls back to peptide+charge matching.
+    """
+    global sage_fragments_by_psm, sage_peptide_to_psm, sage_data_loaded
+
+    fragments_path = sage_dir / "matched_fragments.sage.parquet"
+    results_path = sage_dir / "results.sage.parquet"
+
+    if not fragments_path.exists():
+        print(f"  Sage fragments not found at {fragments_path}")
+        return False
+
+    try:
+        # Load fragments
+        print(f"  Loading Sage fragments from {fragments_path}")
+        fragments_df = pq.read_table(str(fragments_path)).to_pandas()
+
+        # Group fragments by psm_id
+        sage_fragments_by_psm = {}
+        for psm_id, group in fragments_df.groupby('psm_id'):
+            fragments = []
+            for _, row in group.iterrows():
+                fragments.append({
+                    'fragment_type': row['fragment_type'],
+                    'ion_number': int(row['fragment_ordinals']),
+                    'charge': int(row['fragment_charge']),
+                    'mz_experimental': float(row['fragment_mz_experimental']),
+                    'mz_calculated': float(row['fragment_mz_calculated']),
+                    'intensity': float(row['fragment_intensity']),
+                })
+            sage_fragments_by_psm[psm_id] = fragments
+        print(f"    Loaded fragments for {len(sage_fragments_by_psm)} PSMs")
+
+        # Build fallback peptide+charge -> psm_id lookup from results
+        if results_path.exists():
+            print(f"  Building fallback peptide lookup from {results_path}")
+            results_df = pq.read_table(str(results_path)).to_pandas()
+
+            # Normalize peptide format to UNIMOD
+            results_df['peptide_norm'] = results_df['peptide'].apply(normalize_sage_to_unimod)
+
+            # Create key: peptide_norm + "_" + charge
+            results_df['lookup_key'] = results_df['peptide_norm'] + '_' + results_df['charge'].astype(str)
+
+            # For each unique key, take the PSM with lowest posterior_error (best match)
+            best_psms = results_df.sort_values('posterior_error').drop_duplicates('lookup_key', keep='first')
+            sage_peptide_to_psm = dict(zip(best_psms['lookup_key'], best_psms['psm_id']))
+            print(f"    Built fallback lookup for {len(sage_peptide_to_psm)} peptide+charge combos")
+
+        sage_data_loaded = True
+        return True
+
+    except Exception as e:
+        print(f"  Error loading Sage data: {e}")
+        return False
+
+
+class SageMatchedFragment(BaseModel):
+    """A matched b/y ion from Sage search results."""
+    fragment_type: str      # "b" or "y"
+    ion_number: int         # fragment_ordinals (1, 2, 3...)
+    charge: int             # fragment_charge
+    mz_experimental: float
+    mz_calculated: float
+    intensity: float
 
 
 class PrecursorSummary(BaseModel):
@@ -179,6 +278,7 @@ class PrecursorDetail(BaseModel):
     n_engines: int
     fragpipe_peptide: Optional[str] = None
     sage_peptide: Optional[str] = None
+    sage_modified: Optional[str] = None
     diann_peptide: Optional[str] = None
 
     # Fragment spectrum
@@ -186,6 +286,9 @@ class PrecursorDetail(BaseModel):
     fragment_intensity: List[float]
     fragment_mobility: List[float]
     fragment_scan: List[int]
+
+    # Sage matched b/y ions (if available)
+    sage_matched_fragments: Optional[List[SageMatchedFragment]] = None
 
     # MS1 projections
     xic_rt: List[float]
@@ -643,6 +746,25 @@ async def get_precursor(precursor_id: int):
         isotope_mz = to_list(row.get('isotope_mz'))
         isotope_intensity = to_list(row.get('isotope_intensity'))
 
+    # Get Sage matched fragments if available
+    sage_matched_fragments = None
+    sage_modified = safe_str(row.get('sage_modified'))
+    sage_psm_id = row.get('sage_psm_id')
+    if sage_data_loaded:
+        psm_id = None
+        # Try direct psm_id lookup first (new data format)
+        if pd.notna(sage_psm_id):
+            psm_id = int(sage_psm_id)
+        # Fallback to peptide+charge lookup (old data format)
+        elif sage_modified and sage_peptide_to_psm:
+            lookup_key = f"{sage_modified}_{precursor_charge}"
+            psm_id = sage_peptide_to_psm.get(lookup_key)
+
+        if psm_id is not None and psm_id in sage_fragments_by_psm:
+            sage_matched_fragments = [
+                SageMatchedFragment(**frag) for frag in sage_fragments_by_psm[psm_id]
+            ]
+
     return PrecursorDetail(
         precursor_id=int(row['precursor_id']),
         mz=float(row['mz']) if pd.notna(row.get('mz')) else 0.0,
@@ -652,11 +774,13 @@ async def get_precursor(precursor_id: int):
         n_engines=int(row['n_engines']) if pd.notna(row.get('n_engines')) else 0,
         fragpipe_peptide=safe_str(row.get('fragpipe_peptide')),
         sage_peptide=safe_str(row.get('sage_peptide')),
+        sage_modified=sage_modified,
         diann_peptide=safe_str(row.get('diann_peptide')),
         fragment_mz=fragment_mz,
         fragment_intensity=fragment_intensity,
         fragment_mobility=fragment_mobility,
         fragment_scan=fragment_scan,
+        sage_matched_fragments=sage_matched_fragments,
         xic_rt=xic_rt,
         xic_intensity=xic_intensity,
         mobilogram_im=mobilogram_im,
@@ -924,6 +1048,7 @@ Modes:
     )
     parser.add_argument("--store", help="Path to Parquet store (single dataset mode)")
     parser.add_argument("--blob-dir", help="Path to extracted/ directory containing blobs")
+    parser.add_argument("--sage-dir", help="Path to engines/sage/ directory containing matched_fragments")
     parser.add_argument("--collection", help="Path to collection root (collection mode)")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--host", default="127.0.0.1")
@@ -959,6 +1084,16 @@ Modes:
             else:
                 blob_dir = None
                 print(f"Warning: Blob directory not found: {p.parent / 'extracted'}")
+
+            # Try to load Sage fragment data
+            if args.sage_dir:
+                sage_dir = Path(args.sage_dir)
+            else:
+                # Auto-detect: try parent/engines/sage/ or sibling PXD*/engines/sage/
+                sage_dir = p.parent / "engines" / "sage"
+            sage_loaded = load_sage_fragments(sage_dir)
+            if sage_loaded:
+                print("  Sage fragment annotation enabled")
         else:
             print(f"Warning: Store not found: {p}")
 

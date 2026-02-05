@@ -1,5 +1,6 @@
 import { useMemo, useRef, useEffect } from 'react';
 import type { PrecursorDetail } from '../api';
+import MirrorSpectrumPlot from './MirrorSpectrumPlot';
 
 interface PrecursorVizProps {
   precursor: PrecursorDetail | null;
@@ -432,12 +433,22 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
       </div>
 
       {/* Fragment spectrum - full width */}
-      <div className="flex-none h-44 bg-gray-800 rounded overflow-hidden">
-        <SpectrumPlot
-          mz={precursor.fragment_mz}
-          intensity={precursor.fragment_intensity}
-          title={`Fragment Spectrum (${precursor.fragment_mz.length} peaks)`}
-        />
+      {/* Show mirror plot if Sage fragments available, otherwise simple spectrum */}
+      <div className={`flex-none bg-gray-800 rounded overflow-hidden ${precursor.sage_matched_fragments?.length ? 'h-56' : 'h-44'}`}>
+        {precursor.sage_matched_fragments?.length ? (
+          <MirrorSpectrumPlot
+            mz={precursor.fragment_mz}
+            intensity={precursor.fragment_intensity}
+            sageFragments={precursor.sage_matched_fragments}
+            peptide={precursor.sage_peptide}
+          />
+        ) : (
+          <SpectrumPlot
+            mz={precursor.fragment_mz}
+            intensity={precursor.fragment_intensity}
+            title={`Fragment Spectrum (${precursor.fragment_mz.length} peaks)`}
+          />
+        )}
       </div>
 
       {/* Second row: heatmaps */}

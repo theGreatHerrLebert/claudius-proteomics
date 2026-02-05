@@ -124,6 +124,7 @@ class SageParser(BaseParser):
         # Build result DataFrame with standardized columns
         result = pd.DataFrame({
             "raw_file": df["raw_file"],
+            "sage_psm_id": df.get("psm_id"),  # Links to matched_fragments.sage.parquet
             "sage_scannr": df.get("scannr"),  # Keep for reference, NOT for matching
             "sage_peptide": df.get("stripped_peptide"),
             "sage_modified": df["modified_std"],
