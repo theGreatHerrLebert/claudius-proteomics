@@ -7,6 +7,7 @@ Key features:
 - m/z CALCULATION: Sage reports experimental mass, we calculate m/z from mass and charge
   Formula: mz = (expmass + charge * 1.007276) / charge
   This is intentional and documented behavior.
+- RT CONVERSION: Sage reports RT in MINUTES, we convert to SECONDS at parse time
 - scannr from mzML conversion is NOT the timsTOF precursor_id
 - Standardizes [+mass] format to [UNIMOD:X]
 - Filters decoy hits
@@ -60,8 +61,10 @@ class SageParser(BaseParser):
     ) -> pd.DataFrame:
         """Parse Sage results into standardized DataFrame.
 
-        IMPORTANT: m/z is calculated from experimental mass and charge.
-        This is intentional - Sage reports mass, not m/z directly.
+        IMPORTANT:
+        - m/z is calculated from experimental mass and charge.
+          This is intentional - Sage reports mass, not m/z directly.
+        - RT is converted from minutes to seconds at parse time.
 
         Args:
             base_dir: Base directory for processed data
@@ -121,6 +124,11 @@ class SageParser(BaseParser):
         if "posterior_error" in df.columns:
             pep_values = np.exp(df["posterior_error"])
 
+        # CRITICAL: Convert RT from minutes to seconds
+        # Sage reports RT in minutes (confirmed: data range 0-120 for 2h runs)
+        rt_minutes = df.get("rt")
+        rt_seconds = rt_minutes * 60.0 if rt_minutes is not None else None
+
         # Build result DataFrame with standardized columns
         result = pd.DataFrame({
             "raw_file": df["raw_file"],
@@ -136,7 +144,7 @@ class SageParser(BaseParser):
             "sage_protein_qvalue": df.get("protein_q"),
             "sage_pep": pep_values,
             "sage_hyperscore": df.get("hyperscore"),
-            "sage_rt": df.get("rt"),  # Sage RT is in seconds
+            "sage_rt": rt_seconds,  # Converted from minutes to seconds
             "sage_mobility": df.get("ion_mobility"),
         })
 
