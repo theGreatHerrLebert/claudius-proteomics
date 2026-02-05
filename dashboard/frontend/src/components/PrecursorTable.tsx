@@ -9,11 +9,45 @@ import type { PrecursorSummary } from '../api';
 
 const columnHelper = createColumnHelper<PrecursorSummary>();
 
+// Columns that support server-side sorting (must match backend sort_by pattern)
+const SORTABLE_COLUMNS: Record<string, string> = {
+  precursor_id: 'precursor_id',
+  mz: 'mz',
+  rt_seconds: 'rt_seconds',
+  n_engines: 'n_engines',
+  raw_intensity_meta: 'raw_intensity_meta',
+  mobility: 'mobility',
+  fragpipe_probability: 'fragpipe_probability',
+  fragpipe_hyperscore: 'fragpipe_hyperscore',
+  sage_hyperscore: 'sage_hyperscore',
+  sage_qvalue: 'sage_qvalue',
+  diann_qvalue: 'diann_qvalue',
+  ms1_rt_r2: 'ms1_rt_r2',
+  ms1_im_r2: 'ms1_im_r2',
+  isotope_cosim: 'isotope_cosim',
+};
+
 interface PrecursorTableProps {
   data: PrecursorSummary[];
   selectedId: number | null;
   onSelect: (id: number) => void;
   isLoading?: boolean;
+  sortBy?: string;
+  sortDesc?: boolean;
+  onSort?: (column: string) => void;
+}
+
+function SortIndicator({ column, currentSort, sortDesc }: { column: string; currentSort?: string; sortDesc?: boolean }) {
+  const isSortable = column in SORTABLE_COLUMNS;
+  const isActive = currentSort === SORTABLE_COLUMNS[column];
+
+  if (!isSortable) return null;
+
+  return (
+    <span className={`ml-1 inline-block ${isActive ? 'text-blue-400' : 'text-gray-600'}`}>
+      {isActive ? (sortDesc ? '▼' : '▲') : '⇅'}
+    </span>
+  );
 }
 
 export default function PrecursorTable({
@@ -21,6 +55,9 @@ export default function PrecursorTable({
   selectedId,
   onSelect,
   isLoading,
+  sortBy,
+  sortDesc,
+  onSort,
 }: PrecursorTableProps) {
   const columns = useMemo(
     () => [
@@ -277,6 +314,12 @@ export default function PrecursorTable({
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const handleHeaderClick = (columnId: string) => {
+    if (onSort && columnId in SORTABLE_COLUMNS) {
+      onSort(SORTABLE_COLUMNS[columnId]);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400">
@@ -291,15 +334,23 @@ export default function PrecursorTable({
         <thead className="sticky top-0 bg-gray-800 text-gray-300">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-3 py-2 text-left font-medium border-b border-gray-700"
-                  style={{ width: header.getSize() }}
-                >
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
-              ))}
+              {headerGroup.headers.map((header) => {
+                const columnId = header.column.id;
+                const isSortable = columnId in SORTABLE_COLUMNS;
+                return (
+                  <th
+                    key={header.id}
+                    className={`px-3 py-2 text-left font-medium border-b border-gray-700 ${
+                      isSortable ? 'cursor-pointer hover:bg-gray-700 select-none' : ''
+                    }`}
+                    style={{ width: header.getSize() }}
+                    onClick={() => handleHeaderClick(columnId)}
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    <SortIndicator column={columnId} currentSort={sortBy} sortDesc={sortDesc} />
+                  </th>
+                );
+              })}
             </tr>
           ))}
         </thead>

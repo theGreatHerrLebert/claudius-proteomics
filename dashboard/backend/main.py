@@ -297,7 +297,7 @@ async def list_precursors(
     charge: Optional[int] = Query(None),
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
-    sort_by: str = Query("n_engines", pattern="^(raw_intensity_meta|n_engines|mz|rt_seconds|precursor_id)$"),
+    sort_by: str = Query("n_engines", pattern="^(raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
     sort_desc: bool = Query(True),
 ):
     """List precursors with pagination and filtering."""
@@ -317,7 +317,14 @@ async def list_precursors(
     charge_col = 'raw_charge' if use_raw_prefix else 'charge'
     rt_col = 'raw_rt_seconds' if use_raw_prefix else 'rt_seconds'
     mobility_col = 'raw_mobility' if use_raw_prefix else 'mobility'
-    intensity_col = 'raw_intensity_meta'  # This one stays the same
+    # Try different intensity column names
+    available_cols_check = parquet_file.schema_arrow.names
+    if 'precursor_intensity' in available_cols_check:
+        intensity_col = 'precursor_intensity'
+    elif 'ms1_total_intensity' in available_cols_check:
+        intensity_col = 'ms1_total_intensity'
+    else:
+        intensity_col = 'raw_intensity_meta'
 
     # Build column list - base columns that must exist
     base_columns = ['precursor_id', 'raw_file', mz_col, charge_col, rt_col, mobility_col, 'n_engines']
@@ -337,7 +344,7 @@ async def list_precursors(
         'diann_peptide', 'diann_modified', 'diann_protein',
         'diann_qvalue', 'diann_pep', 'diann_global_qvalue', 'diann_pg_qvalue',
         'diann_rt', 'diann_mz', 'diann_mobility', 'diann_ccs', 'diann_match_tier', 'diann_match_score',
-        # Raw
+        # Raw (intensity_col is auto-detected: precursor_intensity, ms1_total_intensity, or raw_intensity_meta)
         intensity_col, 'frame_id', 'isolation_mz',
         # Quality metrics
         'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim'
@@ -365,18 +372,26 @@ async def list_precursors(
         df = df[df[rt_col].notna()]
 
     # Sort - when sorting by n_engines, also sort by intensity within each group
+    # Map sort column to actual column name
+    sort_col = sort_by
+    if sort_by == 'raw_intensity_meta' or sort_by == 'precursor_intensity':
+        sort_col = intensity_col
+    elif sort_by == 'mz':
+        sort_col = mz_col
+    elif sort_by == 'rt_seconds':
+        sort_col = rt_col
+    elif sort_by == 'mobility':
+        sort_col = mobility_col
+
     if sort_by == 'n_engines' and intensity_col in df.columns:
+        # Special case: sort by n_engines with intensity as secondary
         df = df.sort_values(
             ['n_engines', intensity_col],
             ascending=[not sort_desc, False],
             na_position='last'
         )
-    elif sort_by == 'mz' and mz_col in df.columns:
-        df = df.sort_values(mz_col, ascending=not sort_desc, na_position='last')
-    elif sort_by == 'rt_seconds' and rt_col in df.columns:
-        df = df.sort_values(rt_col, ascending=not sort_desc, na_position='last')
-    elif sort_by in df.columns:
-        df = df.sort_values(sort_by, ascending=not sort_desc, na_position='last')
+    elif sort_col in df.columns:
+        df = df.sort_values(sort_col, ascending=not sort_desc, na_position='last')
 
     # Paginate
     df = df.iloc[offset:offset + limit]
@@ -597,6 +612,10 @@ async def get_precursor(precursor_id: int):
             int(row['blob_size'])
         )
 
+    # Get precursor properties for isotope m/z calculation
+    precursor_mz = float(row['mz']) if pd.notna(row.get('mz')) else 0.0
+    precursor_charge = int(row['charge']) if pd.notna(row.get('charge')) else 1
+
     # Use blob data if available, otherwise try parquet columns, otherwise empty
     if blob_data:
         fragment_mz = blob_data.get("fragment_mz", [])
@@ -607,8 +626,11 @@ async def get_precursor(precursor_id: int):
         xic_intensity = blob_data.get("xic_intensity", [])
         mobilogram_im = blob_data.get("mobilogram_im", [])
         mobilogram_intensity = blob_data.get("mobilogram_intensity", [])
-        isotope_mz = blob_data.get("isotope_mz", [])
         isotope_intensity = blob_data.get("isotope_intensity", [])
+        # Compute isotope m/z from precursor m/z and charge
+        # Delta mass between C13 and C12 is ~1.003355 Da
+        delta_mass = 1.003355
+        isotope_mz = [precursor_mz + (i * delta_mass / precursor_charge) for i in range(len(isotope_intensity))]
     else:
         fragment_mz = to_list(row.get('fragment_mz'))
         fragment_intensity = to_list(row.get('fragment_intensity'))

@@ -98,6 +98,16 @@ function DatasetView({
     };
   }, [isResizing]);
 
+  // Handle sorting - clicking same column toggles direction, new column sorts desc
+  const handleSort = (column: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: column,
+      sortDesc: prev.sortBy === column ? !prev.sortDesc : true,
+    }));
+    setPage(0); // Reset to first page on sort change
+  };
+
   // Fetch precursor list
   const {
     data: precursors,
@@ -262,6 +272,9 @@ function DatasetView({
               selectedId={selectedId}
               onSelect={setSelectedId}
               isLoading={isLoadingList}
+              sortBy={filters.sortBy}
+              sortDesc={filters.sortDesc}
+              onSort={handleSort}
             />
           </div>
 
