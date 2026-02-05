@@ -4,11 +4,10 @@ Sage Results Parser
 Parses Sage results.sage.parquet files into standardized format.
 
 Key features:
+- PRECURSOR_ID: Sage scannr IS the timsTOF precursor_id, enabling direct join
 - m/z CALCULATION: Sage reports experimental mass, we calculate m/z from mass and charge
   Formula: mz = (expmass + charge * 1.007276) / charge
-  This is intentional and documented behavior.
 - RT CONVERSION: Sage reports RT in MINUTES, we convert to SECONDS at parse time
-- scannr from mzML conversion is NOT the timsTOF precursor_id
 - Standardizes [+mass] format to [UNIMOD:X]
 - Filters decoy hits
 """
@@ -32,9 +31,9 @@ PROTON_MASS = 1.007276
 class SageParser(BaseParser):
     """Parser for Sage results.sage.parquet results.
 
-    Sage uses mzML files converted from timsTOF .d files. The scannr field
-    comes from mzML conversion and does NOT correspond to timsTOF precursor_id.
-    Matching requires sequence or coordinate matching.
+    Sage's scannr field corresponds to timsTOF precursor_id, enabling
+    direct join to raw data (same as FragPipe). This was confirmed by
+    checking intersection: all scannr values exist in pasef_meta_data.precursor_id.
     """
 
     @property
@@ -43,8 +42,8 @@ class SageParser(BaseParser):
 
     @property
     def has_precursor_id(self) -> bool:
-        """Sage scannr is NOT the timsTOF precursor_id."""
-        return False
+        """Sage scannr IS the timsTOF precursor_id."""
+        return True
 
     def find_result_files(self, base_dir: Path, accession: str) -> list[Path]:
         """Find Sage results.sage.parquet file."""
@@ -62,9 +61,9 @@ class SageParser(BaseParser):
         """Parse Sage results into standardized DataFrame.
 
         IMPORTANT:
-        - m/z is calculated from experimental mass and charge.
-          This is intentional - Sage reports mass, not m/z directly.
-        - RT is converted from minutes to seconds at parse time.
+        - precursor_id comes from scannr (enables direct join to raw data)
+        - m/z is calculated from experimental mass and charge
+        - RT is converted from minutes to seconds at parse time
 
         Args:
             base_dir: Base directory for processed data
@@ -72,7 +71,7 @@ class SageParser(BaseParser):
             raw_file_filter: Optional filter for specific raw file
 
         Returns:
-            DataFrame with sage_* prefixed columns
+            DataFrame with sage_* prefixed columns + precursor_id for joining
         """
         sage_path = base_dir / accession / "sage" / "results.sage.parquet"
 
@@ -130,10 +129,11 @@ class SageParser(BaseParser):
         rt_seconds = rt_minutes * 60.0 if rt_minutes is not None else None
 
         # Build result DataFrame with standardized columns
+        # precursor_id from scannr enables direct join to raw data
         result = pd.DataFrame({
             "raw_file": df["raw_file"],
+            "precursor_id": df.get("scannr"),  # scannr IS precursor_id for direct join
             "sage_psm_id": df.get("psm_id"),  # Links to matched_fragments.sage.parquet
-            "sage_scannr": df.get("scannr"),  # Keep for reference, NOT for matching
             "sage_peptide": df.get("stripped_peptide"),
             "sage_modified": df["modified_std"],
             "sage_protein": df.get("proteins"),
