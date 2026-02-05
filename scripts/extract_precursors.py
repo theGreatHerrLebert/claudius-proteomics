@@ -415,13 +415,17 @@ def extract_precursors(
         largest_peak_mz = float(row['largest_peak_mz'])
         rt_sec = float(row['time']) * 60.0
 
-        # Use best available m/z
-        mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
+        # Use largest_peak_mz for XIC/mobilogram (best signal intensity)
+        # Use mono_mz for isotope envelope extraction (M+0 starting point)
+        # If mono_mz is not available, fall back to largest_peak_mz for both
+        extraction_mz = largest_peak_mz
+        isotope_start_mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
 
         # Build coordinate for Rust extraction
         coord = py_dda.PyPrecursorCoord(
             precursor_id=int(precursor_id),
-            mz=float(mz),
+            mz=float(extraction_mz),         # For XIC/mobilogram (largest_peak_mz)
+            mono_mz=float(isotope_start_mz), # For isotope envelope (mono_mz or fallback)
             rt_seconds=float(rt_sec),
             mobility=float(mobility),
             charge=int(charge) if charge is not None else 2,
@@ -776,11 +780,15 @@ def extract_precursors_batched(
                 largest_peak_mz = float(row['largest_peak_mz'])
                 rt_sec = float(row['time']) * 60.0
 
-                mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
+                # Use largest_peak_mz for XIC/mobilogram (best signal intensity)
+                # Use mono_mz for isotope envelope extraction (M+0 starting point)
+                extraction_mz = largest_peak_mz
+                isotope_start_mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
 
                 coord = py_dda.PyPrecursorCoord(
                     precursor_id=int(precursor_id),
-                    mz=float(mz),
+                    mz=float(extraction_mz),         # For XIC/mobilogram (largest_peak_mz)
+                    mono_mz=float(isotope_start_mz), # For isotope envelope (mono_mz or fallback)
                     rt_seconds=float(rt_sec),
                     mobility=float(mobility),
                     charge=int(charge) if charge is not None else 2,
