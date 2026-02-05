@@ -195,7 +195,7 @@ def _load_diann_with_parser(processed_dir: Path) -> Optional[pd.DataFrame]:
 def _load_sage_with_parser(processed_dir: Path) -> Optional[pd.DataFrame]:
     """Load Sage results using parser.
 
-    Sage scannr IS the timsTOF precursor_id (confirmed: 100% intersection).
+    Sage scannr+1 = raw precursor_id (raw extraction uses 1-based indexing).
     m/z is calculated from experimental mass at parse time.
     """
     parser = SageParser()
@@ -525,7 +525,7 @@ def _build_precursor_index_anchored(
         print(f"    DIA-NN matches: {dn_stats['sequence']} sequence, {dn_stats['coordinate']} coordinate")
 
     # === Step 4: Direct join Sage by precursor_id (like FragPipe) ===
-    # Sage's scannr IS the timsTOF precursor_id, enabling exact matching
+    # Sage parser converts scannr+1 to precursor_id (raw extraction is 1-indexed)
     if sg_df is not None and not sg_df.empty:
         sg_join = sg_df.copy()
 
