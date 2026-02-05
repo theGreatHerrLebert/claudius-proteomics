@@ -276,21 +276,21 @@ class ExtractedPrecursor:
         """Serialize fragment frame + MS1 signal to compressed bytes."""
         frame = self.fragment_frame
 
-        # Fragment arrays
+        # Fragment arrays - use float32 for signal data (sufficient precision, 50% size reduction)
         fragment_arrays = {
             "frag_frame_id": np.array([frame.frame_id], dtype=np.int32),
             "frag_ms_type": np.array([frame.ms_type], dtype=np.int32),
-            "frag_rt": np.array([frame.retention_time], dtype=np.float64),
+            "frag_rt": np.array([frame.retention_time], dtype=np.float32),
             "frag_scan": frame.scan.astype(np.int32),
-            "frag_mobility": frame.mobility.astype(np.float64),
+            "frag_mobility": frame.mobility.astype(np.float32),
             "frag_tof": frame.tof.astype(np.int32),
-            "frag_mz": frame.mz.astype(np.float64),
-            "frag_intensity": frame.intensity.astype(np.float64),
-            # MS1 signal arrays
-            "ms1_rt_coords": self.ms1_rt_coords.astype(np.float64),
-            "ms1_rt_intensities": self.ms1_rt_intensities.astype(np.float64),
-            "ms1_im_coords": self.ms1_im_coords.astype(np.float64),
-            "ms1_im_intensities": self.ms1_im_intensities.astype(np.float64),
+            "frag_mz": frame.mz.astype(np.float32),
+            "frag_intensity": frame.intensity.astype(np.float32),
+            # MS1 signal arrays - float32 sufficient for visualization/training
+            "ms1_rt_coords": self.ms1_rt_coords.astype(np.float32),
+            "ms1_rt_intensities": self.ms1_rt_intensities.astype(np.float32),
+            "ms1_im_coords": self.ms1_im_coords.astype(np.float32),
+            "ms1_im_intensities": self.ms1_im_intensities.astype(np.float32),
         }
 
         # Metadata
@@ -344,7 +344,7 @@ def extract_precursors(
     num_threads: int = 16,
     rt_window_sec: float = 15.0,
     mz_tol_ppm: float = 20.0,
-    im_window: float = 0.1,
+    im_window: float = 0.2,  # Doubled from 0.1 for better coverage
     n_isotopes: int = 5,
     calibration: Optional[NDArray[np.float64]] = None,
     logger: Optional[logging.Logger] = None,
@@ -358,7 +358,7 @@ def extract_precursors(
         num_threads: Threads for parallel processing
         rt_window_sec: RT window for MS1 extraction (seconds)
         mz_tol_ppm: m/z tolerance for MS1 extraction (ppm)
-        im_window: IM window for MS1 extraction (1/K0)
+        im_window: IM window for MS1 extraction (1/K0), default 0.2 (doubled for coverage)
         n_isotopes: Number of isotope peaks to extract
         calibration: Optional IM calibration array (scan → 1/K0 lookup).
                      If provided, uses LookupIndexConverter for fast + accurate extraction.
@@ -415,19 +415,27 @@ def extract_precursors(
         largest_peak_mz = float(row['largest_peak_mz'])
         rt_sec = float(row['time']) * 60.0
 
-        # Use largest_peak_mz for XIC/mobilogram (best signal intensity)
-        # Use mono_mz for isotope envelope extraction (M+0 starting point)
-        # If mono_mz is not available, fall back to largest_peak_mz for both
-        extraction_mz = largest_peak_mz
-        isotope_start_mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
+        # Get IM bounds from fragment selection (scan_begin/scan_end)
+        # These are the IM values used for PASEF selection, useful for plotting
+        scan_begin = int(row['scan_begin'])
+        scan_end = int(row['scan_end'])
+        # Convert scans to 1/K0 using the dataset (scan_end has lower mobility number)
+        im_values = dataset.scan_to_inverse_mobility(int(row['frame_id']), [scan_begin, scan_end])
+        im_start = float(im_values[0])  # Higher 1/K0 (lower scan)
+        im_end = float(im_values[1])    # Lower 1/K0 (higher scan)
+
+        # mono_mz: pass as 0.0 if not available (Rust will use largest_peak_mz as fallback)
+        mono_mz_value = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else 0.0
 
         # Build coordinate for Rust extraction
         coord = py_dda.PyPrecursorCoord(
             precursor_id=int(precursor_id),
-            mz=float(extraction_mz),         # For XIC/mobilogram (largest_peak_mz)
-            mono_mz=float(isotope_start_mz), # For isotope envelope (mono_mz or fallback)
+            mz=float(largest_peak_mz),       # Fallback m/z if mono_mz is 0
+            mono_mz=float(mono_mz_value),    # 0 if unknown, triggers single-peak extraction
             rt_seconds=float(rt_sec),
             mobility=float(mobility),
+            im_start=float(im_start),        # Fragment selection IM bounds (for plotting)
+            im_end=float(im_end),
             charge=int(charge) if charge is not None else 2,
         )
         coords.append(coord)
@@ -444,6 +452,8 @@ def extract_precursors(
             'precursor_intensity': float(row['intensity']),
             'rt_seconds': rt_sec,
             'mobility': float(mobility),
+            'im_start': im_start,
+            'im_end': im_end,
             'fragment_frame': fragment_frame,
             'n_fragments_merged': len(row['collision_energy']),
             'collision_energies': [float(ce) for ce in row['collision_energy']],
@@ -669,7 +679,7 @@ def extract_precursors_batched(
     num_threads: int = 16,
     rt_window_sec: float = 15.0,
     mz_tol_ppm: float = 20.0,
-    im_window: float = 0.1,
+    im_window: float = 0.2,  # Doubled from 0.1 for better coverage
     n_isotopes: int = 5,
     calibration: Optional[NDArray[np.float64]] = None,
     logger: Optional[logging.Logger] = None,
@@ -780,17 +790,24 @@ def extract_precursors_batched(
                 largest_peak_mz = float(row['largest_peak_mz'])
                 rt_sec = float(row['time']) * 60.0
 
-                # Use largest_peak_mz for XIC/mobilogram (best signal intensity)
-                # Use mono_mz for isotope envelope extraction (M+0 starting point)
-                extraction_mz = largest_peak_mz
-                isotope_start_mz = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else largest_peak_mz
+                # Get IM bounds from fragment selection (scan_begin/scan_end)
+                scan_begin = int(row['scan_begin'])
+                scan_end = int(row['scan_end'])
+                im_values = dataset.scan_to_inverse_mobility(int(row['frame_id']), [scan_begin, scan_end])
+                im_start = float(im_values[0])
+                im_end = float(im_values[1])
+
+                # mono_mz: pass as 0.0 if not available (Rust will use largest_peak_mz as fallback)
+                mono_mz_value = mono_mz if mono_mz is not None and not np.isnan(mono_mz) else 0.0
 
                 coord = py_dda.PyPrecursorCoord(
                     precursor_id=int(precursor_id),
-                    mz=float(extraction_mz),         # For XIC/mobilogram (largest_peak_mz)
-                    mono_mz=float(isotope_start_mz), # For isotope envelope (mono_mz or fallback)
+                    mz=float(largest_peak_mz),       # Fallback m/z if mono_mz is 0
+                    mono_mz=float(mono_mz_value),    # 0 if unknown, triggers single-peak extraction
                     rt_seconds=float(rt_sec),
                     mobility=float(mobility),
+                    im_start=float(im_start),        # Fragment selection IM bounds
+                    im_end=float(im_end),
                     charge=int(charge) if charge is not None else 2,
                 )
                 coords.append(coord)
@@ -806,6 +823,8 @@ def extract_precursors_batched(
                     'precursor_intensity': float(row['intensity']),
                     'rt_seconds': rt_sec,
                     'mobility': float(mobility),
+                    'im_start': im_start,
+                    'im_end': im_end,
                     'fragment_frame': fragment_frame,
                     'n_fragments_merged': len(row['collision_energy']),
                     'collision_energies': [float(ce) for ce in row['collision_energy']],

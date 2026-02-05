@@ -308,7 +308,6 @@ class PrecursorStoreParquet:
         """
         from imspy_core.timstof import TimsDatasetDDA
         from imspy_connector import py_dda
-        from imspy_connector.py_dataset import PyTimsDataset
 
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -352,8 +351,7 @@ class PrecursorStoreParquet:
                 im_lookup = ensure_calibration(str(raw_data_path), verbose=True)
 
             # Create DDA dataset with calibration (fast + accurate + thread-safe)
-            from imspy_connector.py_dda import PyTimsDatasetDDA as PyTimsDatasetDDARust
-            rust_dataset = PyTimsDatasetDDARust.with_calibration(
+            rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
                 str(raw_data_path), False, im_lookup.tolist()
             )
             print(f"  Dataset loaded with calibrated IM (thread-safe parallel extraction)")
@@ -428,22 +426,25 @@ class PrecursorStoreParquet:
             ('sage_qvalue', pa.float64()),
             ('raw_intensity_meta', pa.float64()),
 
-            ('fragment_mz', pa.list_(pa.float64())),
-            ('fragment_intensity', pa.list_(pa.float64())),
-            ('fragment_mobility', pa.list_(pa.float64())),
+            # Fragment arrays - float32 sufficient for MS2 data
+            ('fragment_mz', pa.list_(pa.float32())),
+            ('fragment_intensity', pa.list_(pa.float32())),
+            ('fragment_mobility', pa.list_(pa.float32())),
             ('fragment_scan', pa.list_(pa.int32())),  # Scan indices for heatmap visualization
 
-            ('xic_rt', pa.list_(pa.float64())),
-            ('xic_intensity', pa.list_(pa.float64())),
-            ('mobilogram_im', pa.list_(pa.float64())),
-            ('mobilogram_intensity', pa.list_(pa.float64())),
-            ('isotope_mz', pa.list_(pa.float64())),
-            ('isotope_intensity', pa.list_(pa.float64())),
+            # 1D projections - float32 sufficient
+            ('xic_rt', pa.list_(pa.float32())),
+            ('xic_intensity', pa.list_(pa.float32())),
+            ('mobilogram_im', pa.list_(pa.float32())),
+            ('mobilogram_intensity', pa.list_(pa.float32())),
+            ('isotope_mz', pa.list_(pa.float32())),
+            ('isotope_intensity', pa.list_(pa.float32())),
 
-            ('raw_rt', pa.list_(pa.float64())),
-            ('raw_mz', pa.list_(pa.float64())),
-            ('raw_mobility', pa.list_(pa.float64())),
-            ('raw_intensity', pa.list_(pa.float64())),
+            # Raw 4D MS1 data - float32 saves ~50% storage
+            ('raw_rt', pa.list_(pa.float32())),
+            ('raw_mz', pa.list_(pa.float32())),
+            ('raw_mobility', pa.list_(pa.float32())),
+            ('raw_intensity', pa.list_(pa.float32())),
         ])
 
         # Process in batches and write incrementally
@@ -506,8 +507,11 @@ class PrecursorStoreParquet:
                     coord = py_dda.PyPrecursorCoord(
                         precursor_id=pid,
                         mz=float(mz),
+                        mono_mz=float(mz),  # Use same as mz (precursor index doesn't have separate mono_mz)
                         rt_seconds=float(rt_sec),
                         mobility=float(mobility),
+                        im_start=float(mobility),  # Use mobility as center (no window info in index)
+                        im_end=float(mobility),
                         charge=charge,
                     )
                     coords.append(coord)
@@ -546,8 +550,41 @@ class PrecursorStoreParquet:
                     }
                 del batch_signals
 
-            # Build rows for this batch
-            rows = []
+            # Build columns for this batch (column-oriented is more efficient than row-oriented)
+            # Initialize column lists
+            col_precursor_id = []
+            col_raw_file = []
+            col_mz = []
+            col_charge = []
+            col_rt_seconds = []
+            col_mobility = []
+            col_fragpipe_peptide = []
+            col_fragpipe_modified = []
+            col_diann_peptide = []
+            col_diann_modified = []
+            col_sage_peptide = []
+            col_sage_modified = []
+            col_consensus_peptide = []
+            col_n_engines = []
+            col_fragpipe_probability = []
+            col_diann_qvalue = []
+            col_sage_qvalue = []
+            col_raw_intensity_meta = []
+            col_fragment_mz = []
+            col_fragment_intensity = []
+            col_fragment_mobility = []
+            col_fragment_scan = []
+            col_xic_rt = []
+            col_xic_intensity = []
+            col_mobilogram_im = []
+            col_mobilogram_intensity = []
+            col_isotope_mz = []
+            col_isotope_intensity = []
+            col_raw_rt = []
+            col_raw_mz = []
+            col_raw_mobility = []
+            col_raw_intensity = []
+
             for _, row in batch_df.iterrows():
                 pid = int(row['precursor_id'])
                 meta = batch_meta.get(pid, {})
@@ -563,64 +600,99 @@ class PrecursorStoreParquet:
                 total_xic_points += len(ms1.get('rt_coords', []))
                 total_raw_points += len(ms1.get('raw_rt', []))
 
-                precursor_row = {
-                    'precursor_id': pid,
-                    'raw_file': str(row.get('raw_file', '')),
-                    'mz': float(meta.get('mz', 0)),
-                    'charge': int(meta.get('charge', 2)),
-                    'rt_seconds': float(meta.get('rt_seconds', 0)),
-                    'mobility': float(meta.get('mobility', 0)),
+                # Scalar columns
+                col_precursor_id.append(pid)
+                col_raw_file.append(str(row.get('raw_file', '')))
+                col_mz.append(float(meta.get('mz', 0)))
+                col_charge.append(int(meta.get('charge', 2)))
+                col_rt_seconds.append(float(meta.get('rt_seconds', 0)))
+                col_mobility.append(float(meta.get('mobility', 0)))
 
-                    'fragpipe_peptide': row.get('fragpipe_peptide') if pd.notna(row.get('fragpipe_peptide')) else None,
-                    'fragpipe_modified': row.get('fragpipe_modified') if pd.notna(row.get('fragpipe_modified')) else None,
-                    'diann_peptide': row.get('diann_peptide') if pd.notna(row.get('diann_peptide')) else None,
-                    'diann_modified': row.get('diann_modified') if pd.notna(row.get('diann_modified')) else None,
-                    'sage_peptide': row.get('sage_peptide') if pd.notna(row.get('sage_peptide')) else None,
-                    'sage_modified': row.get('sage_modified') if pd.notna(row.get('sage_modified')) else None,
-                    'consensus_peptide': row.get('consensus_peptide') if pd.notna(row.get('consensus_peptide')) else None,
-                    'n_engines': int(row.get('n_engines', 0)),
+                col_fragpipe_peptide.append(row.get('fragpipe_peptide') if pd.notna(row.get('fragpipe_peptide')) else None)
+                col_fragpipe_modified.append(row.get('fragpipe_modified') if pd.notna(row.get('fragpipe_modified')) else None)
+                col_diann_peptide.append(row.get('diann_peptide') if pd.notna(row.get('diann_peptide')) else None)
+                col_diann_modified.append(row.get('diann_modified') if pd.notna(row.get('diann_modified')) else None)
+                col_sage_peptide.append(row.get('sage_peptide') if pd.notna(row.get('sage_peptide')) else None)
+                col_sage_modified.append(row.get('sage_modified') if pd.notna(row.get('sage_modified')) else None)
+                col_consensus_peptide.append(row.get('consensus_peptide') if pd.notna(row.get('consensus_peptide')) else None)
+                col_n_engines.append(int(row.get('n_engines', 0)))
 
-                    'fragpipe_probability': float(row['fragpipe_probability']) if pd.notna(row.get('fragpipe_probability')) else None,
-                    'diann_qvalue': float(row['diann_qvalue']) if pd.notna(row.get('diann_qvalue')) else None,
-                    'sage_qvalue': float(row['sage_qvalue']) if pd.notna(row.get('sage_qvalue')) else None,
-                    'raw_intensity_meta': float(row['raw_intensity']) if pd.notna(row.get('raw_intensity')) else None,
+                col_fragpipe_probability.append(float(row['fragpipe_probability']) if pd.notna(row.get('fragpipe_probability')) else None)
+                col_diann_qvalue.append(float(row['diann_qvalue']) if pd.notna(row.get('diann_qvalue')) else None)
+                col_sage_qvalue.append(float(row['sage_qvalue']) if pd.notna(row.get('sage_qvalue')) else None)
+                col_raw_intensity_meta.append(float(row['raw_intensity']) if pd.notna(row.get('raw_intensity')) else None)
 
-                    'fragment_mz': frag_mz,
-                    'fragment_intensity': frag_int,
-                    'fragment_mobility': frag_mob,
-                    'fragment_scan': frag_scan,
+                # List columns - fragment data (cast to float32)
+                col_fragment_mz.append(np.array(frag_mz, dtype=np.float32) if frag_mz else [])
+                col_fragment_intensity.append(np.array(frag_int, dtype=np.float32) if frag_int else [])
+                col_fragment_mobility.append(np.array(frag_mob, dtype=np.float32) if frag_mob else [])
+                col_fragment_scan.append(np.array(frag_scan, dtype=np.int32) if frag_scan else [])
 
-                    'xic_rt': ms1.get('rt_coords', []),
-                    'xic_intensity': ms1.get('rt_intensities', []),
-                    'mobilogram_im': ms1.get('im_coords', []),
-                    'mobilogram_intensity': ms1.get('im_intensities', []),
-                    'isotope_mz': ms1.get('isotope_mz', []),
-                    'isotope_intensity': ms1.get('isotope_intensity', []),
+                # List columns - 1D projections (cast to float32)
+                col_xic_rt.append(np.array(ms1.get('rt_coords', []), dtype=np.float32))
+                col_xic_intensity.append(np.array(ms1.get('rt_intensities', []), dtype=np.float32))
+                col_mobilogram_im.append(np.array(ms1.get('im_coords', []), dtype=np.float32))
+                col_mobilogram_intensity.append(np.array(ms1.get('im_intensities', []), dtype=np.float32))
+                col_isotope_mz.append(np.array(ms1.get('isotope_mz', []), dtype=np.float32))
+                col_isotope_intensity.append(np.array(ms1.get('isotope_intensity', []), dtype=np.float32))
 
-                    'raw_rt': ms1.get('raw_rt', []),
-                    'raw_mz': ms1.get('raw_mz', []),
-                    'raw_mobility': ms1.get('raw_mobility', []),
-                    'raw_intensity': ms1.get('raw_intensity', []),
-                }
-                rows.append(precursor_row)
+                # List columns - raw 4D MS1 data (cast to float32)
+                col_raw_rt.append(np.array(ms1.get('raw_rt', []), dtype=np.float32))
+                col_raw_mz.append(np.array(ms1.get('raw_mz', []), dtype=np.float32))
+                col_raw_mobility.append(np.array(ms1.get('raw_mobility', []), dtype=np.float32))
+                col_raw_intensity.append(np.array(ms1.get('raw_intensity', []), dtype=np.float32))
 
-            # Convert batch to table and write
-            batch_table = pa.Table.from_pylist(rows, schema=schema)
+            # Build PyArrow arrays from columns
+            arrays = [
+                pa.array(col_precursor_id, type=pa.int64()),
+                pa.array(col_raw_file, type=pa.string()),
+                pa.array(col_mz, type=pa.float64()),
+                pa.array(col_charge, type=pa.int32()),
+                pa.array(col_rt_seconds, type=pa.float64()),
+                pa.array(col_mobility, type=pa.float64()),
+                pa.array(col_fragpipe_peptide, type=pa.string()),
+                pa.array(col_fragpipe_modified, type=pa.string()),
+                pa.array(col_diann_peptide, type=pa.string()),
+                pa.array(col_diann_modified, type=pa.string()),
+                pa.array(col_sage_peptide, type=pa.string()),
+                pa.array(col_sage_modified, type=pa.string()),
+                pa.array(col_consensus_peptide, type=pa.string()),
+                pa.array(col_n_engines, type=pa.int32()),
+                pa.array(col_fragpipe_probability, type=pa.float64()),
+                pa.array(col_diann_qvalue, type=pa.float64()),
+                pa.array(col_sage_qvalue, type=pa.float64()),
+                pa.array(col_raw_intensity_meta, type=pa.float64()),
+                pa.array(col_fragment_mz, type=pa.list_(pa.float32())),
+                pa.array(col_fragment_intensity, type=pa.list_(pa.float32())),
+                pa.array(col_fragment_mobility, type=pa.list_(pa.float32())),
+                pa.array(col_fragment_scan, type=pa.list_(pa.int32())),
+                pa.array(col_xic_rt, type=pa.list_(pa.float32())),
+                pa.array(col_xic_intensity, type=pa.list_(pa.float32())),
+                pa.array(col_mobilogram_im, type=pa.list_(pa.float32())),
+                pa.array(col_mobilogram_intensity, type=pa.list_(pa.float32())),
+                pa.array(col_isotope_mz, type=pa.list_(pa.float32())),
+                pa.array(col_isotope_intensity, type=pa.list_(pa.float32())),
+                pa.array(col_raw_rt, type=pa.list_(pa.float32())),
+                pa.array(col_raw_mz, type=pa.list_(pa.float32())),
+                pa.array(col_raw_mobility, type=pa.list_(pa.float32())),
+                pa.array(col_raw_intensity, type=pa.list_(pa.float32())),
+            ]
+            batch_table = pa.Table.from_arrays(arrays, schema=schema)
 
             if writer is None:
                 writer = pq.ParquetWriter(
                     str(output_path),
                     schema,
                     compression='zstd',
-                    compression_level=3,
+                    compression_level=5,  # Increased for better compression
                     use_dictionary=True,
                     write_statistics=True,
                 )
 
-            writer.write_table(batch_table)
+            writer.write_table(batch_table, row_group_size=row_group_size)
 
             # Clean up batch data
-            del rows, batch_table, ms1_lookup, batch_meta, coords, fragment_lookup
+            del arrays, batch_table, ms1_lookup, batch_meta, coords, fragment_lookup
             gc.collect()
 
         # Close writer (outside the for loop)
