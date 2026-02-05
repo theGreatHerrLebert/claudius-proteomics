@@ -748,14 +748,18 @@ async def get_precursor(precursor_id: int):
     # Get Sage matched fragments if available
     sage_matched_fragments = None
     sage_modified = safe_str(row.get('sage_modified'))
+    sage_psm_id = row.get('sage_psm_id')
     sage_scannr = row.get('sage_scannr')
     if sage_data_loaded:
         psm_id = None
-        # Primary: use sage_scannr -> psm_id lookup (reliable, scan-level linkage)
-        if pd.notna(sage_scannr) and sage_scannr_to_psm:
+        # Primary: use sage_psm_id directly (best, from updated index)
+        if pd.notna(sage_psm_id):
+            psm_id = int(sage_psm_id)
+        # Fallback 1: use sage_scannr -> psm_id lookup
+        elif pd.notna(sage_scannr) and sage_scannr_to_psm:
             psm_id = sage_scannr_to_psm.get(int(sage_scannr))
-        # Fallback: peptide+charge lookup (may match wrong spectrum)
-        if psm_id is None and sage_modified and sage_peptide_to_psm:
+        # Fallback 2: peptide+charge lookup (may match wrong spectrum)
+        elif sage_modified and sage_peptide_to_psm:
             lookup_key = f"{sage_modified}_{precursor_charge}"
             psm_id = sage_peptide_to_psm.get(lookup_key)
 
