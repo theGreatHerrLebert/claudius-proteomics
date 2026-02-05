@@ -195,7 +195,7 @@ def _load_diann_with_parser(processed_dir: Path) -> Optional[pd.DataFrame]:
 def _load_sage_with_parser(processed_dir: Path) -> Optional[pd.DataFrame]:
     """Load Sage results using parser.
 
-    Sage scannr is NOT the timsTOF precursor_id (from mzML conversion).
+    Sage scannr IS the timsTOF precursor_id (confirmed: 100% intersection).
     m/z is calculated from experimental mass at parse time.
     """
     parser = SageParser()
@@ -524,20 +524,30 @@ def _build_precursor_index_anchored(
         )
         print(f"    DIA-NN matches: {dn_stats['sequence']} sequence, {dn_stats['coordinate']} coordinate")
 
-    # === Step 4: Match Sage by sequence+charge, then coordinates ===
+    # === Step 4: Direct join Sage by precursor_id (like FragPipe) ===
+    # Sage's scannr IS the timsTOF precursor_id, enabling exact matching
     if sg_df is not None and not sg_df.empty:
-        index, sg_stats = _match_engine_to_index(
-            index=index,
-            engine_df=sg_df,
-            engine_name='sage',
-            sequence_col='sage_modified',
-            charge_col='sage_charge',
-            mz_col='sage_mz',
-            rt_col='sage_rt',
-            im_col='sage_mobility',
-            config=match_config,
+        sg_join = sg_df.copy()
+
+        # Normalize raw_file in Sage
+        sg_join['raw_file'] = sg_join['raw_file'].apply(
+            lambda x: str(x).replace('.d', '') if pd.notna(x) else ''
         )
-        print(f"    Sage matches: {sg_stats['sequence']} sequence, {sg_stats['coordinate']} coordinate")
+
+        # Keep only columns we need
+        sg_cols = [c for c in sg_join.columns if c.startswith('sage_')]
+        sg_join_cols = ['raw_file', 'precursor_id'] + sg_cols
+        sg_join = sg_join[[c for c in sg_join_cols if c in sg_join.columns]]
+
+        # Direct join on (raw_file, precursor_id)
+        index = index.merge(
+            sg_join,
+            on=['raw_file', 'precursor_id'],
+            how='left'
+        )
+
+        n_sg_joined = index['sage_peptide'].notna().sum() if 'sage_peptide' in index.columns else 0
+        print(f"    Sage direct join: {n_sg_joined} matches")
 
     # === Step 5: Count engines ===
     fp_present = index.get('fragpipe_peptide', pd.Series(dtype=str)).notna()
