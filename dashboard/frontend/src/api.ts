@@ -179,6 +179,7 @@ export async function listPrecursors(params: {
   offset?: number;
   limit?: number;
   min_engines?: number;
+  max_engines?: number;
   charge?: number;
   raw_file?: string;
   has_ms1?: boolean;

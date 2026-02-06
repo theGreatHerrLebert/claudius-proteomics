@@ -54,6 +54,7 @@ function DatasetView({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filters, setFilters] = useState({
     minEngines: 0,
+    maxEngines: undefined as number | undefined,
     charge: undefined as number | undefined,
     rawFile: undefined as string | undefined,
     hasMs1: false,
@@ -119,6 +120,7 @@ function DatasetView({
         offset: page * pageSize,
         limit: pageSize,
         min_engines: filters.minEngines,
+        max_engines: filters.maxEngines,
         charge: filters.charge,
         raw_file: filters.rawFile,
         has_ms1: filters.hasMs1 || undefined,
@@ -169,19 +171,27 @@ function DatasetView({
         {/* Filters */}
         <div className="flex items-center gap-3 ml-auto">
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">Min engines:</span>
+            <span className="text-gray-400">Engines:</span>
             <select
-              value={filters.minEngines}
+              value={filters.maxEngines === 0 ? 'unid' : (filters.minEngines > 0 ? `min${filters.minEngines}` : 'all')}
               onChange={(e) => {
-                setFilters({ ...filters, minEngines: Number(e.target.value) });
+                const val = e.target.value;
+                if (val === 'unid') {
+                  setFilters({ ...filters, minEngines: 0, maxEngines: 0 });
+                } else if (val === 'all') {
+                  setFilters({ ...filters, minEngines: 0, maxEngines: undefined });
+                } else {
+                  setFilters({ ...filters, minEngines: Number(val.slice(3)), maxEngines: undefined });
+                }
                 setPage(0);
               }}
               className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
             >
-              <option value={0}>All</option>
-              <option value={1}>≥1</option>
-              <option value={2}>≥2</option>
-              <option value={3}>3</option>
+              <option value="all">All</option>
+              <option value="unid">Unidentified (0)</option>
+              <option value="min1">≥1</option>
+              <option value="min2">≥2</option>
+              <option value="min3">3 only</option>
             </select>
           </label>
 
@@ -199,9 +209,11 @@ function DatasetView({
               className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
             >
               <option value="">All</option>
+              <option value={1}>1+</option>
               <option value={2}>2+</option>
               <option value={3}>3+</option>
               <option value={4}>4+</option>
+              <option value={5}>5+</option>
             </select>
           </label>
 
