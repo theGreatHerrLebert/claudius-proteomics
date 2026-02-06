@@ -419,7 +419,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
         <div className="mt-2 flex gap-4 text-sm">
           <div>
             <span className="text-gray-500">FragPipe: </span>
-            <span className="font-mono text-blue-400">{precursor.fragpipe_peptide || '-'}</span>
+            <span className="font-mono text-blue-400">{precursor.fragpipe_modified || precursor.fragpipe_peptide || '-'}</span>
           </div>
           <div>
             <span className="text-gray-500">Sage: </span>
@@ -427,7 +427,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
           </div>
           <div>
             <span className="text-gray-500">DIA-NN: </span>
-            <span className="font-mono text-purple-400">{precursor.diann_peptide || '-'}</span>
+            <span className="font-mono text-purple-400">{precursor.diann_modified || precursor.diann_peptide || '-'}</span>
           </div>
         </div>
       </div>
