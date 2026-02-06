@@ -1,5 +1,5 @@
 {
-    "precursor_charge": [1, 5],
+    "precursor_charge": [1, 4],
     "database": {
         "bucket_size": 32768,
         "fragment_min_mz": 150.0,
@@ -11,7 +11,7 @@
         "enzyme": {
             "missed_cleavages": 2,
             "min_len": 7,
-            "max_len": 30,
+            "max_len": 50,
             "cleave_at": "KR",
             "restrict": "P"
         },
@@ -22,7 +22,7 @@
             "M": [15.994915],
             "^": [42.010565]
         },
-        "max_variable_mods": 2,
+        "max_variable_mods": 3,
         "decoy_tag": "rev_",
         "generate_decoys": true
     },

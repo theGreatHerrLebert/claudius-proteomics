@@ -280,6 +280,7 @@ def _run_diann(
             d_files = d_files[:max_files]
 
         # Build DIA-NN command
+        # Settings harmonized with FragPipe and Sage
         cmd = [
             str(diann_path),
             "--fasta", str(fasta_path),
@@ -289,10 +290,19 @@ def _run_diann(
             "--threads", str(num_threads),
             "--predictor",  # Enable deep learning
             "--dda",  # DDA mode for DDA datasets
-            # Modifications to match FragPipe/Sage
+            # Digestion settings (harmonized with FragPipe/Sage)
+            "--cut", "K*,R*,!*P",  # Trypsin: cleave at K/R, not before P
+            "--missed-cleavages", "2",
+            "--min-pep-len", "7",
+            "--max-pep-len", "50",
+            "--min-pr-charge", "1",
+            "--max-pr-charge", "4",
+            # Modifications (harmonized with FragPipe/Sage)
             "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
             "--var-mod", "UniMod:1,42.010565,*n",  # N-term Acetyl
             "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
+            "--max-var-mods", "3",
+            "--met-excision",  # N-terminal methionine excision
         ]
 
         # Add input files
