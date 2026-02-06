@@ -373,7 +373,8 @@ async def list_precursors(
     offset: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     min_engines: int = Query(0, ge=0, le=3),
-    charge: Optional[int] = Query(None),
+    max_engines: Optional[int] = Query(None, ge=0, le=3, description="Maximum number of engines (use 0 for unidentified)"),
+    charge: Optional[int] = Query(None, ge=1, le=5),
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
     sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
@@ -437,6 +438,8 @@ async def list_precursors(
     filters = []
     if min_engines > 0:
         filters.append(('n_engines', '>=', min_engines))
+    if max_engines is not None:
+        filters.append(('n_engines', '<=', max_engines))
     if charge is not None:
         filters.append((charge_col, '=', charge))
     if raw_file is not None:
