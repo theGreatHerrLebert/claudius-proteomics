@@ -630,6 +630,11 @@ def read_blob(raw_file: str, offset: int, size: int) -> Optional[dict]:
             # Isotope envelope (from metadata)
             "isotope_mz": [],  # Not stored separately, would need to compute from mono_mz
             "isotope_intensity": metadata.get("ms1_isotope_intensities", []),
+            # Raw 4D MS1 point cloud (for RT vs IM heatmap)
+            "raw_rt": arrays["raw_rt"].tolist() if "raw_rt" in arrays else [],
+            "raw_mz": arrays["raw_mz"].tolist() if "raw_mz" in arrays else [],
+            "raw_mobility": arrays["raw_mobility"].tolist() if "raw_mobility" in arrays else [],
+            "raw_intensity": arrays["raw_intensity"].tolist() if "raw_intensity" in arrays else [],
         }
 
         return result
@@ -701,6 +706,11 @@ async def get_precursor(precursor_id: int):
         # Delta mass between C13 and C12 is ~1.003355 Da
         delta_mass = 1.003355
         isotope_mz = [precursor_mz + (i * delta_mass / precursor_charge) for i in range(len(isotope_intensity))]
+        # Raw 4D MS1 point cloud (for RT vs IM heatmap)
+        raw_rt = blob_data.get("raw_rt", [])
+        raw_mz = blob_data.get("raw_mz", [])
+        raw_mobility = blob_data.get("raw_mobility", [])
+        raw_intensity = blob_data.get("raw_intensity", [])
     else:
         fragment_mz = to_list(row.get('fragment_mz'))
         fragment_intensity = to_list(row.get('fragment_intensity'))
@@ -712,6 +722,11 @@ async def get_precursor(precursor_id: int):
         mobilogram_intensity = to_list(row.get('mobilogram_intensity'))
         isotope_mz = to_list(row.get('isotope_mz'))
         isotope_intensity = to_list(row.get('isotope_intensity'))
+        # Raw 4D from parquet if available
+        raw_rt = to_list(row.get('raw_rt'))
+        raw_mz = to_list(row.get('raw_mz'))
+        raw_mobility = to_list(row.get('raw_mobility'))
+        raw_intensity = to_list(row.get('raw_intensity'))
 
     # Get Sage modified sequence (standardize format)
     sage_modified = standardize_modified_sequence(safe_str(row.get('sage_modified')))
@@ -748,10 +763,10 @@ async def get_precursor(precursor_id: int):
         mobilogram_intensity=mobilogram_intensity,
         isotope_mz=isotope_mz,
         isotope_intensity=isotope_intensity,
-        raw_rt=[],  # Not stored in blob format
-        raw_mz=[],
-        raw_mobility=[],
-        raw_intensity=[],
+        raw_rt=raw_rt,
+        raw_mz=raw_mz,
+        raw_mobility=raw_mobility,
+        raw_intensity=raw_intensity,
     )
 
 

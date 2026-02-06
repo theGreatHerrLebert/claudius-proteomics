@@ -195,6 +195,12 @@ class ExtractedPrecursor:
     ms1_im_coords: np.ndarray
     ms1_im_intensities: np.ndarray
 
+    # Raw 4D MS1 data (full point cloud for RT vs IM heatmap)
+    raw_rt: np.ndarray
+    raw_mz: np.ndarray
+    raw_mobility: np.ndarray
+    raw_intensity: np.ndarray
+
     # Gaussian fit quality metrics
     ms1_rt_sigma: float
     ms1_rt_r2: float
@@ -291,6 +297,11 @@ class ExtractedPrecursor:
             "ms1_rt_intensities": self.ms1_rt_intensities.astype(np.float32),
             "ms1_im_coords": self.ms1_im_coords.astype(np.float32),
             "ms1_im_intensities": self.ms1_im_intensities.astype(np.float32),
+            # Raw 4D MS1 point cloud (for RT vs IM heatmap)
+            "raw_rt": self.raw_rt.astype(np.float32),
+            "raw_mz": self.raw_mz.astype(np.float32),
+            "raw_mobility": self.raw_mobility.astype(np.float32),
+            "raw_intensity": self.raw_intensity.astype(np.float32),
         }
 
         # Metadata
@@ -517,6 +528,12 @@ def extract_precursors(
             ms1_im_coords = np.array(ms1.im_coords)
             ms1_im_intensities = np.array(ms1.im_intensities)
 
+            # Raw 4D MS1 point cloud
+            raw_rt = np.array(ms1.raw_rt)
+            raw_mz = np.array(ms1.raw_mz)
+            raw_mobility = np.array(ms1.raw_mobility)
+            raw_intensity = np.array(ms1.raw_intensity)
+
             # Gaussian fit quality metrics
             rt_fit = fit_gaussian(ms1_rt_coords, ms1_rt_intensities)
             im_fit = fit_gaussian(ms1_im_coords, ms1_im_intensities)
@@ -545,6 +562,10 @@ def extract_precursors(
             ms1_rt_intensities = np.array([])
             ms1_im_coords = np.array([])
             ms1_im_intensities = np.array([])
+            raw_rt = np.array([])
+            raw_mz = np.array([])
+            raw_mobility = np.array([])
+            raw_intensity = np.array([])
             ms1_rt_sigma = 0.0
             ms1_rt_r2 = 0.0
             ms1_im_sigma = 0.0
@@ -584,6 +605,10 @@ def extract_precursors(
             ms1_rt_intensities=ms1_rt_intensities,
             ms1_im_coords=ms1_im_coords,
             ms1_im_intensities=ms1_im_intensities,
+            raw_rt=raw_rt,
+            raw_mz=raw_mz,
+            raw_mobility=raw_mobility,
+            raw_intensity=raw_intensity,
             ms1_rt_sigma=ms1_rt_sigma,
             ms1_rt_r2=ms1_rt_r2,
             ms1_im_sigma=ms1_im_sigma,
@@ -868,6 +893,12 @@ def extract_precursors_batched(
                     ms1_im_coords = np.array(ms1.im_coords)
                     ms1_im_intensities = np.array(ms1.im_intensities)
 
+                    # Raw 4D MS1 point cloud
+                    raw_rt = np.array(ms1.raw_rt)
+                    raw_mz = np.array(ms1.raw_mz)
+                    raw_mobility = np.array(ms1.raw_mobility)
+                    raw_intensity = np.array(ms1.raw_intensity)
+
                     # Gaussian fit quality metrics
                     rt_fit = fit_gaussian(ms1_rt_coords, ms1_rt_intensities)
                     im_fit = fit_gaussian(ms1_im_coords, ms1_im_intensities)
@@ -896,6 +927,10 @@ def extract_precursors_batched(
                     ms1_rt_intensities = np.array([])
                     ms1_im_coords = np.array([])
                     ms1_im_intensities = np.array([])
+                    raw_rt = np.array([])
+                    raw_mz = np.array([])
+                    raw_mobility = np.array([])
+                    raw_intensity = np.array([])
                     ms1_rt_sigma = 0.0
                     ms1_rt_r2 = 0.0
                     ms1_im_sigma = 0.0
@@ -935,6 +970,10 @@ def extract_precursors_batched(
                     ms1_rt_intensities=ms1_rt_intensities,
                     ms1_im_coords=ms1_im_coords,
                     ms1_im_intensities=ms1_im_intensities,
+                    raw_rt=raw_rt,
+                    raw_mz=raw_mz,
+                    raw_mobility=raw_mobility,
+                    raw_intensity=raw_intensity,
                     ms1_rt_sigma=ms1_rt_sigma,
                     ms1_rt_r2=ms1_rt_r2,
                     ms1_im_sigma=ms1_im_sigma,
