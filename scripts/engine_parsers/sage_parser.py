@@ -132,7 +132,7 @@ class SageParser(BaseParser):
         # precursor_id = scannr + 1 (raw extraction uses 1-based indexing)
         result = pd.DataFrame({
             "raw_file": df["raw_file"],
-            "precursor_id": df.get("scannr") + 1,  # scannr+1 = raw precursor_id
+            "precursor_id": pd.to_numeric(df.get("scannr"), errors='coerce').astype('Int64') + 1,  # scannr+1 = raw precursor_id
             "sage_psm_id": df.get("psm_id"),  # Links to matched_fragments.sage.parquet
             "sage_peptide": df.get("stripped_peptide"),
             "sage_modified": df["modified_std"],

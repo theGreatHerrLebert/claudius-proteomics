@@ -1,4 +1,5 @@
 {
+    "precursor_charge": [1, 5],
     "database": {
         "bucket_size": 32768,
         "fragment_min_mz": 150.0,
@@ -47,7 +48,7 @@
     "predict_rt": true,
     "min_peaks": 15,
     "max_peaks": 150,
-    "max_fragment_charge": 2,
+    "max_fragment_charge": 3,
     "report_psms": 1,
     "annotate_matches": true,
     "mzml_paths": []
