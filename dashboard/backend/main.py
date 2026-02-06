@@ -369,7 +369,7 @@ async def list_precursors(
     charge: Optional[int] = Query(None),
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
-    sort_by: str = Query("n_engines", pattern="^(raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
+    sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
     sort_desc: bool = Query(True),
 ):
     """List precursors with pagination and filtering."""
@@ -455,7 +455,34 @@ async def list_precursors(
     elif sort_by == 'mobility':
         sort_col = mobility_col
 
-    if sort_by == 'n_engines' and intensity_col in df.columns:
+    if sort_by == 'quality':
+        # Composite quality score: agreement + spectral quality + intensity
+        # Higher is better for all components
+        quality_score = pd.Series(0.0, index=df.index)
+
+        # Engine agreement (n_engines/3, weight=0.35)
+        if 'n_engines' in df.columns:
+            quality_score += (df['n_engines'].fillna(0) / 3.0) * 0.35
+
+        # Confidence weight (already 0-1, weight=0.25)
+        if 'confidence_weight' in df.columns:
+            quality_score += df['confidence_weight'].fillna(0) * 0.25
+
+        # Isotope cosine similarity (already 0-1, weight=0.20)
+        if 'isotope_cosim' in df.columns:
+            quality_score += df['isotope_cosim'].fillna(0) * 0.20
+
+        # Intensity (log-normalized, weight=0.20)
+        if intensity_col in df.columns:
+            int_vals = df[intensity_col].fillna(0).clip(lower=1)
+            int_log = np.log10(int_vals)
+            int_normalized = (int_log - int_log.min()) / (int_log.max() - int_log.min() + 1e-10)
+            quality_score += int_normalized * 0.20
+
+        df['_quality_score'] = quality_score
+        df = df.sort_values('_quality_score', ascending=not sort_desc, na_position='last')
+        df = df.drop(columns=['_quality_score'])
+    elif sort_by == 'n_engines' and intensity_col in df.columns:
         # Special case: sort by n_engines with intensity as secondary
         df = df.sort_values(
             ['n_engines', intensity_col],
