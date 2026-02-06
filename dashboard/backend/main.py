@@ -244,9 +244,11 @@ class PrecursorDetail(BaseModel):
     mobility: float
     n_engines: int
     fragpipe_peptide: Optional[str] = None
+    fragpipe_modified: Optional[str] = None
     sage_peptide: Optional[str] = None
     sage_modified: Optional[str] = None
     diann_peptide: Optional[str] = None
+    diann_modified: Optional[str] = None
 
     # Fragment spectrum
     fragment_mz: List[float]
@@ -749,9 +751,11 @@ async def get_precursor(precursor_id: int):
         mobility=float(row['mobility']) if pd.notna(row.get('mobility')) else 0.0,
         n_engines=int(row['n_engines']) if pd.notna(row.get('n_engines')) else 0,
         fragpipe_peptide=safe_str(row.get('fragpipe_peptide')),
+        fragpipe_modified=standardize_modified_sequence(safe_str(row.get('fragpipe_modified'))),
         sage_peptide=safe_str(row.get('sage_peptide')),
         sage_modified=sage_modified,
         diann_peptide=safe_str(row.get('diann_peptide')),
+        diann_modified=standardize_modified_sequence(safe_str(row.get('diann_modified'))),
         fragment_mz=fragment_mz,
         fragment_intensity=fragment_intensity,
         fragment_mobility=fragment_mobility,
