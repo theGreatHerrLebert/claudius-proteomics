@@ -28,6 +28,13 @@ import yaml
 import gzip
 import re
 
+# Try to import zstd for newer blob format
+try:
+    import zstandard as zstd
+    HAS_ZSTD = True
+except ImportError:
+    HAS_ZSTD = False
+
 
 # Mass delta to UNIMOD mapping (for standardizing modification display)
 MASS_TO_UNIMOD = {
@@ -629,8 +636,20 @@ def read_blob(raw_file: str, offset: int, size: int) -> Optional[dict]:
             f.seek(offset)
             compressed = f.read(size)
 
-        # Decompress with gzip
-        combined = gzip.decompress(compressed)
+        # Detect compression format and decompress
+        # zstd magic: 0x28 0xB5 0x2F 0xFD
+        # gzip magic: 0x1F 0x8B
+        if compressed[:4] == b'\x28\xb5\x2f\xfd':
+            if not HAS_ZSTD:
+                print("zstd blob found but zstandard not installed")
+                return None
+            dctx = zstd.ZstdDecompressor()
+            combined = dctx.decompress(compressed)
+        elif compressed[:2] == b'\x1f\x8b':
+            combined = gzip.decompress(compressed)
+        else:
+            print(f"Unknown compression format: {compressed[:4].hex()}")
+            return None
 
         # Parse: [4 bytes metadata_len][metadata JSON][npz arrays]
         metadata_len = int.from_bytes(combined[:4], "little")
