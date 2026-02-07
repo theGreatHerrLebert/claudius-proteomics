@@ -67,12 +67,14 @@ fragpipe:
   workflow: "LFQ-MBR"  # Good default for DDA timsTOF with match-between-runs
   threads: 64
   memory_gb: 128
+  timeout_hours: 4
 
 # DIA-NN configuration (v2.3.2 supports DDA mode)
 diann:
   path: "/home/dateschn/validate-sim/third-party/diann/diann-2.3/diann-2.3.2/diann-2.3.2/diann-linux"
   threads: 64
   qvalue: 1.0  # Report ALL results - no q-value filtering (San José applies thresholds at query time)
+  timeout_hours: 16
   # DIA-NN 2.3+ can run in DDA mode with --dda flag
 
 # Sage configuration (fast Rust-based search engine)
@@ -80,6 +82,7 @@ sage:
   path: "/home/dateschn/rust/sage/target/release/sage"
   config: "config/sage_config.json"
   threads: 64
+  timeout_hours: 2
   # Sage uses timsrust for reading Bruker .d files
 
 # San José mode: report ALL results without FDR/PEP filtering

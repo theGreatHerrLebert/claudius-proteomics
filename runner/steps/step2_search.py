@@ -3,17 +3,17 @@
 Step 2: Execute Third-Party Search Engines
 
 Runs FragPipe, DIA-NN, and Sage on raw data with FDR=1.0 (full results).
+Each engine is a self-contained job (runner/engines/) that produces
+canonical parquet + status JSON.
 
 Input: data/raw/{accession}/*.d, FASTA database
 
 Outputs:
-- data/processed/{accession}/fragpipe/combined_ion.tsv
-- data/processed/{accession}/diann/report.parquet
-- data/processed/{accession}/sage/results.sage.parquet
+- data/processed/{accession}/{engine}_canonical.parquet (per engine)
+- data/processed/{accession}/{engine}_status.json (per engine)
 - step2_summary.json
 """
 
-import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -21,6 +21,7 @@ from typing import Dict, Any, List, Optional
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from runner.engines import ENGINES
 from runner.summary import StepSummary, write_step_summary
 
 
@@ -45,6 +46,7 @@ def run_step2_search(
         fasta_path: Path to FASTA database (default from config)
         engines: List of engines to run (default: all three)
         num_threads: Number of threads
+        max_files: Maximum number of raw files to process (0=all)
 
     Returns:
         StepSummary with results
@@ -55,7 +57,7 @@ def run_step2_search(
     )
 
     if engines is None:
-        engines = ["fragpipe", "diann", "sage"]
+        engines = list(ENGINES.keys())
 
     if raw_dir is None:
         raw_dir = output_base_dir / "raw" / accession
@@ -75,32 +77,28 @@ def run_step2_search(
         print(f"  Running search on {len(d_files)} .d files")
         print(f"  FASTA: {fasta_path}")
 
-        results = {
-            "fragpipe": {"status": "skipped"},
-            "diann": {"status": "skipped"},
-            "sage": {"status": "skipped"},
-        }
+        results = {}
+        for engine_name in engines:
+            if engine_name not in ENGINES:
+                results[engine_name] = {"status": "skipped", "reason": f"Unknown engine: {engine_name}"}
+                continue
 
-        # Run FragPipe
-        if "fragpipe" in engines:
-            fp_result = _run_fragpipe(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
+            job = ENGINES[engine_name]()
+            result = job.run(
+                accession=accession,
+                config=config,
+                raw_dir=raw_dir,
+                processed_dir=processed_dir,
+                fasta_path=fasta_path,
+                num_threads=num_threads,
+                max_files=max_files,
             )
-            results["fragpipe"] = fp_result
+            results[engine_name] = result.to_dict()
 
-        # Run DIA-NN
-        if "diann" in engines:
-            dn_result = _run_diann(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
-            )
-            results["diann"] = dn_result
-
-        # Run Sage
-        if "sage" in engines:
-            sg_result = _run_sage(
-                accession, config, raw_dir, processed_dir, fasta_path, num_threads, max_files
-            )
-            results["sage"] = sg_result
+        # Ensure all default engines have an entry (for summary consistency)
+        for name in ["fragpipe", "diann", "sage"]:
+            if name not in results:
+                results[name] = {"status": "skipped"}
 
         # FASTA info
         fasta_info = {
@@ -110,9 +108,9 @@ def run_step2_search(
 
         # Update summary
         summary.data = {
-            "fragpipe": results["fragpipe"],
-            "diann": results["diann"],
-            "sage": results["sage"],
+            "fragpipe": results.get("fragpipe", {"status": "skipped"}),
+            "diann": results.get("diann", {"status": "skipped"}),
+            "sage": results.get("sage", {"status": "skipped"}),
             "fasta": fasta_info,
         }
         summary.outputs = [str(processed_dir)]
@@ -181,239 +179,6 @@ def _count_proteins(fasta_path: Path) -> int:
     return count
 
 
-def _run_fragpipe(
-    accession: str,
-    config: Dict[str, Any],
-    raw_dir: Path,
-    processed_dir: Path,
-    fasta_path: Path,
-    num_threads: int,
-    max_files: int = 0,
-) -> Dict[str, Any]:
-    """Run FragPipe search."""
-    fragpipe_config = config.get("fragpipe", {})
-    fragpipe_path = fragpipe_config.get("path")
-
-    if not fragpipe_path or not Path(fragpipe_path).exists():
-        return {"status": "skipped", "reason": "FragPipe not configured"}
-
-    output_dir = processed_dir / "fragpipe_output"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Use Snakemake rule or direct execution
-    try:
-        # Check if run_fragpipe.py exists
-        runner_script = Path(__file__).parent.parent.parent / "scripts" / "run_fragpipe.py"
-
-        if runner_script.exists():
-            cmd = [
-                sys.executable, str(runner_script),
-                "--fragpipe", str(fragpipe_path),
-                "--input", str(raw_dir),
-                "--output", str(output_dir),
-                "--fasta", str(fasta_path),
-                "--threads", str(num_threads),
-            ]
-            if max_files > 0:
-                cmd.extend(["--max-files", str(max_files)])
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600 * 4)
-
-            if result.returncode != 0:
-                return {
-                    "status": "error",
-                    "error": result.stderr[:500],
-                }
-        else:
-            # Direct FragPipe execution would go here
-            return {"status": "skipped", "reason": "run_fragpipe.py not found"}
-
-        # Parse results
-        psm_files = list(output_dir.rglob("psm.tsv"))
-        n_psms = 0
-        for psm_file in psm_files:
-            with open(psm_file) as f:
-                n_psms += sum(1 for _ in f) - 1  # Subtract header
-
-        # Copy to standard location
-        combined_ion = output_dir / "combined_ion.tsv"
-        if combined_ion.exists():
-            target = processed_dir / "combined_ion.tsv"
-            if not target.exists():
-                target.symlink_to(combined_ion)
-
-        return {
-            "status": "success",
-            "n_psms": n_psms,
-            "n_files": len(psm_files),
-            "output_dir": str(output_dir),
-        }
-
-    except subprocess.TimeoutExpired:
-        return {"status": "error", "error": "Timeout after 4 hours"}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
-
-
-def _run_diann(
-    accession: str,
-    config: Dict[str, Any],
-    raw_dir: Path,
-    processed_dir: Path,
-    fasta_path: Path,
-    num_threads: int,
-    max_files: int = 0,
-) -> Dict[str, Any]:
-    """Run DIA-NN search."""
-    diann_config = config.get("diann", {})
-    diann_path = diann_config.get("path")
-
-    if not diann_path or not Path(diann_path).exists():
-        return {"status": "skipped", "reason": "DIA-NN not configured"}
-
-    output_dir = processed_dir / "diann"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        # Get .d files (DIA-NN reads Bruker .d directly)
-        d_files = sorted(raw_dir.glob("*.d"))
-        if max_files > 0:
-            d_files = d_files[:max_files]
-
-        # Build DIA-NN command
-        # Settings harmonized with FragPipe and Sage
-        cmd = [
-            str(diann_path),
-            "--fasta", str(fasta_path),
-            "--fasta-search",  # Enable FASTA digest for library-free search
-            "--out", str(output_dir / "report.tsv"),
-            "--qvalue", "1.0",  # No FDR filtering
-            "--threads", str(num_threads),
-            "--predictor",  # Enable deep learning
-            "--dda",  # DDA mode for DDA datasets
-            # Digestion settings (harmonized with FragPipe/Sage)
-            "--cut", "K*,R*,!*P",  # Trypsin: cleave at K/R, not before P
-            "--missed-cleavages", "2",
-            "--min-pep-len", "7",
-            "--max-pep-len", "50",
-            "--min-pr-charge", "1",
-            "--max-pr-charge", "4",
-            # Modifications (harmonized with FragPipe/Sage)
-            "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
-            "--var-mod", "UniMod:1,42.010565,*n",  # N-term Acetyl
-            "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
-            "--max-var-mods", "3",
-            "--met-excision",  # N-terminal methionine excision
-        ]
-
-        # Add input files
-        for d_file in d_files:
-            cmd.extend(["--f", str(d_file)])
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600 * 4)
-
-        if result.returncode != 0:
-            return {
-                "status": "error",
-                "error": result.stderr[:500],
-            }
-
-        # Convert to parquet
-        report_tsv = output_dir / "report.tsv"
-        report_parquet = output_dir / "report.parquet"
-
-        if report_tsv.exists():
-            import pandas as pd
-            df = pd.read_csv(report_tsv, sep="\t")
-            df.to_parquet(report_parquet, index=False)
-            n_precursors = len(df)
-        else:
-            n_precursors = 0
-
-        return {
-            "status": "success",
-            "n_precursors": n_precursors,
-            "output_dir": str(output_dir),
-        }
-
-    except subprocess.TimeoutExpired:
-        return {"status": "error", "error": "Timeout after 4 hours"}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
-
-
-def _run_sage(
-    accession: str,
-    config: Dict[str, Any],
-    raw_dir: Path,
-    processed_dir: Path,
-    fasta_path: Path,
-    num_threads: int,
-    max_files: int = 0,
-) -> Dict[str, Any]:
-    """Run Sage search."""
-    sage_config = config.get("sage", {})
-    sage_path = sage_config.get("path")
-
-    if not sage_path or not Path(sage_path).exists():
-        return {"status": "skipped", "reason": "Sage not configured"}
-
-    output_dir = processed_dir / "sage"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        # Get input files - Sage can read .d files directly, prefer them over mzML
-        d_files = sorted(raw_dir.glob("*.d"))
-        if max_files > 0:
-            d_files = d_files[:max_files]
-
-        input_files = d_files
-        if not input_files:
-            return {"status": "skipped", "reason": "No .d files found"}
-
-        # Build Sage command - requires config JSON as first positional arg
-        sage_config = Path(__file__).parent.parent.parent / "config" / "sage_config.json"
-        cmd = [
-            str(sage_path),
-            str(sage_config),
-            "--fasta", str(fasta_path),
-            "--output_directory", str(output_dir),
-            "--batch-size", str(max(1, num_threads // 2)),
-            "--parquet",
-            "--annotate-matches",
-        ]
-
-        # Add input files as positional arguments
-        cmd.extend([str(f) for f in input_files])
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600 * 2)
-
-        if result.returncode != 0:
-            return {
-                "status": "error",
-                "error": result.stderr[:500],
-            }
-
-        # Find output parquet
-        results_file = output_dir / "results.sage.parquet"
-        if results_file.exists():
-            import pandas as pd
-            df = pd.read_parquet(results_file)
-            n_psms = len(df[~df.get("is_decoy", False)])
-        else:
-            n_psms = 0
-
-        return {
-            "status": "success",
-            "n_psms": n_psms,
-            "output_dir": str(output_dir),
-        }
-
-    except subprocess.TimeoutExpired:
-        return {"status": "error", "error": "Timeout after 2 hours"}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
-
-
 if __name__ == "__main__":
     import argparse
     import yaml
@@ -426,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--fasta", type=Path, help="FASTA database path")
     parser.add_argument("--engines", nargs="+", default=["fragpipe", "diann", "sage"])
     parser.add_argument("--threads", type=int, default=16, help="Number of threads")
+    parser.add_argument("--max-files", type=int, default=0, help="Max input files (0=all)")
 
     args = parser.parse_args()
 
@@ -442,6 +208,7 @@ if __name__ == "__main__":
         fasta_path=args.fasta,
         engines=args.engines,
         num_threads=args.threads,
+        max_files=args.max_files,
     )
 
     print(f"\nStep 2 completed: {summary.status}")
