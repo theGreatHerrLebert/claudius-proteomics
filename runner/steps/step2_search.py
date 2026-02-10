@@ -6,12 +6,16 @@ Runs FragPipe, DIA-NN, and Sage on raw data with FDR=1.0 (full results).
 Each engine is a self-contained job (runner/engines/) that produces
 canonical parquet + status JSON.
 
-Input: data/raw/{accession}/*.d, FASTA database
+Supports multi-organism datasets: loads sample_groups.yaml from step 1 and
+runs each engine per sample group with the correct FASTA and enzyme settings.
+Falls back to single-group (legacy) behavior when no sample_groups.yaml exists.
 
-Outputs:
-- data/processed/{accession}/{engine}_canonical.parquet (per engine)
-- data/processed/{accession}/{engine}_status.json (per engine)
-- step2_summary.json
+Input: data/raw/{accession}/*.d, FASTA database(s)
+
+Outputs (per-group):
+- data/processed/{accession}/{group_id}/{engine}_canonical.parquet
+- data/processed/{accession}/{group_id}/{engine}_status.json
+- data/processed/{accession}/step2_summary.json
 """
 
 import sys
@@ -23,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from runner.engines import ENGINES
 from runner.summary import StepSummary, write_step_summary
+from scripts.sample_group_resolver import SampleGroupManifest
 
 
 def run_step2_search(
@@ -38,12 +43,16 @@ def run_step2_search(
     """
     Execute Step 2: Run search engines.
 
+    If sample_groups.yaml exists (written by step 1), runs each engine per sample
+    group with the group-specific FASTA and enzyme. Otherwise falls back to
+    single-group legacy behavior.
+
     Args:
         accession: PRIDE accession
         config: Pipeline configuration dict
         output_base_dir: Base directory for outputs
         raw_dir: Path to raw data directory (default: data/raw/{accession})
-        fasta_path: Path to FASTA database (default from config)
+        fasta_path: Explicit FASTA path (overrides per-group resolution)
         engines: List of engines to run (default: all three)
         num_threads: Number of threads
         max_files: Maximum number of raw files to process (0=all)
@@ -63,56 +72,46 @@ def run_step2_search(
         raw_dir = output_base_dir / "raw" / accession
 
     processed_dir = output_base_dir / "processed" / accession
+    metadata_dir = output_base_dir / "metadata" / accession
 
     try:
-        # Get FASTA path
-        if fasta_path is None:
-            fasta_path = _get_fasta_path(accession, config, output_base_dir)
+        # Try to load sample groups from step 1
+        sg_path = metadata_dir / "sample_groups.yaml"
+        if sg_path.exists():
+            manifest = SampleGroupManifest.from_yaml(sg_path)
+            print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
+        else:
+            manifest = None
+            print(f"  No sample_groups.yaml found — using single-group mode")
 
-        # Verify inputs
-        d_files = list(raw_dir.glob("*.d"))
-        if not d_files:
-            raise FileNotFoundError(f"No .d files found in {raw_dir}")
-
-        print(f"  Running search on {len(d_files)} .d files")
-        print(f"  FASTA: {fasta_path}")
-
-        results = {}
-        for engine_name in engines:
-            if engine_name not in ENGINES:
-                results[engine_name] = {"status": "skipped", "reason": f"Unknown engine: {engine_name}"}
-                continue
-
-            job = ENGINES[engine_name]()
-            result = job.run(
+        if manifest and len(manifest.groups) > 0:
+            results = _run_per_group(
+                manifest=manifest,
                 accession=accession,
                 config=config,
                 raw_dir=raw_dir,
                 processed_dir=processed_dir,
-                fasta_path=fasta_path,
+                output_base_dir=output_base_dir,
+                engines=engines,
                 num_threads=num_threads,
                 max_files=max_files,
+                fasta_override=fasta_path,
             )
-            results[engine_name] = result.to_dict()
-
-        # Ensure all default engines have an entry (for summary consistency)
-        for name in ["fragpipe", "diann", "sage"]:
-            if name not in results:
-                results[name] = {"status": "skipped"}
-
-        # FASTA info
-        fasta_info = {
-            "path": str(fasta_path),
-            "n_proteins": _count_proteins(fasta_path),
-        }
+        else:
+            results = _run_single_group(
+                accession=accession,
+                config=config,
+                raw_dir=raw_dir,
+                processed_dir=processed_dir,
+                output_base_dir=output_base_dir,
+                engines=engines,
+                num_threads=num_threads,
+                max_files=max_files,
+                fasta_path=fasta_path,
+            )
 
         # Update summary
-        summary.data = {
-            "fragpipe": results.get("fragpipe", {"status": "skipped"}),
-            "diann": results.get("diann", {"status": "skipped"}),
-            "sage": results.get("sage", {"status": "skipped"}),
-            "fasta": fasta_info,
-        }
+        summary.data = results
         summary.outputs = [str(processed_dir)]
         summary.complete(success=True)
 
@@ -126,8 +125,203 @@ def run_step2_search(
     return summary
 
 
+def _run_per_group(
+    manifest: SampleGroupManifest,
+    accession: str,
+    config: Dict[str, Any],
+    raw_dir: Path,
+    processed_dir: Path,
+    output_base_dir: Path,
+    engines: List[str],
+    num_threads: int,
+    max_files: int,
+    fasta_override: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Run engines for each sample group."""
+    group_results = {}
+
+    for group in manifest.groups:
+        print(f"\n  === Sample group: {group.group_id} ===")
+        print(f"      Organism: {group.organism_name} ({group.organism_key})")
+        print(f"      Enzyme:   {group.enzyme}")
+        print(f"      Runs:     {group.n_runs}")
+
+        if group.n_runs == 0:
+            print(f"      Skipping (no runs)")
+            group_results[group.group_id] = {"status": "skipped", "reason": "no runs"}
+            continue
+
+        # Resolve FASTA for this group's organism
+        if fasta_override:
+            group_fasta = fasta_override
+        else:
+            group_fasta = _get_fasta_for_organism(
+                group.organism_key, config, output_base_dir
+            )
+        print(f"      FASTA:    {group_fasta}")
+
+        # Resolve enzyme config
+        enzyme_config = config.get("enzymes", {}).get(group.enzyme)
+        if enzyme_config:
+            print(f"      Enzyme config: {group.enzyme}")
+        else:
+            print(f"      Warning: no enzyme config for '{group.enzyme}', using defaults")
+
+        # Resolve .d file paths
+        group_d_files = [raw_dir / run for run in group.runs]
+        if max_files > 0:
+            group_d_files = group_d_files[:max_files]
+
+        # Per-group output directory
+        group_processed_dir = processed_dir / group.group_id
+
+        # Run each engine
+        engine_results = {}
+        for engine_name in engines:
+            if engine_name not in ENGINES:
+                engine_results[engine_name] = {
+                    "status": "skipped",
+                    "reason": f"Unknown engine: {engine_name}",
+                }
+                continue
+
+            job = ENGINES[engine_name]()
+            result = job.run(
+                accession=accession,
+                config=config,
+                raw_dir=raw_dir,
+                processed_dir=group_processed_dir,
+                fasta_path=group_fasta,
+                num_threads=num_threads,
+                max_files=0,  # Already sliced via d_files
+                d_files=group_d_files,
+                enzyme_config=enzyme_config,
+            )
+            engine_results[engine_name] = result.to_dict()
+
+        # Ensure all default engines have an entry
+        for name in ["fragpipe", "diann", "sage"]:
+            if name not in engine_results:
+                engine_results[name] = {"status": "skipped"}
+
+        group_results[group.group_id] = {
+            "organism": group.organism_key,
+            "enzyme": group.enzyme,
+            "n_runs": len(group_d_files),
+            "fasta": str(group_fasta),
+            "engines": engine_results,
+        }
+
+    return {
+        "mode": "per_group",
+        "n_groups": len(manifest.groups),
+        "groups": group_results,
+    }
+
+
+def _run_single_group(
+    accession: str,
+    config: Dict[str, Any],
+    raw_dir: Path,
+    processed_dir: Path,
+    output_base_dir: Path,
+    engines: List[str],
+    num_threads: int,
+    max_files: int,
+    fasta_path: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Legacy single-group execution (backward compatible)."""
+    # Get FASTA path
+    if fasta_path is None:
+        fasta_path = _get_fasta_path(accession, config, output_base_dir)
+
+    # Verify inputs
+    d_files = list(raw_dir.glob("*.d"))
+    if not d_files:
+        raise FileNotFoundError(f"No .d files found in {raw_dir}")
+
+    print(f"  Running search on {len(d_files)} .d files")
+    print(f"  FASTA: {fasta_path}")
+
+    results = {}
+    for engine_name in engines:
+        if engine_name not in ENGINES:
+            results[engine_name] = {"status": "skipped", "reason": f"Unknown engine: {engine_name}"}
+            continue
+
+        job = ENGINES[engine_name]()
+        result = job.run(
+            accession=accession,
+            config=config,
+            raw_dir=raw_dir,
+            processed_dir=processed_dir,
+            fasta_path=fasta_path,
+            num_threads=num_threads,
+            max_files=max_files,
+        )
+        results[engine_name] = result.to_dict()
+
+    # Ensure all default engines have an entry (for summary consistency)
+    for name in ["fragpipe", "diann", "sage"]:
+        if name not in results:
+            results[name] = {"status": "skipped"}
+
+    # FASTA info
+    fasta_info = {
+        "path": str(fasta_path),
+        "n_proteins": _count_proteins(fasta_path),
+    }
+
+    return {
+        "mode": "single",
+        "fragpipe": results.get("fragpipe", {"status": "skipped"}),
+        "diann": results.get("diann", {"status": "skipped"}),
+        "sage": results.get("sage", {"status": "skipped"}),
+        "fasta": fasta_info,
+    }
+
+
+def _get_fasta_for_organism(
+    organism_key: str,
+    config: Dict[str, Any],
+    output_base_dir: Path,
+) -> Path:
+    """Get FASTA database path for a specific organism."""
+    organisms = config.get("organisms", {})
+    if organism_key in organisms:
+        org_config = organisms[organism_key]
+        if isinstance(org_config, dict):
+            local_fasta = org_config.get("local_fasta")
+            if local_fasta:
+                org_fasta = Path(local_fasta)
+                if org_fasta.exists():
+                    return org_fasta
+        elif isinstance(org_config, str):
+            org_fasta = Path(org_config)
+            if org_fasta.exists():
+                return org_fasta
+
+    # Check resources/fasta/search_db for organism-specific FASTA
+    resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta" / "search_db"
+    organism_fasta = resources_dir / f"{organism_key}_decoys.fasta"
+    if organism_fasta.exists():
+        return organism_fasta
+
+    # Check output dir
+    fasta_dir = output_base_dir / "resources" / "fasta"
+    organism_fasta_alt = fasta_dir / f"{organism_key}_decoys.fasta"
+    if organism_fasta_alt.exists():
+        return organism_fasta_alt
+
+    raise FileNotFoundError(
+        f"No FASTA database found for organism '{organism_key}'. "
+        f"Configure it in config.yaml under organisms.{organism_key}.local_fasta "
+        f"or place {organism_key}_decoys.fasta in resources/fasta/search_db/"
+    )
+
+
 def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Path) -> Path:
-    """Get FASTA database path for accession."""
+    """Get FASTA database path for accession (legacy single-organism lookup)."""
     # Check for accession-specific FASTA in resources/fasta/search_db
     resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta" / "search_db"
     accession_fasta = resources_dir / f"{accession}_decoys.fasta"
@@ -143,21 +337,10 @@ def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Pat
     # Check dataset metadata for organism
     organism = config.get("dataset_metadata", {}).get(accession, {}).get("organism")
     if organism:
-        organisms = config.get("organisms", {})
-        if organism in organisms:
-            org_config = organisms[organism]
-            # Handle nested config format: {local_fasta: path, ...}
-            if isinstance(org_config, dict):
-                local_fasta = org_config.get("local_fasta")
-                if local_fasta:
-                    org_fasta = Path(local_fasta)
-                    if org_fasta.exists():
-                        return org_fasta
-            # Handle simple string path format
-            elif isinstance(org_config, str):
-                org_fasta = Path(org_config)
-                if org_fasta.exists():
-                    return org_fasta
+        try:
+            return _get_fasta_for_organism(organism, config, output_base_dir)
+        except FileNotFoundError:
+            pass
 
     # Fallback to default FASTA
     default_fasta = config.get("fasta", {}).get("default")
@@ -212,6 +395,14 @@ if __name__ == "__main__":
     )
 
     print(f"\nStep 2 completed: {summary.status}")
-    for engine in ["fragpipe", "diann", "sage"]:
-        eng_data = summary.data.get(engine, {})
-        print(f"  {engine}: {eng_data.get('status')}")
+    mode = summary.data.get("mode", "single")
+    if mode == "per_group":
+        print(f"  Mode: per-group ({summary.data.get('n_groups', 0)} groups)")
+        for gid, gdata in summary.data.get("groups", {}).items():
+            eng = gdata.get("engines", {})
+            statuses = {e: eng.get(e, {}).get("status", "?") for e in ["fragpipe", "diann", "sage"]}
+            print(f"    {gid}: {statuses}")
+    else:
+        for engine in ["fragpipe", "diann", "sage"]:
+            eng_data = summary.data.get(engine, {})
+            print(f"  {engine}: {eng_data.get('status')}")

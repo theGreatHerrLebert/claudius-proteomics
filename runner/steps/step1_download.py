@@ -20,6 +20,7 @@ from typing import Dict, Any, Optional, List
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from runner.summary import StepSummary, write_step_summary
+from scripts.sample_group_resolver import resolve_sample_groups
 
 
 def run_step1_download(
@@ -75,6 +76,13 @@ def run_step1_download(
         if test_mode and max_files > 0:
             raw_files = raw_files[:max_files]
 
+        # Resolve sample groups (organism + enzyme per file)
+        print("  Resolving sample groups...")
+        sg_manifest = resolve_sample_groups(accession, raw_dir, metadata_dir, config)
+        sg_manifest.to_yaml(metadata_dir / "sample_groups.yaml")
+        print(f"  Sample groups: {len(sg_manifest.groups)} groups, "
+              f"multi-organism={sg_manifest.is_multi_organism}")
+
         # Calculate total size
         total_size_gb = sum(
             sum(f.stat().st_size for f in Path(rf).rglob("*") if f.is_file())
@@ -91,6 +99,12 @@ def run_step1_download(
                 "instrument": metadata.get("instrument", "unknown"),
                 "lab_id": metadata.get("lab_id", "unknown"),
                 "completeness": metadata.get("completeness", 0),
+            },
+            "sample_groups": {
+                "n_groups": len(sg_manifest.groups),
+                "is_multi_organism": sg_manifest.is_multi_organism,
+                "groups": [g.group_id for g in sg_manifest.groups],
+                "unassigned_runs": len(sg_manifest.unassigned_runs),
             },
         }
         summary.outputs = [str(raw_dir), str(metadata_dir)]

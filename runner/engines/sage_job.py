@@ -5,6 +5,7 @@ Self-contained job module for running Sage search.
 Can be executed standalone: python -m runner.engines.sage_job --help
 """
 
+import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -34,6 +35,8 @@ class SageJob(EngineJob):
         fasta_path: Path,
         num_threads: int,
         max_files: int,
+        d_files: Optional[List[Path]] = None,
+        enzyme_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         sage_config = config.get("sage", {})
         sage_path = sage_config.get("path")
@@ -41,16 +44,18 @@ class SageJob(EngineJob):
         output_dir = processed_dir / "sage"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Get input files - Sage reads .d files directly
-        d_files = sorted(raw_dir.glob("*.d"))
-        if max_files > 0:
-            d_files = d_files[:max_files]
+        # Get input files: prefer explicit list, fall back to glob
+        if d_files is None:
+            d_files = sorted(raw_dir.glob("*.d"))
+            if max_files > 0:
+                d_files = d_files[:max_files]
 
         if not d_files:
             return None
 
-        # Build Sage command - requires config JSON as first positional arg
-        sage_config_json = Path(__file__).parent.parent.parent / "config" / "sage_config.json"
+        # Generate per-group sage config JSON with enzyme settings
+        sage_config_json = self._write_sage_config(output_dir, enzyme_config)
+
         cmd = [
             str(sage_path),
             str(sage_config_json),
@@ -65,6 +70,33 @@ class SageJob(EngineJob):
         cmd.extend([str(f) for f in d_files])
 
         return cmd
+
+    @staticmethod
+    def _write_sage_config(
+        output_dir: Path,
+        enzyme_config: Optional[Dict[str, Any]] = None,
+    ) -> Path:
+        """Write a Sage config JSON, applying enzyme overrides if provided."""
+        base_config_path = Path(__file__).parent.parent.parent / "config" / "sage_config.json"
+        with open(base_config_path) as f:
+            sage_cfg = json.load(f)
+
+        if enzyme_config:
+            enzyme = sage_cfg.get("database", {}).get("enzyme", {})
+            if "sage_cleave_at" in enzyme_config:
+                enzyme["cleave_at"] = enzyme_config["sage_cleave_at"]
+            if "sage_restrict" in enzyme_config:
+                enzyme["restrict"] = enzyme_config["sage_restrict"]
+            if enzyme_config.get("restrict") is None and "sage_restrict" not in enzyme_config:
+                enzyme["restrict"] = None
+            if "missed_cleavages" in enzyme_config:
+                enzyme["missed_cleavages"] = enzyme_config["missed_cleavages"]
+            sage_cfg.setdefault("database", {})["enzyme"] = enzyme
+
+        config_path = output_dir / "sage_config.json"
+        with open(config_path, "w") as f:
+            json.dump(sage_cfg, f, indent=2)
+        return config_path
 
     def _post_subprocess(
         self,
