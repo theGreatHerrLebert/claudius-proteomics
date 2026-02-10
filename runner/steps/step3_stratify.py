@@ -12,9 +12,13 @@ Uses FragPipe-anchored merging strategy:
 
 Input: FragPipe/DIA-NN/Sage outputs from Step 2
 
-Outputs:
-- data/processed/{accession}/precursor_index.parquet
-- data/processed/{accession}/consensus/
+Per-group mode (when sample_groups.yaml exists from Step 1):
+- Iterates over sample groups, produces one index + consensus per group
+- Writes cross-group QC manifest at accession level
+
+Outputs (per-group mode):
+- data/processed/{accession}/{group_id}/precursor_index.parquet
+- data/processed/{accession}/{group_id}/consensus/
     - overlap_stats.json
     - overlap_report.html
     - stratified/
@@ -23,13 +27,20 @@ Outputs:
         - fragpipe_only.parquet
         - diann_only.parquet
         - sage_only.parquet
+- data/processed/{accession}/step3_qc_manifest.json
+- step3_summary.json
+
+Outputs (legacy single-group mode):
+- data/processed/{accession}/precursor_index.parquet
+- data/processed/{accession}/consensus/
 - step3_summary.json
 """
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, Set, Tuple
+from typing import Dict, Any, Optional, Set, Tuple, List
 
 import pandas as pd
 
@@ -42,6 +53,7 @@ from runner.summary import StepSummary, write_step_summary
 from scripts.engine_parsers.fragpipe_parser import FragPipeParser
 from scripts.engine_parsers.diann_parser import DiannParser
 from scripts.engine_parsers.sage_parser import SageParser
+from scripts.sample_group_resolver import SampleGroupManifest
 
 
 def run_step3_stratify(
@@ -53,11 +65,9 @@ def run_step3_stratify(
     """
     Execute Step 3: Stratify and merge search engine results.
 
-    Uses FragPipe-anchored merging:
-    1. Load raw precursors from Step 4 raw_features.parquet
-    2. Direct join FragPipe by (raw_file, precursor_id)
-    3. Match DIA-NN/Sage by sequence+charge, fallback to coordinates
-    4. Output precursor_index with precursor_id for Step 5 merge
+    If sample_groups.yaml exists (written by step 1), runs stratification per
+    sample group with group-specific processed dirs. Otherwise falls back to
+    single-group legacy behavior.
 
     Args:
         accession: PRIDE accession
@@ -75,80 +85,38 @@ def run_step3_stratify(
 
     processed_dir = output_base_dir / "processed" / accession
     extracted_dir = output_base_dir / "extracted" / accession
-    consensus_dir = processed_dir / "consensus"
-    stratified_dir = consensus_dir / "stratified"
+    metadata_dir = output_base_dir / "metadata" / accession
 
     try:
-        # Load raw precursors from Step 4 (provides the anchor)
-        print("  Loading raw precursors from Step 4...")
-        raw_features_path = extracted_dir / "raw_features.parquet"
-        if raw_features_path.exists():
-            raw_precursors = pd.read_parquet(raw_features_path)
-            # Keep only columns needed for anchoring
-            anchor_cols = ['precursor_id', 'raw_file', 'mz', 'charge', 'rt_seconds', 'mobility']
-            available_cols = [c for c in anchor_cols if c in raw_precursors.columns]
-            raw_precursors = raw_precursors[available_cols].copy()
-            print(f"    {len(raw_precursors)} raw precursors loaded")
+        # Try to load sample groups from step 1
+        sg_path = metadata_dir / "sample_groups.yaml"
+        if sg_path.exists():
+            manifest = SampleGroupManifest.from_yaml(sg_path)
+            print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
         else:
-            print("    No raw_features.parquet found - will build index from engine results only")
-            raw_precursors = pd.DataFrame()
+            manifest = None
+            print(f"  No sample_groups.yaml found — using single-group mode")
 
-        # Load search engine results (canonical parquet preferred, parser fallback)
-        print("  Loading search engine results...")
-        fp_df = _load_engine(processed_dir, "fragpipe")
-        dn_df = _load_engine(processed_dir, "diann")
-        sg_df = _load_engine(processed_dir, "sage")
+        if manifest and len(manifest.groups) > 0:
+            results = _run_per_group(
+                manifest=manifest,
+                accession=accession,
+                config=config,
+                processed_dir=processed_dir,
+                extracted_dir=extracted_dir,
+                generate_html=generate_html,
+            )
+        else:
+            results = _run_single_group(
+                accession=accession,
+                config=config,
+                processed_dir=processed_dir,
+                extracted_dir=extracted_dir,
+                generate_html=generate_html,
+            )
 
-        print(f"    FragPipe: {len(fp_df) if fp_df is not None and not fp_df.empty else 0} PSMs")
-        print(f"    DIA-NN: {len(dn_df) if dn_df is not None and not dn_df.empty else 0} precursors")
-        print(f"    Sage: {len(sg_df) if sg_df is not None and not sg_df.empty else 0} PSMs")
-
-        # Compute overlap statistics (at sequence+charge level for reporting)
-        print("  Computing overlap statistics...")
-        overlap_stats = _compute_overlap_stats_from_parsers(fp_df, dn_df, sg_df)
-
-        # Build unified precursor index with FragPipe anchoring
-        print("  Building unified precursor index (FragPipe-anchored)...")
-        precursor_index = _build_precursor_index_anchored(
-            raw_precursors, fp_df, dn_df, sg_df, config
-        )
-
-        # Stratify by engine agreement
-        print("  Stratifying by engine agreement...")
-        stratified_counts = _stratify_precursors(precursor_index, stratified_dir)
-
-        # Compute match tier statistics
-        match_tiers = _compute_match_tiers(precursor_index)
-
-        # Save precursor index
-        index_path = processed_dir / "precursor_index.parquet"
-        precursor_index.to_parquet(index_path, index=False)
-        print(f"  Saved precursor index: {index_path}")
-        print(f"    Columns: {list(precursor_index.columns)}")
-
-        # Save overlap stats
-        consensus_dir.mkdir(parents=True, exist_ok=True)
-        stats_path = consensus_dir / "overlap_stats.json"
-        with open(stats_path, "w") as f:
-            json.dump(overlap_stats, f, indent=2)
-
-        # Generate HTML report
-        if generate_html:
-            html_path = consensus_dir / "overlap_report.html"
-            _generate_html_report(accession, overlap_stats, html_path)
-            print(f"  Generated HTML report: {html_path}")
-
-        # Update summary
-        summary.data = {
-            "overlap_stats": overlap_stats,
-            "stratified_counts": stratified_counts,
-            "match_tiers": match_tiers,
-            "n_total_precursors": len(precursor_index),
-        }
-        summary.outputs = [
-            str(index_path),
-            str(consensus_dir),
-        ]
+        summary.data = results
+        summary.outputs = [str(processed_dir)]
         summary.complete(success=True)
 
     except Exception as e:
@@ -161,16 +129,287 @@ def run_step3_stratify(
     return summary
 
 
-def _load_engine(processed_dir: Path, engine_name: str) -> Optional[pd.DataFrame]:
+def _run_per_group(
+    manifest: SampleGroupManifest,
+    accession: str,
+    config: Dict[str, Any],
+    processed_dir: Path,
+    extracted_dir: Path,
+    generate_html: bool,
+) -> Dict[str, Any]:
+    """Run stratification for each sample group.
+
+    Args:
+        manifest: Sample group manifest from step 1
+        accession: PRIDE accession
+        config: Pipeline configuration dict
+        processed_dir: e.g. data/processed/PXD019086
+        extracted_dir: e.g. data/extracted/PXD019086
+        generate_html: Whether to generate HTML reports
+
+    Returns:
+        Aggregated results dict with per-group breakdown
+    """
+    group_results = {}
+    n_skipped = 0
+
+    for group in manifest.groups:
+        print(f"\n  === Sample group: {group.group_id} ===")
+        print(f"      Organism: {group.organism_name} ({group.organism_key})")
+        print(f"      Enzyme:   {group.enzyme}")
+        print(f"      Runs:     {group.n_runs}")
+
+        if group.n_runs == 0:
+            print(f"      Skipping (no runs)")
+            group_results[group.group_id] = {"status": "skipped", "reason": "no runs"}
+            n_skipped += 1
+            continue
+
+        group_processed_dir = processed_dir / group.group_id
+        group_extracted_dir = extracted_dir / group.group_id
+
+        try:
+            group_stats = _stratify_single_group(
+                accession=accession,
+                config=config,
+                processed_dir=group_processed_dir,
+                extracted_dir=group_extracted_dir,
+                generate_html=generate_html,
+                report_label=f"{accession}/{group.group_id}",
+            )
+            group_results[group.group_id] = {
+                "status": "success",
+                "organism": group.organism_key,
+                "enzyme": group.enzyme,
+                **group_stats,
+            }
+        except Exception as e:
+            print(f"      ERROR: {e}")
+            group_results[group.group_id] = {
+                "status": "error",
+                "organism": group.organism_key,
+                "enzyme": group.enzyme,
+                "error": str(e),
+            }
+
+    # Write cross-group QC manifest
+    _write_qc_manifest(accession, group_results, processed_dir)
+
+    # Compute totals across groups
+    total_precursors = sum(
+        r.get("n_total_precursors", 0)
+        for r in group_results.values()
+        if r.get("status") == "success"
+    )
+
+    return {
+        "mode": "per_group",
+        "n_groups": len(manifest.groups),
+        "n_groups_processed": len(manifest.groups) - n_skipped,
+        "n_groups_skipped": n_skipped,
+        "n_total_precursors": total_precursors,
+        "groups": group_results,
+    }
+
+
+def _run_single_group(
+    accession: str,
+    config: Dict[str, Any],
+    processed_dir: Path,
+    extracted_dir: Path,
+    generate_html: bool,
+) -> Dict[str, Any]:
+    """Legacy single-group mode: flat processed_dir, no sample groups."""
+    stats = _stratify_single_group(
+        accession=accession,
+        config=config,
+        processed_dir=processed_dir,
+        extracted_dir=extracted_dir,
+        generate_html=generate_html,
+        report_label=accession,
+    )
+    return {
+        "mode": "single_group",
+        **stats,
+    }
+
+
+def _stratify_single_group(
+    accession: str,
+    config: Dict[str, Any],
+    processed_dir: Path,
+    extracted_dir: Path,
+    generate_html: bool,
+    report_label: str,
+) -> Dict[str, Any]:
+    """Stratify a single group's search engine results.
+
+    This is the core stratification logic, operating on a single processed_dir
+    (either the flat accession dir in legacy mode, or a group subdir).
+
+    Args:
+        accession: PRIDE accession (for parser fallback)
+        config: Pipeline configuration dict
+        processed_dir: Directory with engine results (canonical parquets)
+        extracted_dir: Directory with raw features (may not exist)
+        generate_html: Whether to generate HTML report
+        report_label: Label for HTML report (accession or accession/group_id)
+
+    Returns:
+        Dict with overlap_stats, stratified_counts, match_tiers, n_total_precursors
+    """
+    consensus_dir = processed_dir / "consensus"
+    stratified_dir = consensus_dir / "stratified"
+
+    # Load raw precursors from Step 4 (provides the anchor)
+    print("  Loading raw precursors from Step 4...")
+    raw_features_path = extracted_dir / "raw_features.parquet"
+    if raw_features_path.exists():
+        raw_precursors = pd.read_parquet(raw_features_path)
+        # Keep only columns needed for anchoring
+        anchor_cols = ['precursor_id', 'raw_file', 'mz', 'charge', 'rt_seconds', 'mobility']
+        available_cols = [c for c in anchor_cols if c in raw_precursors.columns]
+        raw_precursors = raw_precursors[available_cols].copy()
+        print(f"    {len(raw_precursors)} raw precursors loaded")
+    else:
+        print("    No raw_features.parquet found - will build index from engine results only")
+        raw_precursors = pd.DataFrame()
+
+    # Load search engine results (canonical parquet preferred, parser fallback)
+    print("  Loading search engine results...")
+    fp_df = _load_engine(processed_dir, "fragpipe", accession=accession)
+    dn_df = _load_engine(processed_dir, "diann", accession=accession)
+    sg_df = _load_engine(processed_dir, "sage", accession=accession)
+
+    print(f"    FragPipe: {len(fp_df) if fp_df is not None and not fp_df.empty else 0} PSMs")
+    print(f"    DIA-NN: {len(dn_df) if dn_df is not None and not dn_df.empty else 0} precursors")
+    print(f"    Sage: {len(sg_df) if sg_df is not None and not sg_df.empty else 0} PSMs")
+
+    # Compute overlap statistics (at sequence+charge level for reporting)
+    print("  Computing overlap statistics...")
+    overlap_stats = _compute_overlap_stats_from_parsers(fp_df, dn_df, sg_df)
+
+    # Build unified precursor index with FragPipe anchoring
+    print("  Building unified precursor index (FragPipe-anchored)...")
+    precursor_index = _build_precursor_index_anchored(
+        raw_precursors, fp_df, dn_df, sg_df, config
+    )
+
+    # Stratify by engine agreement
+    print("  Stratifying by engine agreement...")
+    stratified_counts = _stratify_precursors(precursor_index, stratified_dir)
+
+    # Compute match tier statistics
+    match_tiers = _compute_match_tiers(precursor_index)
+
+    # Save precursor index
+    index_path = processed_dir / "precursor_index.parquet"
+    precursor_index.to_parquet(index_path, index=False)
+    print(f"  Saved precursor index: {index_path}")
+    print(f"    Columns: {list(precursor_index.columns)}")
+
+    # Save overlap stats
+    consensus_dir.mkdir(parents=True, exist_ok=True)
+    stats_path = consensus_dir / "overlap_stats.json"
+    with open(stats_path, "w") as f:
+        json.dump(overlap_stats, f, indent=2)
+
+    # Generate HTML report
+    if generate_html:
+        html_path = consensus_dir / "overlap_report.html"
+        _generate_html_report(report_label, overlap_stats, html_path)
+        print(f"  Generated HTML report: {html_path}")
+
+    return {
+        "overlap_stats": overlap_stats,
+        "stratified_counts": stratified_counts,
+        "match_tiers": match_tiers,
+        "n_total_precursors": len(precursor_index),
+    }
+
+
+def _write_qc_manifest(
+    accession: str,
+    group_results: Dict[str, Dict[str, Any]],
+    processed_dir: Path,
+) -> None:
+    """Write cross-group QC manifest at the accession level.
+
+    Args:
+        accession: PRIDE accession
+        group_results: Per-group results from _run_per_group
+        processed_dir: e.g. data/processed/PXD019086
+    """
+    groups_qc = {}
+    total_precursors = 0
+    n_processed = 0
+    n_skipped = 0
+
+    for group_id, result in group_results.items():
+        if result.get("status") != "success":
+            n_skipped += 1
+            continue
+
+        n_processed += 1
+        n_prec = result.get("n_total_precursors", 0)
+        total_precursors += n_prec
+
+        overlap = result.get("overlap_stats", {})
+        match_tiers = result.get("match_tiers", {})
+
+        groups_qc[group_id] = {
+            "organism": result.get("organism", ""),
+            "enzyme": result.get("enzyme", ""),
+            "n_precursors": n_prec,
+            "n_engines": {
+                "3": match_tiers.get("all_three", 0),
+                "2": match_tiers.get("two_engines", 0),
+                "1": match_tiers.get("one_engine", 0),
+            },
+            "overlap": {
+                "three_way_rate": overlap.get("three_way_rate", 0.0),
+                "at_least_two_rate": overlap.get("at_least_two_rate", 0.0),
+                "n_union": overlap.get("n_union", 0),
+            },
+        }
+
+    qc_manifest = {
+        "accession": accession,
+        "generated_at": datetime.now().isoformat(),
+        "n_groups": len(group_results),
+        "groups": groups_qc,
+        "totals": {
+            "n_precursors": total_precursors,
+            "n_groups_processed": n_processed,
+            "n_groups_skipped": n_skipped,
+        },
+    }
+
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    qc_path = processed_dir / "step3_qc_manifest.json"
+    with open(qc_path, "w") as f:
+        json.dump(qc_manifest, f, indent=2)
+    print(f"\n  Wrote QC manifest: {qc_path}")
+
+
+def _load_engine(
+    processed_dir: Path,
+    engine_name: str,
+    accession: Optional[str] = None,
+) -> Optional[pd.DataFrame]:
     """Load engine results, preferring canonical parquet from step2.
 
     Lookup order:
     1. {engine}_canonical.parquet (produced by runner/engines/ jobs)
     2. Fallback: re-parse native output using the engine parser
+       (only in legacy single-group mode where processed_dir.name == accession)
 
     Args:
-        processed_dir: e.g. data/processed/PXD019086
+        processed_dir: e.g. data/processed/PXD019086 or data/processed/PXD019086/human_trypsin
         engine_name: "fragpipe", "diann", or "sage"
+        accession: PRIDE accession for parser fallback. If provided and
+            processed_dir.name != accession, parser fallback is skipped
+            (per-group mode always has canonical parquets from step 2).
 
     Returns:
         DataFrame with {engine}_* prefixed columns, or None/empty DataFrame
@@ -180,14 +419,18 @@ def _load_engine(processed_dir: Path, engine_name: str) -> Optional[pd.DataFrame
     if canonical.exists():
         return pd.read_parquet(canonical)
 
-    # Fallback: re-parse native output
+    # In per-group mode, skip parser fallback (canonical parquet is guaranteed)
+    if accession and processed_dir.name != accession:
+        return None
+
+    # Fallback: re-parse native output (legacy single-group mode only)
     parsers = {"fragpipe": FragPipeParser, "diann": DiannParser, "sage": SageParser}
     parser_cls = parsers.get(engine_name)
     if parser_cls is None:
         return None
     base_dir = processed_dir.parent
-    accession = processed_dir.name
-    return parser_cls().parse(base_dir, accession)
+    fallback_accession = accession if accession else processed_dir.name
+    return parser_cls().parse(base_dir, fallback_accession)
 
 
 def _compute_overlap_stats_from_parsers(
@@ -772,5 +1015,12 @@ if __name__ == "__main__":
     )
 
     print(f"\nStep 3 completed: {summary.status}")
-    print(f"  Total precursors: {summary.data['n_total_precursors']}")
-    print(f"  Stratified counts: {summary.data['stratified_counts']}")
+    if "n_total_precursors" in summary.data:
+        print(f"  Total precursors: {summary.data['n_total_precursors']}")
+    if "groups" in summary.data:
+        for gid, gdata in summary.data["groups"].items():
+            status = gdata.get("status", "unknown")
+            n = gdata.get("n_total_precursors", "N/A")
+            print(f"  Group {gid}: {status}, {n} precursors")
+    if "stratified_counts" in summary.data:
+        print(f"  Stratified counts: {summary.data['stratified_counts']}")
