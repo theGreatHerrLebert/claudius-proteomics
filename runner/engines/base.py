@@ -192,9 +192,10 @@ class EngineJob(ABC):
 
             # Parse native output into canonical DataFrame
             parser = self._get_parser()
-            # Parsers expect (base_dir, accession) where base_dir/accession = processed_dir
+            # Parsers expect (base_dir, subdir) where base_dir/subdir = processed_dir.
+            # In per-group mode processed_dir.name is the group_id, not the accession.
             base_dir = processed_dir.parent
-            canonical_df = parser.parse(base_dir, accession)
+            canonical_df = parser.parse(base_dir, processed_dir.name)
 
             # Write canonical parquet
             canonical_path = processed_dir / f"{self.engine_name}_canonical.parquet"
