@@ -91,6 +91,8 @@ class DatasetMetadata:
 
     # Scientific context
     organism: MetadataField = field(default_factory=lambda: MetadataField.missing())
+    organisms_all: MetadataField = field(default_factory=lambda: MetadataField.missing())
+    is_multi_organism: bool = False
     instrument: MetadataField = field(default_factory=lambda: MetadataField.missing())
     title: MetadataField = field(default_factory=lambda: MetadataField.missing())
     publication_doi: MetadataField = field(default_factory=lambda: MetadataField.missing())
@@ -182,10 +184,14 @@ class DatasetMetadata:
             "publication_doi": self.publication_doi.to_dict()
             if self.publication_doi.value
             else None,
+            "is_multi_organism": self.is_multi_organism,
             "fields": {
                 "dataset_id": self.dataset_id.to_dict(),
                 "lab_id": self.lab_id.to_dict(),
                 "organism": self.organism.to_dict(),
+                "organisms_all": self.organisms_all.to_dict()
+                if self.organisms_all.value
+                else None,
                 "instrument": self.instrument.to_dict(),
                 "gradient_length": self.gradient_length.to_dict(),
                 "column_type": self.column_type.to_dict(),
@@ -264,6 +270,24 @@ class DatasetMetadata:
         # Organism from organisms list
         organisms = project.get("organisms", [])
         if organisms:
+            # Store all organisms with name and taxon_id
+            all_orgs = []
+            for org in organisms:
+                org_entry = {"name": org.get("name", "")}
+                accession_str = org.get("accession", "")
+                if accession_str:
+                    try:
+                        org_entry["taxon_id"] = int(accession_str)
+                    except ValueError:
+                        pass
+                all_orgs.append(org_entry)
+
+            metadata.organisms_all = MetadataField.auto(
+                all_orgs, "pride_api.organisms"
+            )
+            metadata.is_multi_organism = len(organisms) > 1
+
+            # Keep backward-compatible single organism (first in list)
             org_name = organisms[0].get("name")
             if org_name:
                 metadata.organism = MetadataField.auto(
@@ -355,6 +379,7 @@ class DatasetMetadata:
         metadata = cls(accession=data.get("accession", ""))
         metadata.version = data.get("version", "1.0")
         metadata.generated_at = data.get("generated_at", "")
+        metadata.is_multi_organism = data.get("is_multi_organism", False)
 
         # Load title and DOI
         if data.get("title"):

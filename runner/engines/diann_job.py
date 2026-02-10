@@ -39,6 +39,8 @@ class DiannJob(EngineJob):
         fasta_path: Path,
         num_threads: int,
         max_files: int,
+        d_files: Optional[List[Path]] = None,
+        enzyme_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         diann_config = config.get("diann", {})
         diann_path = diann_config.get("path")
@@ -46,10 +48,11 @@ class DiannJob(EngineJob):
         output_dir = processed_dir / "diann"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Get .d files
-        d_files = sorted(raw_dir.glob("*.d"))
-        if max_files > 0:
-            d_files = d_files[:max_files]
+        # Get .d files: prefer explicit list, fall back to glob
+        if d_files is None:
+            d_files = sorted(raw_dir.glob("*.d"))
+            if max_files > 0:
+                d_files = d_files[:max_files]
 
         if not d_files:
             return None
@@ -81,9 +84,14 @@ class DiannJob(EngineJob):
             ])
 
         # Digestion and modification settings (always needed)
+        diann_cut = "K*,R*,!*P"  # Default: trypsin
+        missed_cleavages = "2"
+        if enzyme_config:
+            diann_cut = enzyme_config.get("diann_cut", diann_cut)
+            missed_cleavages = str(enzyme_config.get("missed_cleavages", 2))
         cmd.extend([
-            "--cut", "K*,R*,!*P",  # Trypsin: cleave at K/R, not before P
-            "--missed-cleavages", "2",
+            "--cut", diann_cut,
+            "--missed-cleavages", missed_cleavages,
             "--min-pep-len", "7",
             "--max-pep-len", "50",
             "--min-pr-charge", "1",

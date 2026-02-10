@@ -5,15 +5,12 @@
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
 
-# Dataset metadata: organism mapping and bias-aware fields
-# Maps PRIDE accession to organism for automatic FASTA selection
-# These values are used as fallback if automatic extraction fails
+# Dataset metadata: bias-aware fields (manually verified from publication)
+# Organism mapping is now handled automatically by sample_group_resolver.py
 dataset_metadata:
   PXD019086:
-    organism: "human"
-    description: "Meier et al. 2021 - HeLa tryptic digest for CCS prediction"
+    description: "Meier et al. 2021 - multi-organism CCS prediction study"
     instrument: "timsTOF Pro"
-    # Bias-aware fields (manually verified from publication)
     lab_id: "Max Planck Institute of Biochemistry"
     gradient_length: 120  # minutes (from LC method name "120min")
     column_type: "C18 25cm nanoLC"  # From publication methods
@@ -50,12 +47,51 @@ organisms:
     taxon_id: 10090
     proteome_id: "UP000000589"
     local_fasta: null
+  drosophila:
+    taxon_id: 7227
+    proteome_id: "UP000000803"
+    local_fasta: null
+  c_elegans:
+    taxon_id: 6239
+    proteome_id: "UP000001940"
+    local_fasta: null
 
 # Contaminants database (appended to all FASTA files)
 contaminants:
   enabled: true
   source: "cRAP"  # Common Repository of Adventitious Proteins
   url: "http://ftp.thegpm.org/fasta/cRAP/crap.fasta"
+
+# Enzyme definitions for search engines
+# Each enzyme has engine-specific syntax for FragPipe, DIA-NN, and Sage
+enzymes:
+  trypsin:
+    cleave_at: "KR"
+    restrict: "P"
+    terminal: "C"
+    missed_cleavages: 2
+    fragpipe_name: "stricttrypsin"
+    diann_cut: "K*,R*,!*P"
+    sage_cleave_at: "KR"
+    sage_restrict: "P"
+  lysc:
+    cleave_at: "K"
+    restrict: null
+    terminal: "C"
+    missed_cleavages: 2
+    fragpipe_name: "lysc"
+    diann_cut: "K*"
+    sage_cleave_at: "K"
+    sage_restrict: null
+  lysn:
+    cleave_at: "K"
+    restrict: null
+    terminal: "N"
+    missed_cleavages: 2
+    fragpipe_name: "lysn"
+    diann_cut: "*K"
+    sage_cleave_at: "K"
+    sage_restrict: null
 
 # Local data paths (for testing without PRIDE download)
 local_data:

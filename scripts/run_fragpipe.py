@@ -31,12 +31,16 @@ def update_workflow(
     fasta_path: Path,
     is_timstof: bool = True,
     disable_fdr_filter: bool = True,
+    enzyme_name: str | None = None,
 ) -> None:
     """
     Update workflow file with FASTA path and timsTOF settings.
 
     If disable_fdr_filter=True (San José mode), sets all FDR thresholds to 1.0
     so that ALL PSMs are reported regardless of confidence.
+
+    If enzyme_name is provided, override the enzyme in the workflow
+    (msfragger.search_enzyme_name).
     """
     with open(base_workflow) as f:
         lines = f.readlines()
@@ -92,12 +96,24 @@ def update_workflow(
                 break
         updated_lines.insert(insert_idx, f'database.db-path={fasta_path}')
 
+    # Override enzyme if requested
+    if enzyme_name:
+        final_lines = []
+        for line in updated_lines:
+            if line.startswith('msfragger.search_enzyme_name='):
+                final_lines.append(f'msfragger.search_enzyme_name={enzyme_name}')
+            else:
+                final_lines.append(line)
+        updated_lines = final_lines
+
     with open(output_workflow, 'w') as f:
         f.write('\n'.join(updated_lines))
 
     print(f"Created workflow: {output_workflow}")
     print(f"  FASTA: {fasta_path}")
     print(f"  timsTOF IM-MS: {is_timstof}")
+    if enzyme_name:
+        print(f"  Enzyme: {enzyme_name}")
     if disable_fdr_filter:
         print(f"  FDR filtering: DISABLED (San José mode - report ALL PSMs)")
 
@@ -218,6 +234,14 @@ def main():
         "--enable-fdr-filter", action="store_true",
         help="Enable FDR filtering (default: disabled for San José - report ALL PSMs)"
     )
+    parser.add_argument(
+        "--files", nargs="+", type=str, default=None,
+        help="Explicit list of .d file paths (bypasses find_raw_files)"
+    )
+    parser.add_argument(
+        "--enzyme", type=str, default=None,
+        help="Enzyme name to override in workflow (e.g. stricttrypsin, lysc, lysn)"
+    )
 
     args = parser.parse_args()
 
@@ -240,8 +264,12 @@ def main():
         print(f"ERROR: FASTA not found: {fasta_path}")
         sys.exit(1)
 
-    # Find raw files
-    raw_files = find_raw_files(input_dir, args.max_files)
+    # Find raw files: prefer explicit --files list, fall back to directory scan
+    if args.files:
+        raw_files = [Path(f).resolve() for f in args.files]
+        print(f"Using {len(raw_files)} explicitly provided files")
+    else:
+        raw_files = find_raw_files(input_dir, args.max_files)
     if not raw_files:
         print(f"ERROR: No .d folders found in {input_dir}")
         sys.exit(1)
@@ -277,6 +305,7 @@ def main():
         fasta_path,
         is_timstof=not args.no_timstof,
         disable_fdr_filter=not args.enable_fdr_filter,  # Default: disable FDR (San José mode)
+        enzyme_name=args.enzyme,
     )
 
     # Resolve temp directory

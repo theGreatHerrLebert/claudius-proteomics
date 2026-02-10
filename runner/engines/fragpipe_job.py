@@ -46,6 +46,8 @@ class FragPipeJob(EngineJob):
         fasta_path: Path,
         num_threads: int,
         max_files: int,
+        d_files: Optional[List[Path]] = None,
+        enzyme_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         fragpipe_config = config.get("fragpipe", {})
         fragpipe_path = fragpipe_config.get("path")
@@ -63,8 +65,16 @@ class FragPipeJob(EngineJob):
             "--fasta", str(fasta_path),
             "--threads", str(num_threads),
         ]
-        if max_files > 0:
+
+        # Pass explicit file list if provided
+        if d_files:
+            cmd.extend(["--files"] + [str(f) for f in d_files])
+        elif max_files > 0:
             cmd.extend(["--max-files", str(max_files)])
+
+        # Pass enzyme override if provided
+        if enzyme_config and "fragpipe_name" in enzyme_config:
+            cmd.extend(["--enzyme", enzyme_config["fragpipe_name"]])
 
         return cmd
 
