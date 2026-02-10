@@ -4,14 +4,18 @@ Step 5: Merge Search Results with Extracted Raw Data
 
 Joins engine IDs with raw features into final dashboard-ready dataset.
 
-Input:
-- data/processed/{accession}/precursor_index.parquet (Step 3)
-- data/extracted/{accession}/raw_features.parquet (Step 4)
+Input (per-group when sample_groups.yaml exists):
+- data/processed/{accession}/{group_id}/precursor_index.parquet (Step 3)
+- data/extracted/{accession}/{group_id}/raw_features.parquet (Step 4)
 
-Outputs:
+Outputs (per-group):
+- data/merged/{accession}/{group_id}/precursor_store.parquet
+- data/merged/{accession}/{group_id}/manifest.json
+- step5_summary.json
+
+Legacy (no sample_groups.yaml):
 - data/merged/{accession}/precursor_store.parquet
 - data/merged/{accession}/manifest.json
-- step5_summary.json
 """
 
 import json
@@ -39,6 +43,10 @@ def run_step5_merge(
     """
     Execute Step 5: Final merge of search + raw data.
 
+    If sample_groups.yaml exists, merges per-group into
+    data/merged/{accession}/{group_id}/. Otherwise falls back
+    to legacy single-group output at data/merged/{accession}/.
+
     Args:
         accession: PRIDE accession
         config: Pipeline configuration dict
@@ -59,80 +67,91 @@ def run_step5_merge(
     merged_dir = output_base_dir / "merged" / accession
 
     try:
-        # Resolve input paths
-        if precursor_index_path is None:
-            precursor_index_path = processed_dir / "precursor_index.parquet"
-        if raw_features_path is None:
-            raw_features_path = extracted_dir / "raw_features.parquet"
+        # Check for sample group manifest
+        metadata_dir = output_base_dir / "metadata" / accession
+        sg_path = metadata_dir / "sample_groups.yaml"
 
-        # Load inputs
-        print("  Loading precursor index from Step 3...")
-        if not precursor_index_path.exists():
-            raise FileNotFoundError(f"Precursor index not found: {precursor_index_path}")
-        precursor_index = pd.read_parquet(precursor_index_path)
-        print(f"    {len(precursor_index)} precursors")
+        if sg_path.exists():
+            from scripts.sample_group_resolver import SampleGroupManifest
 
-        print("  Loading raw features from Step 4...")
-        if raw_features_path.exists():
-            raw_features = pd.read_parquet(raw_features_path)
-            print(f"    {len(raw_features)} extracted precursors")
+            manifest = SampleGroupManifest.from_yaml(sg_path)
+            print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
+
+            group_results = {}
+            total_precursors = 0
+            total_outputs = []
+
+            for group in manifest.groups:
+                print(f"\n  === Sample group: {group.group_id} ===")
+                print(f"      Organism: {group.organism_name} ({group.organism_key})")
+                print(f"      Enzyme:   {group.enzyme}")
+                print(f"      Runs:     {group.n_runs}")
+
+                if group.n_runs == 0:
+                    print(f"      Skipping (no runs)")
+                    group_results[group.group_id] = {"status": "skipped", "reason": "no runs"}
+                    continue
+
+                # Per-group paths
+                group_processed_dir = processed_dir / group.group_id
+                group_extracted_dir = extracted_dir / group.group_id
+                group_merged_dir = merged_dir / group.group_id
+
+                group_index_path = group_processed_dir / "precursor_index.parquet"
+                group_features_path = group_extracted_dir / "raw_features.parquet"
+
+                group_result = _merge_single_group(
+                    accession=accession,
+                    group_id=group.group_id,
+                    precursor_index_path=group_index_path,
+                    raw_features_path=group_features_path,
+                    merged_dir=group_merged_dir,
+                )
+
+                total_precursors += group_result["n_total_precursors"]
+                total_outputs.extend([
+                    str(group_merged_dir / "precursor_store.parquet"),
+                    str(group_merged_dir / "manifest.json"),
+                ])
+                group_results[group.group_id] = group_result
+
+            summary.data = {
+                "mode": "per_group",
+                "n_total_precursors": total_precursors,
+                "group_results": group_results,
+            }
+            summary.outputs = total_outputs
+            summary.complete(success=True)
+
         else:
-            print("    No raw features found - creating from precursor index only")
-            raw_features = pd.DataFrame()
+            # Legacy single-group behavior
+            print(f"  No sample_groups.yaml found — using single-group mode")
 
-        # Merge datasets
-        print("  Merging search results with raw features...")
-        merged_df = _merge_datasets(precursor_index, raw_features)
+            # Resolve input paths
+            if precursor_index_path is None:
+                precursor_index_path = processed_dir / "precursor_index.parquet"
+            if raw_features_path is None:
+                raw_features_path = extracted_dir / "raw_features.parquet"
 
-        # Add consensus columns
-        merged_df = _add_consensus_columns(merged_df)
+            group_result = _merge_single_group(
+                accession=accession,
+                group_id=None,
+                precursor_index_path=precursor_index_path,
+                raw_features_path=raw_features_path,
+                merged_dir=merged_dir,
+            )
 
-        # Add quality summary columns
-        merged_df = _add_quality_columns(merged_df)
-
-        # Save merged dataset
-        merged_dir.mkdir(parents=True, exist_ok=True)
-        output_path = merged_dir / "precursor_store.parquet"
-        merged_df.to_parquet(output_path, index=False)
-        print(f"  Saved precursor store: {output_path}")
-
-        # Compute statistics
-        n_total = len(merged_df)
-        n_per_engine = {
-            "fragpipe": int((merged_df.get("fragpipe_peptide", pd.Series()).notna()).sum()),
-            "diann": int((merged_df.get("diann_peptide", pd.Series()).notna()).sum()),
-            "sage": int((merged_df.get("sage_peptide", pd.Series()).notna()).sum()),
-        }
-        n_unidentified = int((merged_df["n_engines"] == 0).sum())
-
-        # Quality summary
-        quality_summary = _compute_quality_summary(merged_df)
-
-        # Create manifest
-        manifest = {
-            "accession": accession,
-            "pipeline_version": "1.0",
-            "generated_at": datetime.now().isoformat(),
-            "n_total_precursors": n_total,
-            "n_per_engine": n_per_engine,
-            "n_unidentified": n_unidentified,
-            "quality_summary": quality_summary,
-            "output_file": str(output_path),
-        }
-        manifest_path = merged_dir / "manifest.json"
-        with open(manifest_path, "w") as f:
-            json.dump(manifest, f, indent=2)
-        print(f"  Saved manifest: {manifest_path}")
-
-        # Update summary
-        summary.data = {
-            "n_total_precursors": n_total,
-            "n_per_engine": n_per_engine,
-            "n_unidentified": n_unidentified,
-            "quality_summary": quality_summary,
-        }
-        summary.outputs = [str(output_path), str(manifest_path)]
-        summary.complete(success=True)
+            summary.data = {
+                "n_total_precursors": group_result["n_total_precursors"],
+                "n_per_engine": group_result["n_per_engine"],
+                "n_unidentified": group_result["n_unidentified"],
+                "quality_summary": group_result["quality_summary"],
+            }
+            summary.outputs = [
+                str(merged_dir / "precursor_store.parquet"),
+                str(merged_dir / "manifest.json"),
+            ]
+            summary.complete(success=True)
 
     except Exception as e:
         summary.complete(success=False, error_message=str(e))
@@ -142,6 +161,91 @@ def run_step5_merge(
     write_step_summary(summary, processed_dir)
 
     return summary
+
+
+def _merge_single_group(
+    accession: str,
+    group_id: Optional[str],
+    precursor_index_path: Path,
+    raw_features_path: Path,
+    merged_dir: Path,
+) -> Dict[str, Any]:
+    """
+    Merge search results with raw features for a single group.
+
+    Returns dict with merge statistics.
+    """
+    label = f"group {group_id}" if group_id else "dataset"
+
+    # Load inputs
+    print(f"  Loading precursor index for {label}...")
+    if not precursor_index_path.exists():
+        raise FileNotFoundError(f"Precursor index not found: {precursor_index_path}")
+    precursor_index = pd.read_parquet(precursor_index_path)
+    print(f"    {len(precursor_index)} precursors")
+
+    print(f"  Loading raw features for {label}...")
+    if raw_features_path.exists():
+        raw_features = pd.read_parquet(raw_features_path)
+        print(f"    {len(raw_features)} extracted precursors")
+    else:
+        print("    No raw features found - creating from precursor index only")
+        raw_features = pd.DataFrame()
+
+    # Merge datasets
+    print(f"  Merging search results with raw features for {label}...")
+    merged_df = _merge_datasets(precursor_index, raw_features)
+
+    # Add consensus columns
+    merged_df = _add_consensus_columns(merged_df)
+
+    # Add quality summary columns
+    merged_df = _add_quality_columns(merged_df)
+
+    # Save merged dataset
+    merged_dir.mkdir(parents=True, exist_ok=True)
+    output_path = merged_dir / "precursor_store.parquet"
+    merged_df.to_parquet(output_path, index=False)
+    print(f"  Saved precursor store: {output_path}")
+
+    # Compute statistics
+    n_total = len(merged_df)
+    n_per_engine = {
+        "fragpipe": int((merged_df.get("fragpipe_peptide", pd.Series()).notna()).sum()),
+        "diann": int((merged_df.get("diann_peptide", pd.Series()).notna()).sum()),
+        "sage": int((merged_df.get("sage_peptide", pd.Series()).notna()).sum()),
+    }
+    n_unidentified = int((merged_df["n_engines"] == 0).sum())
+
+    # Quality summary
+    quality_summary = _compute_quality_summary(merged_df)
+
+    # Create manifest
+    manifest_data = {
+        "accession": accession,
+        "pipeline_version": "1.0",
+        "generated_at": datetime.now().isoformat(),
+        "n_total_precursors": n_total,
+        "n_per_engine": n_per_engine,
+        "n_unidentified": n_unidentified,
+        "quality_summary": quality_summary,
+        "output_file": str(output_path),
+    }
+    if group_id is not None:
+        manifest_data["group_id"] = group_id
+
+    manifest_path = merged_dir / "manifest.json"
+    with open(manifest_path, "w") as f:
+        json.dump(manifest_data, f, indent=2)
+    print(f"  Saved manifest: {manifest_path}")
+
+    return {
+        "status": "success",
+        "n_total_precursors": n_total,
+        "n_per_engine": n_per_engine,
+        "n_unidentified": n_unidentified,
+        "quality_summary": quality_summary,
+    }
 
 
 def _merge_datasets(
@@ -387,5 +491,10 @@ if __name__ == "__main__":
 
     print(f"\nStep 5 completed: {summary.status}")
     print(f"  Total precursors: {summary.data['n_total_precursors']}")
-    print(f"  Per engine: {summary.data['n_per_engine']}")
-    print(f"  Unidentified: {summary.data['n_unidentified']}")
+    if summary.data.get("mode") == "per_group":
+        for gid, gres in summary.data["group_results"].items():
+            if gres.get("status") == "success":
+                print(f"    {gid}: {gres['n_total_precursors']} precursors")
+    else:
+        print(f"  Per engine: {summary.data['n_per_engine']}")
+        print(f"  Unidentified: {summary.data['n_unidentified']}")

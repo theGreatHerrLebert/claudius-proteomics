@@ -6,12 +6,16 @@ Extracts 4D raw signals with Gaussian fits and quality metrics.
 
 Input: data/raw/{accession}/*.d
 
-Outputs:
-- data/extracted/{accession}/{raw_file}/
+Outputs (per-group when sample_groups.yaml exists):
+- data/extracted/{accession}/{group_id}/{raw_file}/
     - index.parquet
     - blobs.bin
-- data/extracted/{accession}/raw_features.parquet (merged)
+- data/extracted/{accession}/{group_id}/raw_features.parquet (merged)
 - step4_summary.json
+
+Legacy (no sample_groups.yaml):
+- data/extracted/{accession}/{raw_file}/
+- data/extracted/{accession}/raw_features.parquet
 """
 
 import sys
@@ -44,6 +48,10 @@ def run_step4_extract(
     """
     Execute Step 4: Extract raw 4D signals with quality metrics.
 
+    If sample_groups.yaml exists, extracts per-group into
+    data/extracted/{accession}/{group_id}/. Otherwise falls back
+    to legacy single-group output at data/extracted/{accession}/.
+
     Args:
         accession: PRIDE accession
         config: Pipeline configuration dict
@@ -67,65 +75,119 @@ def run_step4_extract(
     extracted_dir = output_base_dir / "extracted" / accession
 
     try:
-        # Find .d files
-        d_files = sorted(raw_dir.glob("*.d"))
-        if max_files > 0:
-            d_files = d_files[:max_files]
+        # Check for sample group manifest
+        metadata_dir = output_base_dir / "metadata" / accession
+        sg_path = metadata_dir / "sample_groups.yaml"
 
-        if not d_files:
-            raise FileNotFoundError(f"No .d files found in {raw_dir}")
+        if sg_path.exists():
+            from scripts.sample_group_resolver import SampleGroupManifest
 
-        print(f"  Extracting from {len(d_files)} .d files")
+            manifest = SampleGroupManifest.from_yaml(sg_path)
+            print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
 
-        all_features = []
-        total_precursors = 0
-        total_blob_size = 0
-        quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": []}
+            group_results = {}
+            total_precursors = 0
+            total_files = 0
+            total_blob_size = 0
+            all_quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": []}
+            all_outputs = []
 
-        for i, d_file in enumerate(d_files):
-            print(f"  [{i + 1}/{len(d_files)}] Processing {d_file.name}...")
+            for group in manifest.groups:
+                print(f"\n  === Sample group: {group.group_id} ===")
+                print(f"      Organism: {group.organism_name} ({group.organism_key})")
+                print(f"      Enzyme:   {group.enzyme}")
+                print(f"      Runs:     {group.n_runs}")
 
-            # Extract precursors from this file
-            file_features, file_stats = _extract_single_file(
-                d_file,
-                extracted_dir / d_file.name,
+                if group.n_runs == 0:
+                    print(f"      Skipping (no runs)")
+                    group_results[group.group_id] = {"status": "skipped", "reason": "no runs"}
+                    continue
+
+                # Filter .d files to this group's runs
+                group_d_files = [raw_dir / run for run in group.runs]
+                group_d_files = [f for f in group_d_files if f.exists()]
+
+                if max_files > 0:
+                    group_d_files = group_d_files[:max_files]
+
+                if not group_d_files:
+                    print(f"      Warning: No .d files found for this group")
+                    group_results[group.group_id] = {"status": "skipped", "reason": "no .d files found"}
+                    continue
+
+                # Per-group output directory
+                group_extracted_dir = extracted_dir / group.group_id
+
+                print(f"      Extracting from {len(group_d_files)} .d files")
+
+                group_features, group_stats = _extract_file_list(
+                    d_files=group_d_files,
+                    extracted_dir=group_extracted_dir,
+                    num_threads=num_threads,
+                    batch_size=batch_size,
+                )
+
+                total_precursors += group_stats["n_precursors"]
+                total_files += group_stats["n_files"]
+                total_blob_size += group_stats["blob_size_bytes"]
+
+                # Accumulate quality metrics
+                for key in all_quality_metrics:
+                    all_quality_metrics[key].extend(group_stats["quality_metrics"].get(key, []))
+
+                all_outputs.append(str(group_extracted_dir))
+
+                group_results[group.group_id] = {
+                    "status": "success",
+                    "n_precursors": group_stats["n_precursors"],
+                    "n_files": group_stats["n_files"],
+                    "blob_size_bytes": group_stats["blob_size_bytes"],
+                }
+
+            # Compute quality statistics
+            quality_stats = _compute_quality_stats(all_quality_metrics)
+
+            summary.data = {
+                "mode": "per_group",
+                "n_precursors_extracted": total_precursors,
+                "n_files_processed": total_files,
+                "blob_size_gb": round(total_blob_size / (1024 ** 3), 3),
+                "quality_stats": quality_stats,
+                "group_results": group_results,
+            }
+            summary.outputs = all_outputs
+            summary.complete(success=True)
+
+        else:
+            # Legacy single-group behavior
+            print(f"  No sample_groups.yaml found — using single-group mode")
+
+            d_files = sorted(raw_dir.glob("*.d"))
+            if max_files > 0:
+                d_files = d_files[:max_files]
+
+            if not d_files:
+                raise FileNotFoundError(f"No .d files found in {raw_dir}")
+
+            print(f"  Extracting from {len(d_files)} .d files")
+
+            group_features, group_stats = _extract_file_list(
+                d_files=d_files,
+                extracted_dir=extracted_dir,
                 num_threads=num_threads,
                 batch_size=batch_size,
             )
 
-            if file_features is not None and not file_features.empty:
-                all_features.append(file_features)
-                total_precursors += len(file_features)
-                total_blob_size += file_stats.get("blob_size_bytes", 0)
+            quality_stats = _compute_quality_stats(group_stats["quality_metrics"])
 
-                # Collect quality metrics
-                for col in ["ms1_rt_r2", "ms1_im_r2", "isotope_cosim"]:
-                    if col in file_features.columns:
-                        quality_metrics[col.replace("ms1_", "")].extend(
-                            file_features[col].dropna().tolist()
-                        )
-
-        # Merge all features
-        if all_features:
-            merged_features = pd.concat(all_features, ignore_index=True)
-            merged_path = extracted_dir / "raw_features.parquet"
-            merged_features.to_parquet(merged_path, index=False)
-            print(f"  Merged features saved: {merged_path}")
-        else:
-            merged_features = pd.DataFrame()
-
-        # Compute quality statistics
-        quality_stats = _compute_quality_stats(quality_metrics)
-
-        # Update summary
-        summary.data = {
-            "n_precursors_extracted": total_precursors,
-            "n_files_processed": len(d_files),
-            "blob_size_gb": round(total_blob_size / (1024 ** 3), 3),
-            "quality_stats": quality_stats,
-        }
-        summary.outputs = [str(extracted_dir)]
-        summary.complete(success=True)
+            summary.data = {
+                "n_precursors_extracted": group_stats["n_precursors"],
+                "n_files_processed": group_stats["n_files"],
+                "blob_size_gb": round(group_stats["blob_size_bytes"] / (1024 ** 3), 3),
+                "quality_stats": quality_stats,
+            }
+            summary.outputs = [str(extracted_dir)]
+            summary.complete(success=True)
 
     except Exception as e:
         summary.complete(success=False, error_message=str(e))
@@ -135,6 +197,64 @@ def run_step4_extract(
     write_step_summary(summary, output_base_dir / "processed" / accession)
 
     return summary
+
+
+def _extract_file_list(
+    d_files: List[Path],
+    extracted_dir: Path,
+    num_threads: int = 16,
+    batch_size: int = 10000,
+) -> tuple:
+    """
+    Extract precursors from a list of .d files and merge features.
+
+    Returns:
+        (merged_features DataFrame, stats dict)
+    """
+    all_features = []
+    total_precursors = 0
+    total_blob_size = 0
+    quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": []}
+
+    for i, d_file in enumerate(d_files):
+        print(f"  [{i + 1}/{len(d_files)}] Processing {d_file.name}...")
+
+        file_features, file_stats = _extract_single_file(
+            d_file,
+            extracted_dir / d_file.name,
+            num_threads=num_threads,
+            batch_size=batch_size,
+        )
+
+        if file_features is not None and not file_features.empty:
+            all_features.append(file_features)
+            total_precursors += len(file_features)
+            total_blob_size += file_stats.get("blob_size_bytes", 0)
+
+            for col in ["ms1_rt_r2", "ms1_im_r2", "isotope_cosim"]:
+                if col in file_features.columns:
+                    quality_metrics[col.replace("ms1_", "")].extend(
+                        file_features[col].dropna().tolist()
+                    )
+
+    # Merge all features
+    if all_features:
+        merged_features = pd.concat(all_features, ignore_index=True)
+        merged_path = extracted_dir / "raw_features.parquet"
+        extracted_dir.mkdir(parents=True, exist_ok=True)
+        merged_features.to_parquet(merged_path, index=False)
+        print(f"  Merged features saved: {merged_path}")
+    else:
+        merged_features = pd.DataFrame()
+
+    stats = {
+        "n_precursors": total_precursors,
+        "n_files": len(d_files),
+        "blob_size_bytes": total_blob_size,
+        "quality_metrics": quality_metrics,
+    }
+
+    return merged_features, stats
 
 
 def _extract_single_file(

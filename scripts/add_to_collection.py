@@ -64,30 +64,43 @@ def add_to_collection(
             f"Available studies: {available}"
         )
 
-    # Parse archive name to get accession and version
-    archive_name = archive_path.stem  # e.g., "PXD019086_v1.0"
+    # Parse archive name to get accession, optional group_id, and version
+    # Formats:
+    #   Legacy:    PXD019086_v1.0.zip          -> accession=PXD019086, group_id=None
+    #   Per-group: PXD019086_yeast_trypsin_v1.0.zip -> accession=PXD019086, group_id=yeast_trypsin
+    archive_name = archive_path.stem  # e.g., "PXD019086_yeast_trypsin_v1.0"
     parts = archive_name.rsplit("_v", 1)
     if len(parts) != 2:
         raise ValueError(
             f"Invalid archive name format: {archive_name}. "
-            "Expected format: {accession}_v{version}.zip"
+            "Expected format: {{accession}}_v{{version}}.zip or "
+            "{{accession}}_{{group_id}}_v{{version}}.zip"
         )
-    accession, version = parts
+    stem, version = parts
 
-    print(f"Adding {accession} v{version} to study '{study_id}'")
+    # Determine if this is a per-group archive by inspecting the zip prefix
+    accession, group_id = _parse_archive_stem(archive_path, stem)
+
+    if group_id:
+        print(f"Adding {accession} group '{group_id}' v{version} to study '{study_id}'")
+    else:
+        print(f"Adding {accession} v{version} to study '{study_id}'")
 
     # Create study folder if needed
     study_dir = collection_path / study_id
     study_dir.mkdir(parents=True, exist_ok=True)
 
     # Extract archive
-    dataset_dir = study_dir / f"{accession}_v{version}"
+    # Folder name includes group_id when present
+    folder_stem = f"{accession}_{group_id}" if group_id else accession
+    dataset_dir = study_dir / f"{folder_stem}_v{version}"
     if dataset_dir.exists():
         print(f"  Removing existing dataset at {dataset_dir}")
         shutil.rmtree(dataset_dir)
 
+    # The zip prefix matches folder_stem
     print(f"  Extracting to {dataset_dir}")
-    _extract_archive(archive_path, dataset_dir, accession)
+    _extract_archive(archive_path, dataset_dir, folder_stem)
 
     # Load manifest from extracted dataset
     manifest_path = dataset_dir / "manifest.json"
@@ -104,6 +117,7 @@ def add_to_collection(
         study_id=study_id,
         dataset_dir=dataset_dir,
         manifest=manifest,
+        group_id=group_id,
     )
 
     # Copy archive to archives folder if requested
@@ -120,6 +134,55 @@ def add_to_collection(
 
     print(f"  Added {accession} with {dataset_info['n_precursors']} precursors")
     return dataset_info
+
+
+def _parse_archive_stem(
+    archive_path: Path,
+    stem: str,
+) -> tuple:
+    """
+    Parse the archive stem to extract accession and optional group_id.
+
+    Inspects the zip file's top-level directory prefix to determine the
+    correct split. For per-group archives the prefix is {accession}_{group_id},
+    for legacy archives it is just {accession}.
+
+    Returns:
+        (accession, group_id) where group_id may be None for legacy archives.
+    """
+    # Inspect the zip to find the actual prefix used
+    with zipfile.ZipFile(archive_path, 'r') as zf:
+        members = zf.namelist()
+        if members:
+            # The first path component of the first entry is the archive prefix
+            first_member = members[0]
+            zip_prefix = first_member.split('/')[0]
+
+            if zip_prefix == stem:
+                # Prefix matches full stem — this is a per-group or legacy archive
+                # where stem is the exact prefix. Need to figure out if there's a group_id.
+                # Check if the manifest inside has a group_id field
+                manifest_entry = f"{zip_prefix}/manifest.json"
+                if manifest_entry in members:
+                    import io
+                    with zf.open(manifest_entry) as mf:
+                        manifest_data = json.load(io.TextIOWrapper(mf, encoding='utf-8'))
+                        if "group_id" in manifest_data:
+                            # Per-group archive: stem = {accession}_{group_id}
+                            group_id = manifest_data["group_id"]
+                            accession = stem[:-(len(group_id) + 1)]  # strip _group_id
+                            return accession, group_id
+
+                # Legacy archive or group_id not in manifest
+                # Assume stem is just the accession
+                return stem, None
+
+            else:
+                # The zip prefix doesn't match the full stem — this shouldn't happen
+                # with well-formed archives, but fall back to treating stem as accession
+                return stem, None
+
+    return stem, None
 
 
 def _load_studies_config(collection_path: Path) -> Dict[str, Any]:
@@ -173,17 +236,21 @@ def _compute_dataset_info(
     study_id: str,
     dataset_dir: Path,
     manifest: Dict[str, Any],
+    group_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Compute dataset summary information."""
     import pandas as pd
 
+    folder_stem = f"{accession}_{group_id}" if group_id else accession
     info = {
         "accession": accession,
         "version": version,
         "study_id": study_id,
-        "path": f"{study_id}/{accession}_v{version}",
+        "path": f"{study_id}/{folder_stem}_v{version}",
         "added_at": datetime.now().isoformat(),
     }
+    if group_id:
+        info["group_id"] = group_id
 
     # Try to load precursor store for statistics
     store_path = dataset_dir / "precursor_store.parquet"
@@ -249,8 +316,13 @@ def _update_collection_manifest(
     # Update datasets list
     datasets = manifest.get("datasets", [])
 
-    # Remove existing entry for this accession (if re-adding)
-    datasets = [d for d in datasets if d["accession"] != dataset_info["accession"]]
+    # Remove existing entry for this (accession, group_id) pair (if re-adding)
+    new_group_id = dataset_info.get("group_id")
+    datasets = [
+        d for d in datasets
+        if not (d["accession"] == dataset_info["accession"]
+                and d.get("group_id") == new_group_id)
+    ]
 
     # Add new entry
     datasets.append(dataset_info)
@@ -317,15 +389,25 @@ def rebuild_collection_manifest(collection_path: Path) -> None:
             if len(parts) != 2:
                 continue
 
-            accession, version = parts
+            stem, version = parts
 
-            # Load manifest
+            # Load manifest to check for group_id
             manifest_path = dataset_dir / "manifest.json"
             if manifest_path.exists():
                 with open(manifest_path) as f:
                     manifest = json.load(f)
             else:
-                manifest = {"accession": accession}
+                manifest = {}
+
+            # Determine accession and group_id
+            group_id = manifest.get("group_id")
+            if group_id:
+                accession = stem[:-(len(group_id) + 1)]
+            else:
+                accession = stem
+                # Also check if accession wasn't set in manifest
+                if "accession" not in manifest:
+                    manifest["accession"] = accession
 
             # Compute info
             info = _compute_dataset_info(
@@ -334,10 +416,12 @@ def rebuild_collection_manifest(collection_path: Path) -> None:
                 study_id=study_id,
                 dataset_dir=dataset_dir,
                 manifest=manifest,
+                group_id=group_id,
             )
             datasets.append(info)
 
-            print(f"  Found {accession} in {study_id}")
+            label = f"{accession}/{group_id}" if group_id else accession
+            print(f"  Found {label} in {study_id}")
 
     # Build manifest
     manifest = {
