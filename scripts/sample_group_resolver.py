@@ -597,15 +597,16 @@ def resolve_sample_groups(
     # 5. Populate runs from .d folders
     populate_runs(manifest, raw_dir)
 
-    # 6. Instrument refinement: split groups if multiple models detected
-    if raw_dir.exists():
-        instrument_map = _scan_instruments(raw_dir)
-        manifest = _refine_by_instrument(manifest, instrument_map)
-
-    # 7. If some .d files are unassigned and there's only one group, put them there
+    # 6. If some .d files are unassigned and there's only one group, put them there
+    #    (must happen before instrument refinement so runs are on the group)
     if manifest.unassigned_runs and len(manifest.groups) == 1:
         manifest.groups[0].runs.extend(manifest.unassigned_runs)
         manifest.unassigned_runs = []
+
+    # 7. Instrument refinement: split groups if multiple models detected
+    if raw_dir.exists():
+        instrument_map = _scan_instruments(raw_dir)
+        manifest = _refine_by_instrument(manifest, instrument_map)
 
     return manifest
 
