@@ -214,6 +214,7 @@ __marimo__/
 data/raw/*
 data/processed/*
 data/extracted/*
+data/discovery/*
 !data/*/.gitkeep
 
 # Database (large, but keep structure)
