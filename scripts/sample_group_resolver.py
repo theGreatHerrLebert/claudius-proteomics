@@ -44,6 +44,11 @@ ORGANISM_ALIASES: Dict[str, str] = {
     "c.elegans": "c_elegans",
     "elegans": "c_elegans",
     "mouse": "mouse",
+    "pig": "pig",
+    "sus": "pig",
+    "scrofa": "pig",
+    "swine": "pig",
+    "porcine": "pig",
     "proteometools": "human",
 }
 
@@ -64,6 +69,8 @@ TAXON_TO_ORGANISM: Dict[int, str] = {
     7227: "drosophila",
     6239: "c_elegans",
     10090: "mouse",
+    9823: "pig",
+    9825: "pig",
 }
 
 ORGANISM_NAMES: Dict[str, str] = {
@@ -73,6 +80,7 @@ ORGANISM_NAMES: Dict[str, str] = {
     "drosophila": "Drosophila melanogaster",
     "c_elegans": "Caenorhabditis elegans",
     "mouse": "Mus musculus",
+    "pig": "Sus scrofa",
 }
 
 ORGANISM_TAXONS: Dict[str, int] = {
@@ -82,6 +90,7 @@ ORGANISM_TAXONS: Dict[str, int] = {
     "drosophila": 7227,
     "c_elegans": 6239,
     "mouse": 10090,
+    "pig": 9823,
 }
 
 INSTRUMENT_ALIASES: Dict[str, str] = {

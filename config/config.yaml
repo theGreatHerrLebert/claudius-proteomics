@@ -4,6 +4,7 @@
 # Datasets to process (PRIDE accession numbers)
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
+  - PXD046675  # Pig muscle 4D-LFQ (Wannanhua, timsTOF Pro)
 
 # Dataset metadata: bias-aware fields (manually verified from publication)
 # Organism mapping is now handled automatically by sample_group_resolver.py
@@ -15,6 +16,11 @@ dataset_metadata:
     gradient_length: 120  # minutes (from LC method name "120min")
     column_type: "C18 25cm nanoLC"  # From publication methods
     acquisition_mode: "PASEF"  # DDA-PASEF
+  PXD046675:
+    description: "Pig Longissimus dorsi muscle 4D-LFQ (Wannanhua, 120d vs 240d)"
+    organism: "pig"
+    instrument: "timsTOF Pro"
+    acquisition_mode: "PASEF"  # DDA-PASEF, 4D label-free
 
 # Download settings for PRIDE data
 download:
@@ -54,6 +60,10 @@ organisms:
   c_elegans:
     taxon_id: 6239
     proteome_id: "UP000001940"
+    local_fasta: null
+  pig:
+    taxon_id: 9823
+    proteome_id: "UP000008227"
     local_fasta: null
 
 # Contaminants database (appended to all FASTA files)
