@@ -149,21 +149,39 @@ def load_sage_fragments(sage_dir: Path) -> bool:
         # Load fragments
         print(f"  Loading Sage fragments from {fragments_path}")
         fragments_df = pq.read_table(str(fragments_path)).to_pandas()
+        print(f"    Read {len(fragments_df)} fragment rows, grouping by psm_id...")
 
-        # Group fragments by psm_id
+        # Vectorized groupby: build list-of-dicts per psm_id without iterrows()
+        fragments_df = fragments_df.sort_values('psm_id')
+        psm_ids = fragments_df['psm_id'].values
+        types = fragments_df['fragment_type'].values
+        ordinals = fragments_df['fragment_ordinals'].values.astype(int)
+        charges = fragments_df['fragment_charge'].values.astype(int)
+        mz_exp = fragments_df['fragment_mz_experimental'].values.astype(float)
+        mz_calc = fragments_df['fragment_mz_calculated'].values.astype(float)
+        intensities = fragments_df['fragment_intensity'].values.astype(float)
+
+        # Find group boundaries using numpy
+        boundaries = np.where(np.diff(psm_ids) != 0)[0] + 1
+        starts = np.concatenate([[0], boundaries])
+        ends = np.concatenate([boundaries, [len(psm_ids)]])
+        unique_psm_ids = psm_ids[starts]
+
         sage_fragments_by_psm = {}
-        for psm_id, group in fragments_df.groupby('psm_id'):
-            fragments = []
-            for _, row in group.iterrows():
-                fragments.append({
-                    'fragment_type': row['fragment_type'],
-                    'ion_number': int(row['fragment_ordinals']),
-                    'charge': int(row['fragment_charge']),
-                    'mz_experimental': float(row['fragment_mz_experimental']),
-                    'mz_calculated': float(row['fragment_mz_calculated']),
-                    'intensity': float(row['fragment_intensity']),
-                })
-            sage_fragments_by_psm[psm_id] = fragments
+        for i in range(len(unique_psm_ids)):
+            s, e = starts[i], ends[i]
+            sage_fragments_by_psm[unique_psm_ids[i]] = [
+                {
+                    'fragment_type': types[j],
+                    'ion_number': ordinals[j],
+                    'charge': charges[j],
+                    'mz_experimental': mz_exp[j],
+                    'mz_calculated': mz_calc[j],
+                    'intensity': intensities[j],
+                }
+                for j in range(s, e)
+            ]
+        del fragments_df  # Free memory
         print(f"    Loaded fragments for {len(sage_fragments_by_psm)} PSMs")
 
         sage_data_loaded = True
