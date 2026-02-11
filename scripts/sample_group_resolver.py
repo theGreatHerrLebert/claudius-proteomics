@@ -17,6 +17,7 @@ Usage:
 
 import json
 import re
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -83,6 +84,28 @@ ORGANISM_TAXONS: Dict[str, int] = {
     "mouse": 10090,
 }
 
+INSTRUMENT_ALIASES: Dict[str, str] = {
+    "timstof": "timsTOF",
+    "timstof pro": "timsTOF Pro",
+    "timstof pro 2": "timsTOF Pro 2",
+    "timstof flex": "timsTOF fleX",
+    "timstof ht": "timsTOF HT",
+    "timstof scp": "timsTOF SCP",
+    "timstof ultra": "timsTOF Ultra",
+}
+
+
+def normalize_instrument(raw_name: str) -> Optional[str]:
+    """Normalize an instrument name from TDF GlobalMetadata."""
+    lower = raw_name.lower().strip()
+    best_match = None
+    best_len = 0
+    for pattern, canonical in INSTRUMENT_ALIASES.items():
+        if pattern in lower and len(pattern) > best_len:
+            best_match = canonical
+            best_len = len(pattern)
+    return best_match
+
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -99,6 +122,7 @@ class SampleGroup:
     enzyme: str             # "trypsin" | "lysc" | "lysn"
     sample_type: str        # "biological" | "synthetic"
     source_archive: str     # "Raw_HeLa_Trp.zip"
+    instrument_model: Optional[str] = None  # e.g. "timsTOF Pro"
     runs: List[str] = field(default_factory=list)  # .d folder names
 
     @property
@@ -106,7 +130,7 @@ class SampleGroup:
         return len(self.runs)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "group_id": self.group_id,
             "organism_key": self.organism_key,
             "organism_name": self.organism_name,
@@ -114,9 +138,11 @@ class SampleGroup:
             "enzyme": self.enzyme,
             "sample_type": self.sample_type,
             "source_archive": self.source_archive,
+            "instrument_model": self.instrument_model,
             "n_runs": self.n_runs,
             "runs": self.runs,
         }
+        return d
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "SampleGroup":
@@ -128,6 +154,7 @@ class SampleGroup:
             enzyme=d["enzyme"],
             sample_type=d.get("sample_type", "biological"),
             source_archive=d.get("source_archive", ""),
+            instrument_model=d.get("instrument_model"),
             runs=d.get("runs", []),
         )
 
@@ -145,6 +172,11 @@ class SampleGroupManifest:
     def is_multi_organism(self) -> bool:
         organism_keys = {g.organism_key for g in self.groups}
         return len(organism_keys) > 1
+
+    @property
+    def is_multi_instrument(self) -> bool:
+        models = {g.instrument_model for g in self.groups if g.instrument_model}
+        return len(models) > 1
 
     @property
     def run_to_group(self) -> Dict[str, str]:
@@ -175,6 +207,7 @@ class SampleGroupManifest:
             "accession": self.accession,
             "generated_at": self.generated_at,
             "is_multi_organism": self.is_multi_organism,
+            "is_multi_instrument": self.is_multi_instrument,
             "n_groups": len(self.groups),
             "organisms": self.organisms,
             "groups": [g.to_dict() for g in self.groups],
@@ -261,11 +294,21 @@ def _parse_archive_name(filename: str) -> Tuple[Optional[str], Optional[str], st
     return organism_key, enzyme, sample_type
 
 
-def _make_group_id(organism_key: str, enzyme: str, sample_type: str) -> str:
+def _instrument_key(model: str) -> str:
+    """Convert 'timsTOF Pro 2' -> 'timstof_pro_2'."""
+    return model.lower().replace(" ", "_")
+
+
+def _make_group_id(organism_key: str, enzyme: str, sample_type: str,
+                   instrument_key: Optional[str] = None) -> str:
     """Build a unique group_id string."""
     if sample_type == "synthetic":
-        return f"{organism_key}_{enzyme}_synthetic"
-    return f"{organism_key}_{enzyme}"
+        base = f"{organism_key}_{enzyme}_synthetic"
+    else:
+        base = f"{organism_key}_{enzyme}"
+    if instrument_key:
+        base = f"{base}_{instrument_key}"
+    return base
 
 
 # ---------------------------------------------------------------------------
@@ -417,6 +460,76 @@ def populate_runs(manifest: SampleGroupManifest, raw_dir: Path) -> None:
     manifest.unassigned_runs = [d for d in d_folders if d not in assigned]
 
 
+def _read_instrument_from_d(d_path: Path) -> Optional[str]:
+    """Read instrument model from a .d folder's analysis.tdf."""
+    tdf = d_path / "analysis.tdf"
+    if not tdf.exists():
+        return None
+    try:
+        conn = sqlite3.connect(str(tdf))
+        cursor = conn.cursor()
+        cursor.execute("SELECT Value FROM GlobalMetadata WHERE Key = 'InstrumentName'")
+        row = cursor.fetchone()
+        conn.close()
+        return row[0] if row else None
+    except Exception:
+        return None
+
+
+def _scan_instruments(raw_dir: Path) -> Dict[str, Optional[str]]:
+    """Map .d folder name -> normalized instrument model."""
+    result = {}
+    for d_path in sorted(raw_dir.iterdir()):
+        if d_path.is_dir() and d_path.name.endswith(".d"):
+            raw_name = _read_instrument_from_d(d_path)
+            result[d_path.name] = normalize_instrument(raw_name) if raw_name else None
+    return result
+
+
+def _refine_by_instrument(
+    manifest: SampleGroupManifest,
+    instrument_map: Dict[str, Optional[str]],
+) -> SampleGroupManifest:
+    """Split groups that contain multiple instrument models."""
+    new_groups = []
+    for group in manifest.groups:
+        # Collect instruments for this group's runs
+        instruments_in_group: Dict[Optional[str], List[str]] = {}
+        for run in group.runs:
+            model = instrument_map.get(run)
+            instruments_in_group.setdefault(model, []).append(run)
+
+        unique_models = {m for m in instruments_in_group if m is not None}
+
+        if len(unique_models) <= 1:
+            # Single instrument (or all unknown) — keep group as-is, just tag it
+            model = unique_models.pop() if unique_models else None
+            group.instrument_model = model
+            new_groups.append(group)
+        else:
+            # Multiple instruments — split into sub-groups
+            for model, runs in instruments_in_group.items():
+                ikey = _instrument_key(model) if model else "unknown_instrument"
+                sub = SampleGroup(
+                    group_id=_make_group_id(group.organism_key, group.enzyme,
+                                            group.sample_type, ikey),
+                    organism_key=group.organism_key,
+                    organism_name=group.organism_name,
+                    taxon_id=group.taxon_id,
+                    enzyme=group.enzyme,
+                    sample_type=group.sample_type,
+                    source_archive=group.source_archive,
+                    instrument_model=model,
+                    runs=runs,
+                )
+                new_groups.append(sub)
+            print(f"  Split group {group.group_id} by instrument: "
+                  f"{', '.join(sorted(unique_models))}")
+
+    manifest.groups = sorted(new_groups, key=lambda g: g.group_id)
+    return manifest
+
+
 def resolve_sample_groups(
     accession: str,
     raw_dir: Path,
@@ -475,7 +588,12 @@ def resolve_sample_groups(
     # 5. Populate runs from .d folders
     populate_runs(manifest, raw_dir)
 
-    # 6. If some .d files are unassigned and there's only one group, put them there
+    # 6. Instrument refinement: split groups if multiple models detected
+    if raw_dir.exists():
+        instrument_map = _scan_instruments(raw_dir)
+        manifest = _refine_by_instrument(manifest, instrument_map)
+
+    # 7. If some .d files are unassigned and there's only one group, put them there
     if manifest.unassigned_runs and len(manifest.groups) == 1:
         manifest.groups[0].runs.extend(manifest.unassigned_runs)
         manifest.unassigned_runs = []
@@ -524,10 +642,12 @@ def main():
     print(f"\nSample Group Summary:")
     print(f"  Accession: {manifest.accession}")
     print(f"  Multi-organism: {manifest.is_multi_organism}")
+    print(f"  Multi-instrument: {manifest.is_multi_instrument}")
     print(f"  Groups: {len(manifest.groups)}")
     for g in manifest.groups:
+        instr = f" [{g.instrument_model}]" if g.instrument_model else ""
         print(f"    {g.group_id}: {g.organism_name} / {g.enzyme} "
-              f"({g.sample_type}) — {g.n_runs} runs [{g.source_archive}]")
+              f"({g.sample_type}) — {g.n_runs} runs{instr}")
     if manifest.unassigned_runs:
         print(f"  Unassigned runs: {len(manifest.unassigned_runs)}")
         for r in manifest.unassigned_runs[:5]:

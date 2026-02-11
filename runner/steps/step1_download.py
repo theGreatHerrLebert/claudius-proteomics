@@ -82,6 +82,9 @@ def run_step1_download(
         sg_manifest.to_yaml(metadata_dir / "sample_groups.yaml")
         print(f"  Sample groups: {len(sg_manifest.groups)} groups, "
               f"multi-organism={sg_manifest.is_multi_organism}")
+        if sg_manifest.is_multi_instrument:
+            instruments = {g.instrument_model for g in sg_manifest.groups if g.instrument_model}
+            print(f"  Multi-instrument: {', '.join(sorted(instruments))}")
 
         # Calculate total size
         total_size_gb = sum(
@@ -103,7 +106,12 @@ def run_step1_download(
             "sample_groups": {
                 "n_groups": len(sg_manifest.groups),
                 "is_multi_organism": sg_manifest.is_multi_organism,
+                "is_multi_instrument": sg_manifest.is_multi_instrument,
                 "groups": [g.group_id for g in sg_manifest.groups],
+                "group_instruments": {
+                    g.group_id: g.instrument_model
+                    for g in sg_manifest.groups
+                },
                 "unassigned_runs": len(sg_manifest.unassigned_runs),
             },
         }

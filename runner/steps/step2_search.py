@@ -142,9 +142,10 @@ def _run_per_group(
 
     for group in manifest.groups:
         print(f"\n  === Sample group: {group.group_id} ===")
-        print(f"      Organism: {group.organism_name} ({group.organism_key})")
-        print(f"      Enzyme:   {group.enzyme}")
-        print(f"      Runs:     {group.n_runs}")
+        print(f"      Organism:    {group.organism_name} ({group.organism_key})")
+        print(f"      Enzyme:      {group.enzyme}")
+        print(f"      Instrument:  {group.instrument_model or 'unknown'}")
+        print(f"      Runs:        {group.n_runs}")
 
         if group.n_runs == 0:
             print(f"      Skipping (no runs)")
