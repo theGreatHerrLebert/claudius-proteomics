@@ -525,7 +525,12 @@ def run_paper_extraction(
     # Merge into pride_metadata.yaml
     if pride_metadata_path.exists():
         try:
-            from scripts.pride_metadata import DatasetMetadata
+            try:
+                from scripts.pride_metadata import DatasetMetadata
+            except ImportError:
+                import sys
+                sys.path.insert(0, str(Path(__file__).parent.parent))
+                from scripts.pride_metadata import DatasetMetadata
 
             metadata = DatasetMetadata.from_yaml(pride_metadata_path)
             metadata.merge_paper_extraction(extraction_path)
