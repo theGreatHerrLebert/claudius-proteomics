@@ -12,3 +12,7 @@ google-cloud-storage>=2.14.0
 # For PRIDE API and download
 requests-cache>=1.1.0
 pridepy>=0.0.1
+
+# Paper metadata extraction (optional, gracefully skipped if missing)
+pdfplumber>=0.10.0
+anthropic>=0.40.0
