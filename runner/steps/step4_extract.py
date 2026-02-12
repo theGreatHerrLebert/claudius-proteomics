@@ -264,6 +264,16 @@ def _extract_single_file(
     batch_size: int = 10000,
 ) -> tuple:
     """Extract precursors from a single .d file."""
+    # Skip if already extracted (index.parquet exists)
+    index_path = output_dir / "index.parquet"
+    if index_path.exists():
+        print(f"    Already extracted, skipping")
+        features = pd.read_parquet(index_path)
+        features["raw_file"] = d_file.name
+        blob_path = output_dir / "blobs.bin"
+        blob_size = blob_path.stat().st_size if blob_path.exists() else 0
+        return features, {"n_precursors": len(features), "blob_size_bytes": blob_size}
+
     try:
         from scripts.extract_precursors import (
             extract_precursors_batched,
