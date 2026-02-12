@@ -25,6 +25,7 @@ const SORTABLE_COLUMNS: Record<string, string> = {
   ms1_rt_r2: 'ms1_rt_r2',
   ms1_im_r2: 'ms1_im_r2',
   isotope_cosim: 'isotope_cosim',
+  sage_cosine: 'sage_cosine',
 };
 
 interface PrecursorTableProps {
@@ -313,6 +314,16 @@ export default function PrecursorTable({
           return <span className={color}>{val.toFixed(2)}</span>;
         },
         size: 50,
+      }),
+      columnHelper.accessor('sage_cosine', {
+        header: 'S Cos',
+        cell: (info) => {
+          const val = info.getValue();
+          if (val === null || val === undefined) return '-';
+          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          return <span className={color}>{val.toFixed(3)}</span>;
+        },
+        size: 55,
       }),
     ],
     []

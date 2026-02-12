@@ -36,6 +36,62 @@ from lib.quality_metrics import (
 from runner.summary import StepSummary, write_step_summary
 
 
+def _load_sage_fragments(processed_dir: Path, raw_file_name: str) -> dict:
+    """Load Sage matched fragments for a specific raw file.
+
+    Reads matched_fragments.sage.parquet, filters to the given raw file,
+    and groups by psm_id (which equals precursor_id in Bruker numbering).
+
+    Returns:
+        Dict mapping precursor_id to list of fragment dicts, or empty dict
+        if the file doesn't exist or loading fails.
+    """
+    fragments_path = processed_dir / "sage" / "matched_fragments.sage.parquet"
+    if not fragments_path.exists():
+        return {}
+
+    try:
+        import pyarrow.parquet as pq
+
+        df = pq.read_table(str(fragments_path)).to_pandas()
+
+        # Filter to this raw file (Sage stores filename per PSM)
+        if 'filename' in df.columns:
+            # Sage filename may or may not include .d suffix
+            raw_stem = raw_file_name.replace('.d', '')
+            mask = df['filename'].astype(str).str.replace('.d', '', regex=False) == raw_stem
+            df = df[mask]
+
+        if df.empty:
+            return {}
+
+        # Group by psm_id (which equals precursor_id)
+        df = df.sort_values('psm_id')
+        psm_ids = df['psm_id'].values
+        mz_exp = df['fragment_mz_experimental'].values.astype(float)
+        intensities = df['fragment_intensity'].values.astype(float)
+
+        # Find group boundaries
+        boundaries = np.where(np.diff(psm_ids) != 0)[0] + 1
+        starts = np.concatenate([[0], boundaries])
+        ends = np.concatenate([boundaries, [len(psm_ids)]])
+        unique_ids = psm_ids[starts]
+
+        result = {}
+        for i in range(len(unique_ids)):
+            s, e = starts[i], ends[i]
+            result[int(unique_ids[i])] = [
+                {'mz_experimental': float(mz_exp[j]), 'intensity': float(intensities[j])}
+                for j in range(s, e)
+            ]
+
+        return result
+
+    except Exception as e:
+        print(f"    Warning: Could not load Sage fragments: {e}")
+        return {}
+
+
 def run_step4_extract(
     accession: str,
     config: Dict[str, Any],
@@ -89,7 +145,7 @@ def run_step4_extract(
             total_precursors = 0
             total_files = 0
             total_blob_size = 0
-            all_quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": []}
+            all_quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": [], "sage_cosine": []}
             all_outputs = []
 
             for group in manifest.groups:
@@ -214,7 +270,7 @@ def _extract_file_list(
     all_features = []
     total_precursors = 0
     total_blob_size = 0
-    quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": []}
+    quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": [], "sage_cosine": []}
 
     for i, d_file in enumerate(d_files):
         print(f"  [{i + 1}/{len(d_files)}] Processing {d_file.name}...")
@@ -231,7 +287,7 @@ def _extract_file_list(
             total_precursors += len(file_features)
             total_blob_size += file_stats.get("blob_size_bytes", 0)
 
-            for col in ["ms1_rt_r2", "ms1_im_r2", "isotope_cosim"]:
+            for col in ["ms1_rt_r2", "ms1_im_r2", "isotope_cosim", "sage_cosine"]:
                 if col in file_features.columns:
                     quality_metrics[col.replace("ms1_", "")].extend(
                         file_features[col].dropna().tolist()
@@ -294,6 +350,27 @@ def _extract_single_file(
         else:
             calibration = ensure_calibration(str(d_file), verbose=False)
 
+        # Load Sage matched fragments for this raw file
+        # Resolve processed_dir: extracted/{acc}/{raw}.d -> processed/{acc}
+        # output_dir is extracted/{acc}/{raw}.d or extracted/{acc}/{group}/{raw}.d
+        # processed_dir is sibling of extracted/ at the same level as the accession
+        extracted_acc_dir = output_dir.parent  # extracted/{acc}/ or extracted/{acc}/{group}/
+        # Walk up to find the 'extracted' directory
+        p = output_dir
+        while p.name != 'extracted' and p != p.parent:
+            p = p.parent
+        if p.name == 'extracted':
+            processed_dir = p.parent / "processed" / extracted_acc_dir.name
+            # If per-group mode, accession is one level up
+            if not (processed_dir / "sage").exists():
+                processed_dir = p.parent / "processed" / extracted_acc_dir.parent.name
+        else:
+            processed_dir = output_dir.parent.parent.parent / "processed" / output_dir.parent.name
+
+        sage_fragments_by_id = _load_sage_fragments(processed_dir, d_file.name)
+        if sage_fragments_by_id:
+            print(f"    Loaded Sage fragments for {len(sage_fragments_by_id)} precursors")
+
         # Extract with batching
         stats = extract_precursors_batched(
             dataset=dataset,
@@ -302,6 +379,7 @@ def _extract_single_file(
             batch_size=batch_size,
             num_threads=num_threads,
             calibration=calibration,
+            sage_fragments_by_id=sage_fragments_by_id if sage_fragments_by_id else None,
         )
 
         # Load extracted features

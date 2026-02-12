@@ -145,6 +145,63 @@ def compute_isotope_cosine_similarity(
     return float(np.dot(theo_int, obs) / (theo_norm * obs_norm))
 
 
+def compute_sage_fragment_cosine(
+    obs_mz: np.ndarray, obs_int: np.ndarray,
+    sage_frags: List[dict], ppm_tol: float = 20.0,
+) -> float:
+    """Cosine similarity between observed fragment spectrum and Sage matched ions.
+
+    For each Sage fragment, finds the closest observed peak within ppm_tol
+    using binary search and builds matched intensity vectors for cosine.
+
+    Returns NaN if fewer than 2 fragments match.
+    """
+    if len(obs_mz) == 0 or not sage_frags:
+        return float('nan')
+
+    # Sort observed spectrum by m/z for binary search
+    sort_idx = np.argsort(obs_mz)
+    obs_mz_sorted = obs_mz[sort_idx]
+    obs_int_sorted = obs_int[sort_idx]
+
+    matched_obs = []
+    matched_sage = []
+
+    for frag in sage_frags:
+        sage_mz = frag['mz_experimental']
+        sage_int = frag['intensity']
+        tol = sage_mz * ppm_tol / 1e6
+
+        # Binary search for closest peak
+        idx = np.searchsorted(obs_mz_sorted, sage_mz)
+        best_idx = None
+        best_delta = tol
+
+        for candidate in [idx - 1, idx]:
+            if 0 <= candidate < len(obs_mz_sorted):
+                delta = abs(obs_mz_sorted[candidate] - sage_mz)
+                if delta < best_delta:
+                    best_delta = delta
+                    best_idx = candidate
+
+        if best_idx is not None:
+            matched_obs.append(obs_int_sorted[best_idx])
+            matched_sage.append(sage_int)
+
+    if len(matched_obs) < 2:
+        return float('nan')
+
+    a = np.array(matched_obs)
+    b = np.array(matched_sage)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+
+    if norm_a == 0 or norm_b == 0:
+        return float('nan')
+
+    return float(np.dot(a, b) / (norm_a * norm_b))
+
+
 @dataclass
 class ExtractedPrecursor:
     """Complete extracted precursor with fragment spectrum and MS1 signal."""
@@ -209,6 +266,9 @@ class ExtractedPrecursor:
 
     # Isotope envelope quality
     isotope_cosim: float
+
+    # Sage fragment cosine similarity
+    sage_cosine: float  # Cosine sim: observed fragment spectrum vs Sage matched ions
 
     @property
     def mz(self) -> float:
@@ -276,6 +336,8 @@ class ExtractedPrecursor:
             "ms1_im_r2": self.ms1_im_r2,
             # Isotope envelope quality
             "isotope_cosim": self.isotope_cosim,
+            # Sage fragment cosine similarity
+            "sage_cosine": self.sage_cosine,
         }
 
     def serialize_blob(self) -> bytes:
@@ -358,6 +420,7 @@ def extract_precursors(
     im_window: float = 0.2,  # Doubled from 0.1 for better coverage
     n_isotopes: int = 5,
     calibration: Optional[NDArray[np.float64]] = None,
+    sage_fragments_by_id: Optional[Dict[int, List[dict]]] = None,
     logger: Optional[logging.Logger] = None,
 ) -> List[ExtractedPrecursor]:
     """
@@ -374,6 +437,7 @@ def extract_precursors(
         calibration: Optional IM calibration array (scan → 1/K0 lookup).
                      If provided, uses LookupIndexConverter for fast + accurate extraction.
                      If None, uses the dataset's default converter.
+        sage_fragments_by_id: Optional dict mapping precursor_id to list of Sage fragment dicts
         logger: Optional logger
 
     Returns:
@@ -572,6 +636,15 @@ def extract_precursors(
             ms1_im_r2 = 0.0
             isotope_cosim = 0.0
 
+        # Sage fragment cosine similarity
+        sage_cosine = float('nan')
+        if sage_fragments_by_id is not None:
+            sage_frags = sage_fragments_by_id.get(pid)
+            if sage_frags and len(frag_frame.mz) > 0:
+                sage_cosine = compute_sage_fragment_cosine(
+                    frag_frame.mz, frag_frame.intensity, sage_frags
+                )
+
         precursor = ExtractedPrecursor(
             precursor_id=pid,
             raw_file=raw_file_name,
@@ -614,6 +687,7 @@ def extract_precursors(
             ms1_im_sigma=ms1_im_sigma,
             ms1_im_r2=ms1_im_r2,
             isotope_cosim=isotope_cosim,
+            sage_cosine=sage_cosine,
         )
         results.append(precursor)
 
@@ -707,6 +781,7 @@ def extract_precursors_batched(
     im_window: float = 0.2,  # Doubled from 0.1 for better coverage
     n_isotopes: int = 5,
     calibration: Optional[NDArray[np.float64]] = None,
+    sage_fragments_by_id: Optional[Dict[int, List[dict]]] = None,
     logger: Optional[logging.Logger] = None,
 ) -> dict:
     """
@@ -726,6 +801,7 @@ def extract_precursors_batched(
         im_window: IM window for MS1 extraction (1/K0)
         n_isotopes: Number of isotope peaks to extract
         calibration: Optional IM calibration array (scan → 1/K0 lookup)
+        sage_fragments_by_id: Optional dict mapping precursor_id to list of Sage fragment dicts
         logger: Optional logger
 
     Returns:
@@ -937,6 +1013,15 @@ def extract_precursors_batched(
                     ms1_im_r2 = 0.0
                     isotope_cosim = 0.0
 
+                # Sage fragment cosine similarity
+                sage_cosine = float('nan')
+                if sage_fragments_by_id is not None:
+                    sage_frags = sage_fragments_by_id.get(pid)
+                    if sage_frags and len(frag_frame.mz) > 0:
+                        sage_cosine = compute_sage_fragment_cosine(
+                            frag_frame.mz, frag_frame.intensity, sage_frags
+                        )
+
                 precursor = ExtractedPrecursor(
                     precursor_id=pid,
                     raw_file=raw_file_name,
@@ -979,6 +1064,7 @@ def extract_precursors_batched(
                     ms1_im_sigma=ms1_im_sigma,
                     ms1_im_r2=ms1_im_r2,
                     isotope_cosim=isotope_cosim,
+                    sage_cosine=sage_cosine,
                 )
 
                 # Write blob and record offset
