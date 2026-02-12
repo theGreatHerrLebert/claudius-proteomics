@@ -165,6 +165,16 @@ containers:
   fragpipe_base: "containers/fragpipe-base.sif"
   imspy: "containers/imspy.sif"
 
+# Paper-based metadata extraction (Step 1 substep)
+# Downloads OA PDFs via Unpaywall and uses Claude API to extract LC-MS parameters
+paper_extraction:
+  enabled: true
+  unpaywall_email: "your-email@university.edu"  # Required by Unpaywall TOS
+  model: "claude-sonnet-4-20250514"  # Cost-efficient for structured extraction
+  max_pdf_chars: 80000
+  skip_if_exists: true
+  # API key via ANTHROPIC_API_KEY env var (never in config)
+
 # Test mode: use subset of data for quick validation
 test_mode:
   enabled: true
