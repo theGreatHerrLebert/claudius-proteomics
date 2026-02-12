@@ -285,7 +285,29 @@ Fields to extract:
 ## Data Processing (authors' pipeline — never in raw data)
 15. "processing_software" - List of software with versions used by the authors for data analysis. Each entry is an object with name, version, and purpose (e.g., [{{"name": "MaxQuant", "version": "1.6.17.0", "purpose": "database search"}}, {{"name": "Perseus", "version": "1.6.15.0", "purpose": "statistical analysis"}}])
 16. "search_database" - Protein database used by the authors: source, species, version/date, number of entries if stated (e.g., {{"source": "UniProt", "species": "Homo sapiens", "version": "2021_01", "entries": 20396}})
-17. "search_settings" - Key search parameters as object with any of: precursor_tolerance, fragment_tolerance, missed_cleavages, fixed_modifications, variable_modifications, fdr_threshold, min_peptide_length, max_peptide_length
+17. "search_settings" - IMPORTANT: Extract each sub-field individually. This is a structured object with these EXACT keys (use null if not reported):
+  {{
+    "precursor_tol_ppm": <float, precursor mass tolerance in ppm, e.g. 20.0>,
+    "fragment_tol_ppm": <float, fragment mass tolerance in ppm, e.g. 20.0>,
+    "enzyme": <string, enzyme name, e.g. "trypsin", "trypsin/P", "LysC">,
+    "missed_cleavages": <int, max allowed missed cleavages, e.g. 2>,
+    "min_peptide_length": <int, minimum peptide length in amino acids, e.g. 7>,
+    "max_peptide_length": <int, maximum peptide length in amino acids, e.g. 50>,
+    "min_precursor_charge": <int, minimum precursor charge state, e.g. 1>,
+    "max_precursor_charge": <int, maximum precursor charge state, e.g. 4>,
+    "fixed_modifications": <list of strings in UniMod format, e.g. ["Carbamidomethyl (C)"]>,
+    "variable_modifications": <list of strings in UniMod format, e.g. ["Oxidation (M)", "Acetyl (Protein N-term)"]>,
+    "max_variable_mods": <int, max variable modifications per peptide, e.g. 3>,
+    "max_fragment_charge": <int, max fragment ion charge, e.g. 2>,
+    "ion_types": <list of strings, fragment ion series, e.g. ["b", "y"]>,
+    "isotope_errors": <string, isotope error range, e.g. "0/1/2" or "-1 to 3">,
+    "fdr_psm": <float, PSM-level FDR threshold, e.g. 0.01>,
+    "fdr_peptide": <float, peptide-level FDR, e.g. 0.01>,
+    "fdr_protein": <float, protein-level FDR, e.g. 0.01>,
+    "deisotope": <bool, whether deisotoping was applied>,
+    "min_peaks": <int, minimum peaks per spectrum, e.g. 15>,
+    "other": <object, any additional search settings not covered above, e.g. {{"match_between_runs": true, "second_peptide": true, "dependent_peptides": false}}>
+  }}
 18. "statistical_tools" - Any downstream analysis software (e.g., "Perseus 1.6.15.0 for statistical analysis, R 4.1 for visualization")
 
 ## Study Context (never in raw data)
