@@ -314,10 +314,18 @@ def _stratify_single_group(
     with open(stats_path, "w") as f:
         json.dump(overlap_stats, f, indent=2)
 
-    # Generate HTML report
+    # Compute QC stats from engine DataFrames
+    print("  Computing QC statistics...")
+    qc_stats = _compute_qc_stats(fp_df, dn_df, sg_df)
+
+    # Generate QC plots and HTML report
     if generate_html:
+        print("  Generating QC plots...")
+        qc_plots = _generate_qc_plots(precursor_index)
+        print(f"    Generated {len(qc_plots)} plots")
+
         html_path = consensus_dir / "overlap_report.html"
-        _generate_html_report(report_label, overlap_stats, html_path)
+        _generate_html_report(report_label, overlap_stats, html_path, qc_stats=qc_stats, plots=qc_plots)
         print(f"  Generated HTML report: {html_path}")
 
     return {
@@ -925,65 +933,696 @@ def _compute_match_tiers(index_df: pd.DataFrame) -> Dict[str, int]:
     }
 
 
+def _compute_qc_stats(
+    fp_df: Optional[pd.DataFrame],
+    dn_df: Optional[pd.DataFrame],
+    sg_df: Optional[pd.DataFrame],
+) -> Dict[str, Any]:
+    """Compute exhaustive QC statistics from the three engine DataFrames.
+
+    Returns a dict with per-engine charge distributions, sequence length stats,
+    ion mobility stats, PEP score distributions, per-raw-file PSM counts,
+    and top modifications.
+    """
+    import numpy as np
+
+    engines = {
+        "fragpipe": fp_df,
+        "diann": dn_df,
+        "sage": sg_df,
+    }
+
+    qc: Dict[str, Any] = {}
+
+    # --- Charge distribution per engine ---
+    charge_dist: Dict[str, Dict[int, int]] = {}
+    for name, df in engines.items():
+        col = f"{name}_charge"
+        if df is not None and not df.empty and col in df.columns:
+            counts = df[col].dropna().astype(int).value_counts().sort_index()
+            charge_dist[name] = {int(k): int(v) for k, v in counts.items()}
+        else:
+            charge_dist[name] = {}
+    qc["charge_dist"] = charge_dist
+
+    # --- Sequence length stats per engine ---
+    seq_length: Dict[str, Dict[str, Any]] = {}
+    for name, df in engines.items():
+        col = f"{name}_peptide"
+        if df is not None and not df.empty and col in df.columns:
+            lengths = df[col].dropna().str.len()
+            if len(lengths) > 0:
+                seq_length[name] = {
+                    "min": int(lengths.min()),
+                    "median": int(lengths.median()),
+                    "max": int(lengths.max()),
+                    "mean": round(float(lengths.mean()), 1),
+                }
+            else:
+                seq_length[name] = {}
+        else:
+            seq_length[name] = {}
+    qc["seq_length"] = seq_length
+
+    # --- Ion mobility stats per engine ---
+    mobility_stats: Dict[str, Dict[str, Any]] = {}
+    for name, df in engines.items():
+        col = f"{name}_mobility"
+        if df is not None and not df.empty and col in df.columns:
+            vals = df[col].dropna()
+            if len(vals) > 0:
+                mobility_stats[name] = {
+                    "min": round(float(vals.min()), 4),
+                    "median": round(float(vals.median()), 4),
+                    "max": round(float(vals.max()), 4),
+                    "mean": round(float(vals.mean()), 4),
+                }
+            else:
+                mobility_stats[name] = {}
+        else:
+            mobility_stats[name] = {}
+    qc["mobility"] = mobility_stats
+
+    # --- PEP score distribution per engine ---
+    pep_stats: Dict[str, Dict[str, Any]] = {}
+    for name, df in engines.items():
+        col = f"{name}_pep"
+        if df is not None and not df.empty and col in df.columns:
+            vals = df[col].dropna()
+            if len(vals) > 0:
+                pep_stats[name] = {
+                    "median": f"{float(vals.median()):.2e}",
+                    "p95": f"{float(np.percentile(vals, 95)):.2e}",
+                    "min": f"{float(vals.min()):.2e}",
+                    "max": f"{float(vals.max()):.2e}",
+                    "pct_below_001": round(float((vals < 0.01).mean()) * 100, 1),
+                }
+            else:
+                pep_stats[name] = {}
+        else:
+            pep_stats[name] = {}
+    qc["pep_scores"] = pep_stats
+
+    # --- Per-raw-file PSM counts per engine ---
+    per_file: Dict[str, Dict[str, int]] = {}
+    for name, df in engines.items():
+        if df is not None and not df.empty and "raw_file" in df.columns:
+            counts = df.groupby("raw_file").size()
+            per_file[name] = {str(k): int(v) for k, v in counts.items()}
+        else:
+            per_file[name] = {}
+    qc["per_file_counts"] = per_file
+
+    # --- Top modifications per engine ---
+    mod_freq: Dict[str, List[Tuple[str, int]]] = {}
+    import re
+    for name, df in engines.items():
+        col = f"{name}_modified"
+        if df is not None and not df.empty and col in df.columns:
+            seqs = df[col].dropna()
+            mod_counts: Dict[str, int] = {}
+            for seq in seqs:
+                mods = re.findall(r'\[UNIMOD:\d+\]', str(seq))
+                for m in mods:
+                    mod_counts[m] = mod_counts.get(m, 0) + 1
+            # Sort by frequency, take top 5
+            top = sorted(mod_counts.items(), key=lambda x: -x[1])[:5]
+            mod_freq[name] = top
+        else:
+            mod_freq[name] = []
+    qc["top_mods"] = mod_freq
+
+    return qc
+
+
+def _generate_qc_plots(
+    precursor_index: pd.DataFrame,
+    max_points: int = 20_000,
+) -> Dict[str, str]:
+    """Generate QC scatter plots as base64-encoded PNGs.
+
+    Produces:
+    - 3 RT vs IM scatter plots (one per engine)
+    - 3 pairwise IM alignment plots (engine pairs with y=x line and Pearson R)
+
+    Args:
+        precursor_index: Unified precursor index with per-engine columns
+        max_points: Maximum points to plot (subsampled for performance)
+
+    Returns:
+        Dict mapping plot name to base64 PNG string
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from io import BytesIO
+    import base64
+
+    plots: Dict[str, str] = {}
+
+    def _fig_to_base64(fig) -> str:
+        buf = BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        plt.close(fig)
+        buf.seek(0)
+        return base64.b64encode(buf.read()).decode('ascii')
+
+    def _subsample(series_list, n):
+        """Subsample multiple aligned series to at most n rows."""
+        length = len(series_list[0])
+        if length <= n:
+            return series_list
+        idx = np.random.default_rng(42).choice(length, size=n, replace=False)
+        return [s.iloc[idx] for s in series_list]
+
+    # --- RT vs IM scatter plots (one per engine) ---
+    engines = {
+        'FragPipe': ('fragpipe_rt', 'fragpipe_mobility'),
+        'DIA-NN': ('diann_rt', 'diann_mobility'),
+        'Sage': ('sage_rt', 'sage_mobility'),
+    }
+    colors = {'FragPipe': '#e74c3c', 'DIA-NN': '#3498db', 'Sage': '#27ae60'}
+
+    for engine_label, (rt_col, im_col) in engines.items():
+        if rt_col not in precursor_index.columns or im_col not in precursor_index.columns:
+            continue
+        mask = precursor_index[rt_col].notna() & precursor_index[im_col].notna()
+        if mask.sum() == 0:
+            continue
+
+        rt = precursor_index.loc[mask, rt_col].astype(float)
+        im = precursor_index.loc[mask, im_col].astype(float)
+        rt, im = _subsample([rt, im], max_points)
+
+        fig, ax = plt.subplots(figsize=(5, 4))
+        ax.scatter(rt, im, s=1, alpha=0.15, c=colors[engine_label], rasterized=True)
+        ax.set_xlabel('RT (seconds)')
+        ax.set_ylabel('Ion Mobility (1/K0)')
+        ax.set_title(f'{engine_label}: RT vs IM (n={mask.sum():,})')
+        fig.tight_layout()
+        plots[f'rt_im_{engine_label.lower().replace("-", "")}'] = _fig_to_base64(fig)
+
+    # --- Pairwise IM alignment plots ---
+    pairs = [
+        ('FragPipe', 'DIA-NN', 'fragpipe_mobility', 'diann_mobility'),
+        ('FragPipe', 'Sage', 'fragpipe_mobility', 'sage_mobility'),
+        ('DIA-NN', 'Sage', 'diann_mobility', 'sage_mobility'),
+    ]
+
+    for engine_a, engine_b, col_a, col_b in pairs:
+        if col_a not in precursor_index.columns or col_b not in precursor_index.columns:
+            continue
+        mask = precursor_index[col_a].notna() & precursor_index[col_b].notna()
+        if mask.sum() < 2:
+            continue
+
+        im_a = precursor_index.loc[mask, col_a].astype(float)
+        im_b = precursor_index.loc[mask, col_b].astype(float)
+
+        # Compute Pearson R before subsampling (on full data)
+        r = float(np.corrcoef(im_a, im_b)[0, 1])
+
+        im_a_plot, im_b_plot = _subsample([im_a, im_b], max_points)
+
+        fig, ax = plt.subplots(figsize=(5, 4.5))
+        ax.scatter(im_a_plot, im_b_plot, s=1, alpha=0.15, c='#34495e', rasterized=True)
+
+        # y=x reference line
+        lo = min(float(im_a_plot.min()), float(im_b_plot.min()))
+        hi = max(float(im_a_plot.max()), float(im_b_plot.max()))
+        ax.plot([lo, hi], [lo, hi], 'r--', linewidth=1, label='y = x')
+
+        ax.set_xlabel(f'{engine_a} IM (1/K0)')
+        ax.set_ylabel(f'{engine_b} IM (1/K0)')
+        ax.set_title(f'{engine_a} vs {engine_b} IM  (R={r:.4f}, n={mask.sum():,})')
+        ax.legend(loc='lower right', fontsize=8)
+        fig.tight_layout()
+
+        key = f'im_align_{engine_a.lower().replace("-", "")}_{engine_b.lower().replace("-", "")}'
+        plots[key] = _fig_to_base64(fig)
+
+    return plots
+
+
 def _generate_html_report(
     accession: str,
     stats: Dict[str, Any],
     output_path: Path,
+    qc_stats: Optional[Dict[str, Any]] = None,
+    plots: Optional[Dict[str, str]] = None,
 ) -> None:
-    """Generate HTML overlap report."""
-    from scripts.analyze_overlap import HTML_TEMPLATE_3WAY
+    """Generate self-contained HTML overlap + QC report.
 
-    # Calculate percentages
+    Uses an inline template (no external import) with computed QC stats
+    for charge distribution, sequence length, ion mobility, PEP scores,
+    per-run PSM counts, and top modifications.
+    """
+    if qc_stats is None:
+        qc_stats = {}
+    if plots is None:
+        plots = {}
+
     total = stats["n_union"]
     if total == 0:
-        total = 1  # Avoid division by zero
+        total = 1
 
-    html = HTML_TEMPLATE_3WAY.format(
-        accession=accession,
-        timestamp="Generated by San José Runner",
-        match_type="sequence+charge",
-        pep_filter="None (all results)",
-        n_fragpipe=stats["n_fragpipe"],
-        n_diann=stats["n_diann"],
-        n_sage=stats["n_sage"],
-        n_all_three=stats["n_all_three"],
-        n_at_least_two=stats["n_at_least_two"],
-        n_union=stats["n_union"],
-        three_way_pct=stats["three_way_rate"],
-        two_plus_pct=stats["at_least_two_rate"],
-        n_fp_dn=stats["n_all_three"] + stats["n_fp_dn_only"],
-        n_fp_sg=stats["n_all_three"] + stats["n_fp_sg_only"],
-        n_dn_sg=stats["n_all_three"] + stats["n_dn_sg_only"],
-        n_fp_dn_only=stats["n_fp_dn_only"],
-        n_fp_sg_only=stats["n_fp_sg_only"],
-        n_dn_sg_only=stats["n_dn_sg_only"],
-        n_fragpipe_only=stats["n_fragpipe_only"],
-        n_diann_only=stats["n_diann_only"],
-        n_sage_only=stats["n_sage_only"],
-        all_three_pct=stats["n_all_three"] / total * 100,
-        fp_dn_only_pct=stats["n_fp_dn_only"] / total * 100,
-        fp_sg_only_pct=stats["n_fp_sg_only"] / total * 100,
-        dn_sg_only_pct=stats["n_dn_sg_only"] / total * 100,
-        fp_only_pct=stats["n_fragpipe_only"] / total * 100,
-        dn_only_pct=stats["n_diann_only"] / total * 100,
-        sg_only_pct=stats["n_sage_only"] / total * 100,
-        fp_unique_pct=stats["n_fragpipe_only"] / max(stats["n_fragpipe"], 1) * 100,
-        dn_unique_pct=stats["n_diann_only"] / max(stats["n_diann"], 1) * 100,
-        sg_unique_pct=stats["n_sage_only"] / max(stats["n_sage"], 1) * 100,
-        fp_validation_rate=1 - stats["n_fragpipe_only"] / max(stats["n_fragpipe"], 1),
-        dn_validation_rate=1 - stats["n_diann_only"] / max(stats["n_diann"], 1),
-        sg_validation_rate=1 - stats["n_sage_only"] / max(stats["n_sage"], 1),
-        charge_rows="<tr><td colspan='4'>N/A</td></tr>",
-        fp_len_min="N/A",
-        fp_len_median="N/A",
-        fp_len_max="N/A",
-        dn_len_min="N/A",
-        dn_len_median="N/A",
-        dn_len_max="N/A",
-        sg_len_min="N/A",
-        sg_len_median="N/A",
-        sg_len_max="N/A",
+    # --- Precompute derived values ---
+    all_three_pct = stats["n_all_three"] / total * 100
+    fp_dn_only_pct = stats["n_fp_dn_only"] / total * 100
+    fp_sg_only_pct = stats["n_fp_sg_only"] / total * 100
+    dn_sg_only_pct = stats["n_dn_sg_only"] / total * 100
+    fp_only_pct = stats["n_fragpipe_only"] / total * 100
+    dn_only_pct = stats["n_diann_only"] / total * 100
+    sg_only_pct = stats["n_sage_only"] / total * 100
+
+    fp_unique_pct = stats["n_fragpipe_only"] / max(stats["n_fragpipe"], 1) * 100
+    dn_unique_pct = stats["n_diann_only"] / max(stats["n_diann"], 1) * 100
+    sg_unique_pct = stats["n_sage_only"] / max(stats["n_sage"], 1) * 100
+
+    fp_val = 1 - stats["n_fragpipe_only"] / max(stats["n_fragpipe"], 1)
+    dn_val = 1 - stats["n_diann_only"] / max(stats["n_diann"], 1)
+    sg_val = 1 - stats["n_sage_only"] / max(stats["n_sage"], 1)
+
+    n_fp_dn = stats["n_all_three"] + stats["n_fp_dn_only"]
+    n_fp_sg = stats["n_all_three"] + stats["n_fp_sg_only"]
+    n_dn_sg = stats["n_all_three"] + stats["n_dn_sg_only"]
+
+    # --- Build charge distribution rows ---
+    charge_dist = qc_stats.get("charge_dist", {})
+    all_charges = sorted(
+        set(charge_dist.get("fragpipe", {}).keys())
+        | set(charge_dist.get("diann", {}).keys())
+        | set(charge_dist.get("sage", {}).keys())
     )
+    if all_charges:
+        charge_rows = "\n".join(
+            f"        <tr><td>{c}+</td>"
+            f"<td>{charge_dist.get('fragpipe', {}).get(c, 0):,}</td>"
+            f"<td>{charge_dist.get('diann', {}).get(c, 0):,}</td>"
+            f"<td>{charge_dist.get('sage', {}).get(c, 0):,}</td></tr>"
+            for c in all_charges
+        )
+    else:
+        charge_rows = "        <tr><td colspan='4'>No data</td></tr>"
+
+    # --- Build sequence length rows ---
+    sl = qc_stats.get("seq_length", {})
+
+    def _sl(engine, stat):
+        v = sl.get(engine, {}).get(stat)
+        return str(v) if v is not None else "-"
+
+    # --- Build ion mobility rows ---
+    mob = qc_stats.get("mobility", {})
+
+    def _mob(engine, stat):
+        v = mob.get(engine, {}).get(stat)
+        return str(v) if v is not None else "-"
+
+    # --- Build PEP score rows ---
+    pep = qc_stats.get("pep_scores", {})
+
+    def _pep(engine, stat):
+        v = pep.get(engine, {}).get(stat)
+        return str(v) if v is not None else "-"
+
+    # --- Build per-file PSM count table ---
+    pf = qc_stats.get("per_file_counts", {})
+    all_files = sorted(
+        set(pf.get("fragpipe", {}).keys())
+        | set(pf.get("diann", {}).keys())
+        | set(pf.get("sage", {}).keys())
+    )
+    if all_files:
+        per_file_rows = "\n".join(
+            f"        <tr><td>{f}</td>"
+            f"<td>{pf.get('fragpipe', {}).get(f, 0):,}</td>"
+            f"<td>{pf.get('diann', {}).get(f, 0):,}</td>"
+            f"<td>{pf.get('sage', {}).get(f, 0):,}</td></tr>"
+            for f in all_files
+        )
+    else:
+        per_file_rows = "        <tr><td colspan='4'>No data</td></tr>"
+
+    # --- Build top modifications rows ---
+    mods = qc_stats.get("top_mods", {})
+    mod_names = {
+        "[UNIMOD:4]": "Carbamidomethyl (C)",
+        "[UNIMOD:35]": "Oxidation (M)",
+        "[UNIMOD:1]": "Acetyl (N-term)",
+        "[UNIMOD:21]": "Phospho (STY)",
+        "[UNIMOD:7]": "Deamidation (NQ)",
+        "[UNIMOD:34]": "Methylation",
+        "[UNIMOD:28]": "Gln->pyro-Glu",
+        "[UNIMOD:27]": "Glu->pyro-Glu",
+        "[UNIMOD:5]": "Carbamyl",
+        "[UNIMOD:122]": "Formyl (N-term)",
+    }
+
+    def _mod_table(engine):
+        items = mods.get(engine, [])
+        if not items:
+            return "<em>-</em>"
+        parts = []
+        for m, count in items:
+            label = mod_names.get(m, m)
+            parts.append(f"{label}: {count:,}")
+        return "<br>".join(parts)
+
+    # --- Build plot sections ---
+    rt_im_keys = ['rt_im_fragpipe', 'rt_im_diann', 'rt_im_sage']
+    rt_im_imgs = [
+        f'<img src="data:image/png;base64,{plots[k]}" alt="{k}">'
+        for k in rt_im_keys if k in plots
+    ]
+    rt_im_section = ""
+    if rt_im_imgs:
+        rt_im_section = f"""
+    <h2>RT vs Ion Mobility</h2>
+    <div class="plot-row">
+        {"".join(rt_im_imgs)}
+    </div>"""
+
+    im_align_keys = [
+        'im_align_fragpipe_diann',
+        'im_align_fragpipe_sage',
+        'im_align_diann_sage',
+    ]
+    im_align_imgs = [
+        f'<img src="data:image/png;base64,{plots[k]}" alt="{k}">'
+        for k in im_align_keys if k in plots
+    ]
+    im_align_section = ""
+    if im_align_imgs:
+        im_align_section = f"""
+    <h2>Ion Mobility Alignment (Cross-Engine)</h2>
+    <div class="plot-row">
+        {"".join(im_align_imgs)}
+    </div>"""
+
+    # --- Assemble HTML ---
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QC Report: {accession}</title>
+    <style>
+        :root {{
+            --fragpipe-color: #e74c3c;
+            --diann-color: #3498db;
+            --sage-color: #27ae60;
+            --all-three-color: #9b59b6;
+            --two-engines-color: #f39c12;
+            --bg-light: #f8f9fa;
+            --border-color: #dee2e6;
+        }}
+        * {{ box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            color: #333;
+        }}
+        h1 {{
+            color: #2c3e50;
+            border-bottom: 3px solid var(--all-three-color);
+            padding-bottom: 10px;
+        }}
+        h2 {{
+            color: #34495e;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }}
+        .header-info {{
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }}
+        .header-info .label {{
+            font-weight: 600;
+            color: #666;
+            font-size: 0.85em;
+        }}
+        .summary-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }}
+        .stat-card {{
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }}
+        .stat-card.fragpipe {{ border-left: 4px solid var(--fragpipe-color); }}
+        .stat-card.diann {{ border-left: 4px solid var(--diann-color); }}
+        .stat-card.sage {{ border-left: 4px solid var(--sage-color); }}
+        .stat-card.all-three {{ border-left: 4px solid var(--all-three-color); background: #f3e5f5; }}
+        .stat-card.two-plus {{ border-left: 4px solid var(--two-engines-color); }}
+        .stat-card .number {{
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }}
+        .stat-card .label {{
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }}
+        .stat-card .pct {{
+            font-size: 0.9em;
+            color: #888;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }}
+        th, td {{
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }}
+        th {{ background: var(--bg-light); font-weight: 600; }}
+        .highlight {{ background: #e8f5e9; font-weight: 600; }}
+        .bar-stacked {{
+            display: flex;
+            height: 40px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }}
+        .bar-segment {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            min-width: 30px;
+        }}
+        .bar-fp {{ background: var(--fragpipe-color); }}
+        .bar-dn {{ background: var(--diann-color); }}
+        .bar-sg {{ background: var(--sage-color); }}
+        .bar-all {{ background: var(--all-three-color); }}
+        .bar-fp-dn {{ background: #8e44ad; }}
+        .bar-fp-sg {{ background: #c0392b; }}
+        .bar-dn-sg {{ background: #16a085; }}
+        .legend {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 10px 0;
+            font-size: 0.85em;
+        }}
+        .legend-item {{
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }}
+        .legend-color {{
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }}
+        .validation-table td:nth-child(3) {{
+            font-weight: bold;
+        }}
+        .plot-row {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+        }}
+        .plot-row img {{
+            max-width: 380px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }}
+        .footer {{
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-color);
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }}
+    </style>
+</head>
+<body>
+    <h1>3-Way Orthogonal Validation: {accession}</h1>
+
+    <div class="header-info">
+        <div><div class="label">Accession</div><div>{accession}</div></div>
+        <div><div class="label">Generated</div><div>San Jos&eacute; Runner</div></div>
+        <div><div class="label">Match Type</div><div>sequence+charge</div></div>
+        <div><div class="label">PEP Filter</div><div>None (all results)</div></div>
+        <div><div class="label">I/L Normalized</div><div>Yes</div></div>
+    </div>
+
+    <h2>Search Engine Results</h2>
+    <div class="summary-grid">
+        <div class="stat-card fragpipe">
+            <div class="number">{stats['n_fragpipe']:,}</div>
+            <div class="label">FragPipe</div>
+            <div class="pct">{fp_val:.1%} validated</div>
+        </div>
+        <div class="stat-card diann">
+            <div class="number">{stats['n_diann']:,}</div>
+            <div class="label">DIA-NN</div>
+            <div class="pct">{dn_val:.1%} validated</div>
+        </div>
+        <div class="stat-card sage">
+            <div class="number">{stats['n_sage']:,}</div>
+            <div class="label">Sage</div>
+            <div class="pct">{sg_val:.1%} validated</div>
+        </div>
+    </div>
+
+    <h2>Consensus Summary</h2>
+    <div class="summary-grid">
+        <div class="stat-card all-three">
+            <div class="number">{stats['n_all_three']:,}</div>
+            <div class="label">All 3 Engines</div>
+            <div class="pct">{stats['three_way_rate']:.1%} of union</div>
+        </div>
+        <div class="stat-card two-plus">
+            <div class="number">{stats['n_at_least_two']:,}</div>
+            <div class="label">At Least 2 Engines</div>
+            <div class="pct">{stats['at_least_two_rate']:.1%} of union</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{stats['n_union']:,}</div>
+            <div class="label">Union (Any Engine)</div>
+            <div class="pct">100%</div>
+        </div>
+    </div>
+
+    <h2>Overlap Breakdown</h2>
+    <div class="bar-stacked">
+        <div class="bar-segment bar-all" style="width: {all_three_pct}%" title="All 3">{stats['n_all_three']:,}</div>
+        <div class="bar-segment bar-fp-dn" style="width: {fp_dn_only_pct}%" title="FP+DN only">{stats['n_fp_dn_only']:,}</div>
+        <div class="bar-segment bar-fp-sg" style="width: {fp_sg_only_pct}%" title="FP+Sage only">{stats['n_fp_sg_only']:,}</div>
+        <div class="bar-segment bar-dn-sg" style="width: {dn_sg_only_pct}%" title="DN+Sage only">{stats['n_dn_sg_only']:,}</div>
+        <div class="bar-segment bar-fp" style="width: {fp_only_pct}%" title="FragPipe only">{stats['n_fragpipe_only']:,}</div>
+        <div class="bar-segment bar-dn" style="width: {dn_only_pct}%" title="DIA-NN only">{stats['n_diann_only']:,}</div>
+        <div class="bar-segment bar-sg" style="width: {sg_only_pct}%" title="Sage only">{stats['n_sage_only']:,}</div>
+    </div>
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background: var(--all-three-color)"></div>All 3</div>
+        <div class="legend-item"><div class="legend-color" style="background: #8e44ad"></div>FP+DN</div>
+        <div class="legend-item"><div class="legend-color" style="background: #c0392b"></div>FP+Sage</div>
+        <div class="legend-item"><div class="legend-color" style="background: #16a085"></div>DN+Sage</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--fragpipe-color)"></div>FP only</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--diann-color)"></div>DN only</div>
+        <div class="legend-item"><div class="legend-color" style="background: var(--sage-color)"></div>Sage only</div>
+    </div>
+
+    <h2>Pairwise Overlaps</h2>
+    <table>
+        <tr><th>Pair</th><th>Total Overlap</th><th>Exclusive (not in 3rd)</th></tr>
+        <tr><td>FragPipe &cap; DIA-NN</td><td>{n_fp_dn:,}</td><td>{stats['n_fp_dn_only']:,}</td></tr>
+        <tr><td>FragPipe &cap; Sage</td><td>{n_fp_sg:,}</td><td>{stats['n_fp_sg_only']:,}</td></tr>
+        <tr><td>DIA-NN &cap; Sage</td><td>{n_dn_sg:,}</td><td>{stats['n_dn_sg_only']:,}</td></tr>
+    </table>
+
+    <h2>Validation Quality</h2>
+    <table class="validation-table">
+        <tr><th>Engine</th><th>Unique (not in others)</th><th>Validation Rate</th></tr>
+        <tr><td>FragPipe</td><td>{stats['n_fragpipe_only']:,} ({fp_unique_pct:.1f}%)</td><td>{fp_val:.1%}</td></tr>
+        <tr><td>DIA-NN</td><td>{stats['n_diann_only']:,} ({dn_unique_pct:.1f}%)</td><td>{dn_val:.1%}</td></tr>
+        <tr class="highlight"><td>Sage</td><td>{stats['n_sage_only']:,} ({sg_unique_pct:.1f}%)</td><td>{sg_val:.1%}</td></tr>
+    </table>
+
+    <h2>Charge Distribution</h2>
+    <table>
+        <tr><th>Charge</th><th>FragPipe</th><th>DIA-NN</th><th>Sage</th></tr>
+{charge_rows}
+    </table>
+
+    <h2>Sequence Length</h2>
+    <table>
+        <tr><th>Statistic</th><th>FragPipe</th><th>DIA-NN</th><th>Sage</th></tr>
+        <tr><td>Min</td><td>{_sl('fragpipe','min')}</td><td>{_sl('diann','min')}</td><td>{_sl('sage','min')}</td></tr>
+        <tr><td>Median</td><td>{_sl('fragpipe','median')}</td><td>{_sl('diann','median')}</td><td>{_sl('sage','median')}</td></tr>
+        <tr><td>Mean</td><td>{_sl('fragpipe','mean')}</td><td>{_sl('diann','mean')}</td><td>{_sl('sage','mean')}</td></tr>
+        <tr><td>Max</td><td>{_sl('fragpipe','max')}</td><td>{_sl('diann','max')}</td><td>{_sl('sage','max')}</td></tr>
+    </table>
+
+    <h2>Ion Mobility (1/K0)</h2>
+    <table>
+        <tr><th>Statistic</th><th>FragPipe</th><th>DIA-NN</th><th>Sage</th></tr>
+        <tr><td>Min</td><td>{_mob('fragpipe','min')}</td><td>{_mob('diann','min')}</td><td>{_mob('sage','min')}</td></tr>
+        <tr><td>Median</td><td>{_mob('fragpipe','median')}</td><td>{_mob('diann','median')}</td><td>{_mob('sage','median')}</td></tr>
+        <tr><td>Mean</td><td>{_mob('fragpipe','mean')}</td><td>{_mob('diann','mean')}</td><td>{_mob('sage','mean')}</td></tr>
+        <tr><td>Max</td><td>{_mob('fragpipe','max')}</td><td>{_mob('diann','max')}</td><td>{_mob('sage','max')}</td></tr>
+    </table>
+
+    <h2>Score Quality (PEP)</h2>
+    <table>
+        <tr><th>Statistic</th><th>FragPipe</th><th>DIA-NN</th><th>Sage</th></tr>
+        <tr><td>Median</td><td>{_pep('fragpipe','median')}</td><td>{_pep('diann','median')}</td><td>{_pep('sage','median')}</td></tr>
+        <tr><td>95th Percentile</td><td>{_pep('fragpipe','p95')}</td><td>{_pep('diann','p95')}</td><td>{_pep('sage','p95')}</td></tr>
+        <tr><td>Min</td><td>{_pep('fragpipe','min')}</td><td>{_pep('diann','min')}</td><td>{_pep('sage','min')}</td></tr>
+        <tr><td>Max</td><td>{_pep('fragpipe','max')}</td><td>{_pep('diann','max')}</td><td>{_pep('sage','max')}</td></tr>
+        <tr><td>% PEP &lt; 0.01</td><td>{_pep('fragpipe','pct_below_001')}</td><td>{_pep('diann','pct_below_001')}</td><td>{_pep('sage','pct_below_001')}</td></tr>
+    </table>
+
+    <h2>Per-Run PSM Counts</h2>
+    <table>
+        <tr><th>Raw File</th><th>FragPipe</th><th>DIA-NN</th><th>Sage</th></tr>
+{per_file_rows}
+    </table>
+
+    <h2>Top Modifications</h2>
+    <table>
+        <tr><th>Engine</th><th>Most Frequent Modifications</th></tr>
+        <tr><td>FragPipe</td><td>{_mod_table('fragpipe')}</td></tr>
+        <tr><td>DIA-NN</td><td>{_mod_table('diann')}</td></tr>
+        <tr><td>Sage</td><td>{_mod_table('sage')}</td></tr>
+    </table>
+{rt_im_section}
+{im_align_section}
+
+    <div class="footer">
+        <p>Generated by <strong>San Jos&eacute; Pipeline</strong> | Triple Orthogonal Validation</p>
+        <p>Using I/L normalization and UNIMOD standardization</p>
+    </div>
+</body>
+</html>"""
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
