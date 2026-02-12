@@ -52,12 +52,14 @@ function DatasetView({
   onNavigateToCollection: () => void;
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedRawFile, setSelectedRawFile] = useState<string | undefined>(undefined);
   const [filters, setFilters] = useState({
     minEngines: 0,
     maxEngines: undefined as number | undefined,
     charge: undefined as number | undefined,
     rawFile: undefined as string | undefined,
     hasMs1: false,
+    hasRawData: false,
     sortBy: 'n_engines',
     sortDesc: true,
   });
@@ -124,6 +126,7 @@ function DatasetView({
         charge: filters.charge,
         raw_file: filters.rawFile,
         has_ms1: filters.hasMs1 || undefined,
+        has_raw_data: filters.hasRawData || undefined,
         sort_by: filters.sortBy,
         sort_desc: filters.sortDesc,
       }),
@@ -131,8 +134,8 @@ function DatasetView({
 
   // Fetch selected precursor detail
   const { data: selectedPrecursor, isLoading: isLoadingDetail } = useQuery({
-    queryKey: ['precursor', selectedId],
-    queryFn: () => (selectedId ? getPrecursor(selectedId) : null),
+    queryKey: ['precursor', selectedId, selectedRawFile],
+    queryFn: () => (selectedId ? getPrecursor(selectedId, selectedRawFile) : null),
     enabled: selectedId !== null,
   });
 
@@ -268,6 +271,19 @@ function DatasetView({
             />
             <span className="text-gray-400">Has MS1 data</span>
           </label>
+
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.hasRawData}
+              onChange={(e) => {
+                setFilters({ ...filters, hasRawData: e.target.checked });
+                setPage(0);
+              }}
+              className="rounded bg-gray-700 border-gray-600"
+            />
+            <span className="text-gray-400">Has raw data</span>
+          </label>
         </div>
       </header>
 
@@ -282,7 +298,7 @@ function DatasetView({
             <PrecursorTable
               data={precursors || []}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={(id, rawFile) => { setSelectedId(id); setSelectedRawFile(rawFile); }}
               isLoading={isLoadingList}
               sortBy={filters.sortBy}
               sortDesc={filters.sortDesc}

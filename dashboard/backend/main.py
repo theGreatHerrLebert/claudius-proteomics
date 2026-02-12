@@ -112,6 +112,9 @@ store_path: Optional[Path] = None
 parquet_file: Optional[pq.ParquetFile] = None
 blob_dir: Optional[Path] = None  # Directory containing extracted/{raw_file}.d/blobs.bin
 
+# Blob file sizes for raw data availability checking
+blob_file_sizes: Dict[str, int] = {}  # raw_file_name (without .d) -> blobs.bin file size
+
 # Sage fragment data (loaded from engines/sage/)
 sage_fragments_by_psm: Dict[int, List[Dict]] = {}  # psm_id -> list of fragment dicts
 sage_data_loaded: bool = False
@@ -395,6 +398,7 @@ async def list_precursors(
     charge: Optional[int] = Query(None, ge=1, le=5),
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
+    has_raw_data: bool = Query(False, description="Only show precursors with readable raw blob data"),
     sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
     sort_desc: bool = Query(True),
 ):
@@ -445,7 +449,9 @@ async def list_precursors(
         # Raw (intensity_col is auto-detected: precursor_intensity, ms1_total_intensity, or raw_intensity_meta)
         intensity_col, 'frame_id', 'isolation_mz',
         # Quality metrics
-        'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim'
+        'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim',
+        # Blob metadata (needed for has_raw_data filter)
+        'blob_offset', 'blob_size',
     ]
 
     # Get available columns from schema
@@ -470,6 +476,13 @@ async def list_precursors(
     # Filter for precursors with MS1 data
     if has_ms1:
         df = df[df[rt_col].notna()]
+
+    # Filter for precursors with readable raw blob data
+    if has_raw_data and blob_file_sizes and 'blob_offset' in df.columns and 'blob_size' in df.columns:
+        raw_clean = df['raw_file'].astype(str).str.replace('.d', '', regex=False)
+        file_size_series = raw_clean.map(blob_file_sizes).fillna(0)
+        blob_end = df['blob_offset'].fillna(0) + df['blob_size'].fillna(0)
+        df = df[blob_end <= file_size_series]
 
     # Sort - when sorting by n_engines, also sort by intensity within each group
     # Map sort column to actual column name
@@ -654,8 +667,14 @@ def read_blob(raw_file: str, offset: int, size: int) -> Optional[dict]:
 
     try:
         with open(blob_path, 'rb') as f:
+            file_size = f.seek(0, 2)  # Get file size
+            if offset + size > file_size:
+                return None  # Blob offset beyond file (truncated extraction)
             f.seek(offset)
             compressed = f.read(size)
+
+        if len(compressed) == 0:
+            return None
 
         # Detect compression format and decompress
         # zstd magic: 0x28 0xB5 0x2F 0xFD
@@ -714,19 +733,24 @@ def read_blob(raw_file: str, offset: int, size: int) -> Optional[dict]:
 
 
 @app.get("/precursor/{precursor_id}", response_model=PrecursorDetail)
-async def get_precursor(precursor_id: int):
+async def get_precursor(
+    precursor_id: int,
+    raw_file: Optional[str] = Query(None, description="Specific raw file to load data from"),
+):
     """Get full detail for a single precursor."""
     if parquet_file is None:
         raise HTTPException(400, "No store loaded")
 
     # Read with filter
-    table = pq.read_table(str(store_path), filters=[('precursor_id', '=', precursor_id)])
+    filters = [('precursor_id', '=', precursor_id)]
+    if raw_file:
+        filters.append(('raw_file', '=', raw_file))
+    table = pq.read_table(str(store_path), filters=filters)
 
     if len(table) == 0:
         raise HTTPException(404, f"Precursor not found: {precursor_id}")
 
     df = table.to_pandas()
-    row = df.iloc[0]
 
     def to_list(val):
         if val is None:
@@ -747,8 +771,20 @@ async def get_precursor(precursor_id: int):
             return None
         return str(val) if val else None
 
-    # Try to read blob data if available
+    # When multiple rows exist (same precursor across raw files),
+    # prefer a row with readable blob data
     blob_data = None
+    row = df.iloc[0]
+    if blob_file_sizes and 'blob_offset' in df.columns and 'blob_size' in df.columns:
+        for _, candidate in df.iterrows():
+            rf = str(candidate.get('raw_file', '')).replace('.d', '')
+            fsize = blob_file_sizes.get(rf, 0)
+            off = candidate.get('blob_offset')
+            sz = candidate.get('blob_size')
+            if pd.notna(off) and pd.notna(sz) and int(off) + int(sz) <= fsize:
+                row = candidate
+                break
+
     if pd.notna(row.get('blob_offset')) and pd.notna(row.get('blob_size')) and pd.notna(row.get('raw_file')):
         blob_data = read_blob(
             str(row['raw_file']),
@@ -758,7 +794,7 @@ async def get_precursor(precursor_id: int):
 
     # Get precursor properties for isotope m/z calculation
     precursor_mz = float(row['mz']) if pd.notna(row.get('mz')) else 0.0
-    precursor_charge = int(row['charge']) if pd.notna(row.get('charge')) else 1
+    precursor_charge = int(row['charge']) if pd.notna(row.get('charge')) and int(row['charge']) > 0 else 1
 
     # Use blob data if available, otherwise try parquet columns, otherwise empty
     if blob_data:
@@ -1127,7 +1163,15 @@ Modes:
 
             if blob_dir.exists():
                 print(f"Blob directory: {blob_dir}")
-                print("  Blob reading enabled (gzip format)")
+                print("  Blob reading enabled (auto-detect gzip/zstd)")
+                # Index blob file sizes for raw data availability filtering
+                import os
+                for d in sorted(blob_dir.iterdir()):
+                    if d.is_dir() and (d / "blobs.bin").exists():
+                        raw_name = d.name.replace('.d', '')
+                        blob_file_sizes[raw_name] = os.path.getsize(d / "blobs.bin")
+                if blob_file_sizes:
+                    print(f"  Indexed {len(blob_file_sizes)} blob files for raw data filtering")
             else:
                 blob_dir = None
                 print(f"Warning: Blob directory not found: {p.parent / 'extracted'}")

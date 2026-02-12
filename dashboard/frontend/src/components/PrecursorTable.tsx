@@ -30,7 +30,7 @@ const SORTABLE_COLUMNS: Record<string, string> = {
 interface PrecursorTableProps {
   data: PrecursorSummary[];
   selectedId: number | null;
-  onSelect: (id: number) => void;
+  onSelect: (id: number, rawFile?: string) => void;
   isLoading?: boolean;
   sortBy?: string;
   sortDesc?: boolean;
@@ -65,6 +65,16 @@ export default function PrecursorTable({
         header: 'ID',
         cell: (info) => info.getValue(),
         size: 70,
+      }),
+      columnHelper.accessor('raw_file', {
+        header: 'Raw File',
+        cell: (info) => {
+          const val = info.getValue();
+          // Show last portion for readability
+          const short = val && val.length > 20 ? '...' + val.slice(-20) : val;
+          return <span className="text-xs truncate max-w-28 block" title={val}>{short || '-'}</span>;
+        },
+        size: 130,
       }),
       columnHelper.accessor('mz', {
         header: 'm/z',
@@ -360,7 +370,7 @@ export default function PrecursorTable({
             return (
               <tr
                 key={row.id}
-                onClick={() => onSelect(row.original.precursor_id)}
+                onClick={() => onSelect(row.original.precursor_id, row.original.raw_file)}
                 className={`
                   cursor-pointer border-b border-gray-800 transition-colors
                   ${isSelected ? 'bg-blue-900/50' : 'hover:bg-gray-800/50'}

@@ -183,6 +183,7 @@ export async function listPrecursors(params: {
   charge?: number;
   raw_file?: string;
   has_ms1?: boolean;
+  has_raw_data?: boolean;
   sort_by?: string;
   sort_desc?: boolean;
 }): Promise<PrecursorSummary[]> {
@@ -195,8 +196,10 @@ export async function getRawFiles(): Promise<RawFileInfo[]> {
   return response.data;
 }
 
-export async function getPrecursor(id: number): Promise<PrecursorDetail> {
-  const response = await api.get(`/precursor/${id}`);
+export async function getPrecursor(id: number, rawFile?: string): Promise<PrecursorDetail> {
+  const params: Record<string, string> = {};
+  if (rawFile) params.raw_file = rawFile;
+  const response = await api.get(`/precursor/${id}`, { params });
   return response.data;
 }
 
