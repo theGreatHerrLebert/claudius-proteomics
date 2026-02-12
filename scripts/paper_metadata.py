@@ -248,33 +248,49 @@ def extract_metadata_with_llm(
         print("    Install with: pip install anthropic")
         return None
 
-    prompt = f"""You are extracting LC-MS/MS experimental parameters from a proteomics publication.
+    prompt = f"""You are extracting experimental parameters from a proteomics publication.
 The data is deposited in PRIDE as {accession}.
 
-Extract the following fields from the paper text. For each field, provide:
+IMPORTANT: Do NOT extract parameters that are stored in Bruker timsTOF .d raw files
+(collision energy values, m/z range, 1/K0 range, accumulation time, ramp time, PASEF
+cycle counts). These are read directly from the data. Only extract what's in the paper.
+
+For each field, provide:
 - "value": the extracted value
 - "confidence": float 0.0-1.0 indicating how certain you are
 - "evidence": the exact quote from the paper supporting this value
 
 Fields to extract:
-1. "gradient_length" - LC gradient length in minutes (integer). Look for statements like "X min gradient" or gradient time descriptions.
-2. "column_type" - Full column specification (e.g., "25 cm x 75 um IonOpticks Aurora C18 1.6 um"). Include length, ID, packing material, particle size.
-3. "lc_system" - LC system name (e.g., "nanoElute 2", "EASY-nLC 1200", "Vanquish Neo")
-4. "acquisition_mode" - One of: DDA, DIA, PASEF, diaPASEF, PRM, targeted
-5. "sample_prep" - Brief sample preparation description (e.g., "SP3 bead cleanup, trypsin digestion")
-6. "lab_id" - Corresponding author name and institution
-7. "additional_lc_params" - Object with any of: flow_rate, mobile_phase_a, mobile_phase_b, column_temp, injection_volume
 
-Return ONLY valid JSON (no markdown code fences) with this structure:
-{{
-  "gradient_length": {{"value": 120, "confidence": 0.95, "evidence": "...exact quote..."}},
-  "column_type": {{"value": "...", "confidence": 0.9, "evidence": "..."}},
-  "lc_system": {{"value": "...", "confidence": 0.9, "evidence": "..."}},
-  "acquisition_mode": {{"value": "PASEF", "confidence": 0.95, "evidence": "..."}},
-  "sample_prep": {{"value": "...", "confidence": 0.8, "evidence": "..."}},
-  "lab_id": {{"value": "...", "confidence": 0.9, "evidence": "..."}},
-  "additional_lc_params": {{"value": {{...}}, "confidence": 0.7, "evidence": "..."}}
-}}
+## LC Setup (not in raw data)
+1. "gradient_length" - LC gradient length in minutes (integer)
+2. "column_type" - Full column spec: length, ID, packing, particle size (e.g., "25 cm x 75 um IonOpticks Aurora C18 1.6 um")
+3. "lc_system" - LC system name (e.g., "nanoElute 2", "EASY-nLC 1200")
+4. "mobile_phases" - Object with mobile_phase_a, mobile_phase_b, and any additives (e.g., {{"a": "0.1% formic acid in water", "b": "0.1% formic acid in 80% ACN"}})
+5. "flow_rate" - LC flow rate as string (e.g., "300 nL/min")
+6. "column_temp" - Column temperature if mentioned (e.g., "60°C")
+
+## Acquisition (fallback — raw data has actual values, but paper gives strategy)
+7. "acquisition_mode" - One of: DDA, DIA, PASEF, diaPASEF, PRM, targeted
+8. "ce_strategy" - Collision energy strategy description, NOT actual values (e.g., "linear ramp from 20-59 eV as a function of mobility", "stepped CE: 25, 30, 35 eV")
+9. "source_voltage_settings" - Object with any of: capillary_voltage, dry_gas_flow, dry_temp, end_plate_offset, nanoflow_source_temp
+
+## Sample & Biology (never in raw data)
+10. "cell_lines_tissues" - Sample types used (e.g., "HeLa cell line", "mouse liver tissue", "human plasma")
+11. "sample_prep" - Brief sample preparation description (e.g., "SP3 bead cleanup, trypsin digestion, SDB-RPS cleanup")
+12. "digestion_details" - Object with any of: enzyme, enzyme_ratio, digestion_time, digestion_temp, alkylation_agent, reduction_agent
+13. "fractionation" - Object with method and number of fractions (e.g., {{"method": "high pH reversed-phase", "n_fractions": 8}})
+14. "quantification_method" - One of: LFQ, TMT, iTRAQ, SILAC, DIA-quant, label-free, or other
+
+## Study Context (never in raw data)
+15. "lab_id" - Corresponding author name and institution
+16. "study_type" - One of: benchmarking, method_development, clinical, biomarker, interactomics, structural, drug_treatment, other
+17. "number_of_replicates" - Object with biological and technical replicate counts (e.g., {{"biological": 3, "technical": 2}})
+18. "reported_ids" - Object with author-reported identification counts: proteins, peptides, and/or PSMs
+19. "key_findings" - 1-2 sentence summary of the main result relevant to proteomics methodology (e.g., reported R², prediction accuracy, coverage improvement)
+
+Return ONLY valid JSON (no markdown code fences). Every field uses the same structure:
+{{"value": <extracted>, "confidence": <0.0-1.0>, "evidence": "exact quote"}}
 
 If a field cannot be determined from the text, set value to null and confidence to 0.0.
 
@@ -285,7 +301,7 @@ Paper text:
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model=model,
-            max_tokens=2000,
+            max_tokens=4000,
             messages=[{"role": "user", "content": prompt}],
         )
 
