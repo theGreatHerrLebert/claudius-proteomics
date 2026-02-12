@@ -205,6 +205,65 @@ class SageMatchedFragment(BaseModel):
     intensity: float
 
 
+def compute_spectrum_cosine(
+    obs_mz: List[float], obs_int: List[float],
+    sage_fragments: List[dict],
+    ppm_tol: float = 20.0,
+) -> Optional[float]:
+    """Cosine similarity between observed (blob) and Sage-matched fragment spectra.
+
+    For each Sage fragment, finds the closest observed peak within ppm_tol
+    and builds matched intensity vectors for cosine computation.
+    """
+    if not obs_mz or not sage_fragments:
+        return None
+
+    obs_mz_arr = np.array(obs_mz)
+    obs_int_arr = np.array(obs_int)
+
+    # Sort observed spectrum by m/z for efficient searching
+    sort_idx = np.argsort(obs_mz_arr)
+    obs_mz_sorted = obs_mz_arr[sort_idx]
+    obs_int_sorted = obs_int_arr[sort_idx]
+
+    matched_obs = []
+    matched_sage = []
+
+    for frag in sage_fragments:
+        sage_mz = frag['mz_experimental']
+        sage_int = frag['intensity']
+        tol = sage_mz * ppm_tol / 1e6
+
+        # Binary search for closest peak
+        idx = np.searchsorted(obs_mz_sorted, sage_mz)
+        best_idx = None
+        best_delta = tol
+
+        for candidate in [idx - 1, idx]:
+            if 0 <= candidate < len(obs_mz_sorted):
+                delta = abs(obs_mz_sorted[candidate] - sage_mz)
+                if delta < best_delta:
+                    best_delta = delta
+                    best_idx = candidate
+
+        if best_idx is not None:
+            matched_obs.append(obs_int_sorted[best_idx])
+            matched_sage.append(sage_int)
+
+    if len(matched_obs) < 2:
+        return None
+
+    a = np.array(matched_obs)
+    b = np.array(matched_sage)
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+
+    if norm_a == 0 or norm_b == 0:
+        return None
+
+    return float(np.dot(a, b) / (norm_a * norm_b))
+
+
 class PrecursorSummary(BaseModel):
     precursor_id: int
     raw_file: str
@@ -214,6 +273,7 @@ class PrecursorSummary(BaseModel):
     mobility: float
     n_engines: int
     confidence_weight: Optional[float] = None
+    sage_cosine: Optional[float] = None
     # FragPipe (10 columns)
     fragpipe_peptide: Optional[str] = None
     fragpipe_modified: Optional[str] = None
@@ -286,6 +346,7 @@ class PrecursorDetail(BaseModel):
 
     # Sage matched b/y ions (if available)
     sage_matched_fragments: Optional[List[SageMatchedFragment]] = None
+    sage_cosine: Optional[float] = None  # Cosine similarity: observed vs Sage-matched spectrum
 
     # MS1 projections
     xic_rt: List[float]
@@ -399,7 +460,7 @@ async def list_precursors(
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
     has_raw_data: bool = Query(False, description="Only show precursors with readable raw blob data"),
-    sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim)$"),
+    sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim|sage_cosine)$"),
     sort_desc: bool = Query(True),
 ):
     """List precursors with pagination and filtering."""
@@ -441,7 +502,7 @@ async def list_precursors(
         # Sage (12 columns)
         'sage_peptide', 'sage_modified', 'sage_protein',
         'sage_qvalue', 'sage_pep', 'sage_hyperscore', 'sage_peptide_qvalue', 'sage_protein_qvalue',
-        'sage_rt', 'sage_mz', 'sage_mobility', 'sage_match_tier',
+        'sage_rt', 'sage_mz', 'sage_mobility', 'sage_match_tier', 'sage_psm_id',
         # DIA-NN (13 columns)
         'diann_peptide', 'diann_modified', 'diann_protein',
         'diann_qvalue', 'diann_pep', 'diann_global_qvalue', 'diann_pg_qvalue',
@@ -450,6 +511,7 @@ async def list_precursors(
         intensity_col, 'frame_id', 'isolation_mz',
         # Quality metrics
         'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim',
+        'sage_cosine',
         # Blob metadata (needed for has_raw_data filter)
         'blob_offset', 'blob_size',
     ]
@@ -584,6 +646,27 @@ async def list_precursors(
         if pd.isna(n_engines_val):
             n_engines_val = 0
 
+        # Use precomputed sage_cosine from parquet if available,
+        # otherwise fall back to on-the-fly blob-read computation
+        row_sage_cosine = safe_float(row.get('sage_cosine'))
+        if row_sage_cosine is None:
+            sage_psm_val = row.get('sage_psm_id')
+            if (sage_data_loaded and pd.notna(sage_psm_val)
+                    and pd.notna(row.get('blob_offset')) and pd.notna(row.get('blob_size'))):
+                psm_id = int(sage_psm_val)
+                if psm_id in sage_fragments_by_psm:
+                    blob = read_blob(
+                        str(row['raw_file']) if pd.notna(row.get('raw_file')) else '',
+                        int(row['blob_offset']),
+                        int(row['blob_size']),
+                    )
+                    if blob:
+                        row_sage_cosine = compute_spectrum_cosine(
+                            blob.get('fragment_mz', []),
+                            blob.get('fragment_intensity', []),
+                            sage_fragments_by_psm[psm_id],
+                        )
+
         results.append(PrecursorSummary(
             precursor_id=int(prec_id),
             raw_file=str(row['raw_file']) if pd.notna(row.get('raw_file')) else '',
@@ -593,6 +676,7 @@ async def list_precursors(
             mobility=float(row[mobility_col]) if pd.notna(row.get(mobility_col)) else 0.0,
             n_engines=int(n_engines_val),
             confidence_weight=safe_float(row.get('confidence_weight')),
+            sage_cosine=row_sage_cosine,
             # FragPipe (10 columns)
             fragpipe_peptide=safe_str(row.get('fragpipe_peptide')),
             fragpipe_modified=standardize_modified_sequence(safe_str(row.get('fragpipe_modified'))),
@@ -838,13 +922,19 @@ async def get_precursor(
 
     # Get Sage matched fragments if available (exact psm_id match only)
     sage_matched_fragments = None
+    sage_cosine = None
     sage_psm_id = row.get('sage_psm_id')
     if sage_data_loaded and pd.notna(sage_psm_id):
         psm_id = int(sage_psm_id)
         if psm_id in sage_fragments_by_psm:
+            frag_dicts = sage_fragments_by_psm[psm_id]
             sage_matched_fragments = [
-                SageMatchedFragment(**frag) for frag in sage_fragments_by_psm[psm_id]
+                SageMatchedFragment(**frag) for frag in frag_dicts
             ]
+            # Compute cosine similarity between blob spectrum and Sage-matched peaks
+            sage_cosine = compute_spectrum_cosine(
+                fragment_mz, fragment_intensity, frag_dicts
+            )
 
     return PrecursorDetail(
         precursor_id=int(row['precursor_id']),
@@ -864,6 +954,7 @@ async def get_precursor(
         fragment_mobility=fragment_mobility,
         fragment_scan=fragment_scan,
         sage_matched_fragments=sage_matched_fragments,
+        sage_cosine=sage_cosine,
         xic_rt=xic_rt,
         xic_intensity=xic_intensity,
         mobilogram_im=mobilogram_im,
