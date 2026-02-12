@@ -282,12 +282,18 @@ Fields to extract:
 13. "fractionation" - Object with method and number of fractions (e.g., {{"method": "high pH reversed-phase", "n_fractions": 8}})
 14. "quantification_method" - One of: LFQ, TMT, iTRAQ, SILAC, DIA-quant, label-free, or other
 
+## Data Processing (authors' pipeline — never in raw data)
+15. "processing_software" - List of software with versions used by the authors for data analysis. Each entry is an object with name, version, and purpose (e.g., [{{"name": "MaxQuant", "version": "1.6.17.0", "purpose": "database search"}}, {{"name": "Perseus", "version": "1.6.15.0", "purpose": "statistical analysis"}}])
+16. "search_database" - Protein database used by the authors: source, species, version/date, number of entries if stated (e.g., {{"source": "UniProt", "species": "Homo sapiens", "version": "2021_01", "entries": 20396}})
+17. "search_settings" - Key search parameters as object with any of: precursor_tolerance, fragment_tolerance, missed_cleavages, fixed_modifications, variable_modifications, fdr_threshold, min_peptide_length, max_peptide_length
+18. "statistical_tools" - Any downstream analysis software (e.g., "Perseus 1.6.15.0 for statistical analysis, R 4.1 for visualization")
+
 ## Study Context (never in raw data)
-15. "lab_id" - Corresponding author name and institution
-16. "study_type" - One of: benchmarking, method_development, clinical, biomarker, interactomics, structural, drug_treatment, other
-17. "number_of_replicates" - Object with biological and technical replicate counts (e.g., {{"biological": 3, "technical": 2}})
-18. "reported_ids" - Object with author-reported identification counts: proteins, peptides, and/or PSMs
-19. "key_findings" - 1-2 sentence summary of the main result relevant to proteomics methodology (e.g., reported R², prediction accuracy, coverage improvement)
+19. "lab_id" - Corresponding author name and institution
+20. "study_type" - One of: benchmarking, method_development, clinical, biomarker, interactomics, structural, drug_treatment, other
+21. "number_of_replicates" - Object with biological and technical replicate counts (e.g., {{"biological": 3, "technical": 2}})
+22. "reported_ids" - Object with author-reported identification counts: proteins, peptides, and/or PSMs
+23. "key_findings" - 1-2 sentence summary of the main result relevant to proteomics methodology (e.g., reported R², prediction accuracy, coverage improvement)
 
 Return ONLY valid JSON (no markdown code fences). Every field uses the same structure:
 {{"value": <extracted>, "confidence": <0.0-1.0>, "evidence": "exact quote"}}
