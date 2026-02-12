@@ -86,6 +86,23 @@ def run_step1_download(
             instruments = {g.instrument_model for g in sg_manifest.groups if g.instrument_model}
             print(f"  Multi-instrument: {', '.join(sorted(instruments))}")
 
+        # Paper metadata extraction (optional, graceful)
+        paper_result = None
+        print("  Paper metadata extraction...")
+        try:
+            from scripts.paper_metadata import run_paper_extraction
+
+            paper_result = run_paper_extraction(accession, metadata_dir, config)
+            if paper_result and paper_result.get("status") == "success":
+                n_fields = len(paper_result.get("fields", {}))
+                print(f"  Paper extraction: {n_fields} fields extracted")
+            elif paper_result:
+                print(f"  Paper extraction: {paper_result.get('status', 'unknown')}")
+            else:
+                print("  Paper extraction: skipped (disabled in config)")
+        except Exception as e:
+            print(f"  Paper extraction: failed ({e}), continuing...")
+
         # Calculate total size
         total_size_gb = sum(
             sum(f.stat().st_size for f in Path(rf).rglob("*") if f.is_file())
@@ -102,6 +119,10 @@ def run_step1_download(
                 "instrument": metadata.get("instrument", "unknown"),
                 "lab_id": metadata.get("lab_id", "unknown"),
                 "completeness": metadata.get("completeness", 0),
+            },
+            "paper_extraction": {
+                "status": paper_result.get("status") if paper_result else "skipped",
+                "n_fields": len(paper_result.get("fields", {})) if paper_result else 0,
             },
             "sample_groups": {
                 "n_groups": len(sg_manifest.groups),

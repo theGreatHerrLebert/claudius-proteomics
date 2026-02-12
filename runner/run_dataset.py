@@ -348,6 +348,11 @@ Examples:
         default="1.0",
         help="Version string for archive (default: 1.0)",
     )
+    parser.add_argument(
+        "--enrich-metadata",
+        action="store_true",
+        help="Re-run only paper metadata extraction (for manually-placed PDFs)",
+    )
 
     args = parser.parse_args()
 
@@ -362,6 +367,28 @@ Examples:
 
     # Store config path for reference
     config["_config_path"] = str(config_path)
+
+    # Handle --enrich-metadata: re-run only paper extraction, then exit
+    if args.enrich_metadata:
+        from scripts.paper_metadata import run_paper_extraction
+
+        metadata_dir = Path(args.output_dir) / "metadata" / args.accession
+        # Force re-run by overriding skip_if_exists
+        config.setdefault("paper_extraction", {})["skip_if_exists"] = False
+
+        print(f"Re-running paper metadata extraction for {args.accession}")
+        print(f"  Metadata dir: {metadata_dir}")
+        result = run_paper_extraction(args.accession, metadata_dir, config)
+        if result and result.get("status") == "success":
+            n = len(result.get("fields", {}))
+            print(f"\nPaper extraction: {n} fields extracted")
+            sys.exit(0)
+        elif result:
+            print(f"\nPaper extraction: {result.get('status', 'unknown')}")
+            sys.exit(0)
+        else:
+            print("\nPaper extraction: skipped")
+            sys.exit(0)
 
     # Run pipeline
     success = run_dataset(

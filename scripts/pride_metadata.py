@@ -118,6 +118,11 @@ class DatasetMetadata:
             hint="Check raw data chromatography info or publication"
         )
     )
+    sample_prep: MetadataField = field(
+        default_factory=lambda: MetadataField.missing(
+            hint="Check publication methods for sample preparation protocol"
+        )
+    )
 
     # File information
     num_files: MetadataField = field(default_factory=lambda: MetadataField.missing())
@@ -156,6 +161,7 @@ class DatasetMetadata:
             "column_type": self.column_type,
             "acquisition_mode": self.acquisition_mode,
             "lc_system": self.lc_system,
+            "sample_prep": self.sample_prep,
         }
 
         auto_count = sum(1 for f in all_fields.values() if f.status == "auto")
@@ -197,6 +203,7 @@ class DatasetMetadata:
                 "column_type": self.column_type.to_dict(),
                 "acquisition_mode": self.acquisition_mode.to_dict(),
                 "lc_system": self.lc_system.to_dict(),
+                "sample_prep": self.sample_prep.to_dict(),
             },
             "files": {
                 "num_files": self.num_files.to_dict() if self.num_files.value else None,
@@ -227,6 +234,73 @@ class DatasetMetadata:
 
         with open(path, "w") as f:
             yaml.dump(yaml_dict, f, default_flow_style=False, sort_keys=False)
+
+    def merge_paper_extraction(self, paper_extraction_path: Path) -> int:
+        """
+        Merge fields from paper_extraction.yaml into this metadata.
+
+        Only overwrites fields with status "missing", or "inferred" with
+        lower confidence. Never overwrites "auto" or "manual" fields.
+
+        Args:
+            paper_extraction_path: Path to paper_extraction.yaml
+
+        Returns:
+            Number of fields updated
+        """
+        paper_extraction_path = Path(paper_extraction_path)
+        if not paper_extraction_path.exists():
+            return 0
+
+        with open(paper_extraction_path) as f:
+            paper_data = yaml.safe_load(f) or {}
+
+        fields = paper_data.get("fields", {})
+        if not fields:
+            return 0
+
+        # Map paper field names to DatasetMetadata attributes
+        mergeable = [
+            "gradient_length", "column_type", "acquisition_mode",
+            "lc_system", "sample_prep", "lab_id",
+        ]
+
+        updated = 0
+        for field_name in mergeable:
+            paper_field = fields.get(field_name)
+            if not paper_field or not isinstance(paper_field, dict):
+                continue
+            paper_value = paper_field.get("value")
+            if paper_value is None:
+                continue
+
+            current = getattr(self, field_name, None)
+            if current is None:
+                continue
+
+            paper_confidence = paper_field.get("confidence", 0.8)
+
+            # Decide whether to overwrite
+            should_update = False
+            if current.status == "missing":
+                should_update = True
+            elif current.status == "inferred" and paper_confidence > current.confidence:
+                should_update = True
+            # Never overwrite "auto" or "manual"
+
+            if should_update:
+                setattr(
+                    self,
+                    field_name,
+                    MetadataField.inferred(
+                        value=paper_value,
+                        source=paper_field.get("source", "paper_extraction"),
+                        confidence=paper_confidence,
+                    ),
+                )
+                updated += 1
+
+        return updated
 
     @classmethod
     def from_pride_api(cls, accession: str) -> "DatasetMetadata":
