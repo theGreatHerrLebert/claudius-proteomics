@@ -1,0 +1,315 @@
+\documentclass[10pt,twoside]{article}
+
+% Encoding and font setup
+\usepackage[T1]{fontenc}            % Needed for special characters like Ł
+\usepackage{lmodern}                % Modern scalable fonts
+\renewcommand*\familydefault{\sfdefault}  % Use sans-serif (if preferred)
+
+% General layout and styling
+\usepackage[a4paper, left=2.5cm, right=3cm, top=2.5cm, bottom=2.5cm]{geometry}
+\usepackage{graphicx, float, amssymb, amsmath}
+\usepackage{natbib}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tabulary}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage[left]{lineno}
+\usepackage[yyyymmdd,hhmmss]{datetime}
+\usepackage{authblk}
+\usepackage{subcaption}
+\usepackage{titlesec}
+\usepackage{nameref}
+
+\usepackage[hidelinks]{hyperref}
+
+% Section and paragraph spacing customization
+\titleformat{\paragraph}[hang]{\bfseries\normalsize}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{1.5ex plus .2ex minus .2ex}{0.5em}
+
+% Fancy headers/footers
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[RO,LE]{\texttt{san-jos\'{e}}}
+\fancyfoot[RO,LE]{Page-\thepage}
+\fancyfoot[C]{\textbf{Preprint}}
+\fancyfoot[RE,LO]{Created: \today\ at \currenttime}
+
+% Margin note utilities
+\newcounter{note}
+\stepcounter{note}
+\newcommand{\Note}[1]{\marginpar{\tiny{\color{gray}\thenote\ #1}} \stepcounter{note}}
+\newcommand{\MNote}[1]{\marginpar{\tiny{\color{gray}#1}}}
+
+% Title and authorship
+\title{San Jos\'{e}: A Reproducible, Bias-Aware Reference Layer for timsTOF Data on PRIDE}
+
+\author[1,2]{David Teschner}
+% TODO: add co-authors
+% \author[3,4]{Co-author}
+\author[1,2]{Andreas Hildebrandt}
+\author[3,4,5]{Stefan Tenzer}
+
+\affil[1]{Institute of Computer Science, Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[2]{Institute for Quantitative and Computational Biosciences (IQCB), Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[3]{Helmholtz Institute for Translational Oncology, Mainz, Germany}
+\affil[4]{German Cancer Research Center (DKFZ), 69120 Heidelberg, Germany}
+\affil[5]{University Medical Center, Johannes Gutenberg University, 55131 Mainz, Germany}
+
+\date{\today}
+
+\begin{document}
+
+\onehalfspacing
+\maketitle
+
+\begin{abstract}
+Public proteomics repositories such as PRIDE contain petabytes of raw mass spectrometry data, yet this data remains largely underutilized for systematic cross-study analysis and machine learning applications.
+Existing reprocessing efforts typically apply a single search engine with fixed parameters and discard the raw signal, retaining only summarized identifications that lose critical information about peptide behavior in experimental context.
+
+We present \textbf{San Jos\'{e}}, an automated pipeline for systematically reprocessing timsTOF datasets deposited on PRIDE through triple orthogonal validation with FragPipe, DIA-NN, and Sage, combined with full 4D raw signal extraction via the rustims framework.
+The pipeline stores not only consensus and engine-specific identifications but also raw chromatographic profiles, ion mobilograms, isotope envelopes, and complete MS1 point clouds for every precursor, all in a training-ready Parquet format with rich experimental metadata.
+By explicitly tracking lab provenance, instrument configuration, gradient conditions, and acquisition mode alongside every peptide observation, San Jos\'{e} enables bias-aware model training and cross-laboratory validation studies that have previously been infeasible at scale.
+
+The pipeline processes PRIDE datasets through six automated steps with checkpointing and produces self-contained, versioned archives suitable for distribution and citation.
+An interactive dashboard allows visual exploration of individual precursors with their full 4D signal context.
+% TODO: add concrete numbers once datasets are processed at scale (N datasets, N precursors, CCS prediction performance)
+San Jos\'{e} transforms PRIDE from a collection of independent studies into a unified, reprocessable experimental corpus for ion mobility proteomics.
+\end{abstract}
+
+\linenumbers
+
+\section{Introduction}
+
+Bottom-up proteomics has become a cornerstone methodology for characterizing the proteome and its dynamics across biological states.
+Recent advances in instrumentation, particularly the introduction of trapped ion mobility spectrometry (TIMS) coupled with Parallel Accumulation-Serial Fragmentation (PASEF) on the timsTOF platform \cite{meier_parallel_2015}, have significantly enhanced proteome coverage and analytical throughput.
+These instruments capture data in four dimensions---retention time (RT), mass-to-charge ratio ($m/z$), ion mobility (IM), and intensity---providing rich signal information that enables the measurement of collisional cross sections (CCS) alongside conventional peptide identification.
+
+The PRIDE archive \cite{perez-riverol_pride_2022} has grown into the largest public repository of mass spectrometry proteomics data, containing thousands of timsTOF datasets from laboratories worldwide.
+However, these datasets are typically processed with inconsistent, often outdated pipelines, using different search engines, parameter settings, and post-processing strategies.
+This heterogeneity makes cross-study comparison difficult and limits the utility of this data for large-scale machine learning applications such as CCS prediction \cite{meier_deep_2021}, retention time modeling \cite{ma_deeprt_2018}, and fragment intensity prediction \cite{gessulat_prosit_2019}.
+
+Existing efforts to build reference datasets for peptide property prediction have typically relied on data from a single laboratory or a small number of controlled experiments \cite{meier_deep_2021, zolg_building_2017}.
+While such datasets provide high internal consistency, they do not capture the full diversity of experimental conditions present in the public record.
+Conversely, naive aggregation of data across PRIDE, without accounting for systematic differences between labs, instruments, gradient conditions, and sample preparation protocols, risks producing models that learn ``how 20 labs run timsTOF'' rather than how peptides behave.
+
+A second limitation of existing reprocessing efforts is their reliance on a single search engine.
+Different engines make different algorithmic assumptions: spectrum-centric approaches such as FragPipe/MSFragger \cite{kong_msfragger_2017} score observed spectra against a database, while peptide-centric approaches such as DIA-NN \cite{demichev_diann_2020} predict and match peptide-specific signals.
+These methodological differences lead to systematic discrepancies in which peptides are identified and at what confidence.
+The points of agreement and disagreement between engines are both scientifically informative: consensus reduces random false positives, while disagreements reveal algorithmic biases and edge cases.
+
+A third gap concerns the raw signal itself.
+Conventional search engine outputs report summarized metrics---an apex retention time, a single CCS value, a list of fragment $m/z$ and intensity pairs---but discard the underlying chromatographic peak shape, ion mobilogram profile, isotope envelope, and the full four-dimensional point cloud from which these summaries were derived.
+For machine learning applications that aim to predict or model these signal characteristics, access to the complete raw data is essential.
+
+Here we present San Jos\'{e}, a pipeline that addresses all three limitations simultaneously.
+San Jos\'{e} systematically reprocesses timsTOF datasets from PRIDE through triple orthogonal validation with FragPipe \cite{kong_msfragger_2017}, DIA-NN \cite{demichev_diann_2020}, and Sage \cite{lazear_sage_2023}, extracts full 4D raw signal features via the rustims framework \cite{teschner_rustims_2025}, and stores the results in a bias-aware, versioned format that explicitly tracks experimental context.
+The pipeline is designed around the principle that we are not collecting peptides, but \textit{peptide observations in experimental context}---every stored identification is inseparable from its lab provenance, instrument configuration, chromatographic conditions, and engine agreement profile.
+
+\section{Results}
+
+\subsection*{A six-step pipeline for systematic reprocessing of timsTOF data}
+
+The San Jos\'{e} pipeline processes a single PRIDE accession through six sequential steps with checkpoint-based recovery (Figure~\ref{fig:pipeline_overview}).
+
+In \textbf{Step~1 (Download)}, raw timsTOF \texttt{.d} folders are downloaded from the PRIDE archive via the REST API.
+PRIDE project metadata---including organisms, instruments, and experimental protocols---is extracted and, when available, supplemented with LC-MS parameters from the associated publication (gradient length, column type, acquisition mode) obtained via automated PDF extraction.
+For multi-organism studies, a sample group resolver assigns each raw file to its corresponding organism and enzyme based on filename patterns and PRIDE annotations, producing a structured grouping that governs all subsequent processing.
+
+In \textbf{Step~2 (Search)}, all raw files are searched independently by three engines.
+FragPipe \cite{kong_msfragger_2017} performs spectrum-centric search using the LFQ-MBR workflow with FDR filtering disabled to report all peptide-spectrum matches.
+DIA-NN \cite{demichev_diann_2020} operates in DDA mode with library-free FASTA search, also with a $q$-value threshold of 1.0 to retain all results.
+Sage \cite{lazear_sage_2023}, an open-source Rust-based search engine, reads timsTOF \texttt{.d} files directly via its timsrust backend.
+For multi-organism datasets, each engine is executed per sample group with the appropriate organism-specific FASTA database and enzyme specificity.
+All engine outputs are normalized to a canonical UniMod sequence format (see Materials and Methods).
+
+In \textbf{Step~3 (Stratify)}, the three sets of engine results are unified into a single precursor index using a FragPipe-anchored merging strategy.
+Each precursor is classified by its engine agreement profile: identified by all three engines (3/3), by a majority (2/3), or by a single engine only (1/1).
+Overlap statistics and visual QC reports are generated for each dataset.
+Importantly, all tiers---including engine-specific unique identifications---are retained, because disagreements between engines carry scientific value for understanding algorithmic biases.
+
+In \textbf{Step~4 (Extract)}, full 4D raw signal data is extracted from the timsTOF \texttt{.d} files for every precursor in the unified index.
+Using the rustims Rust backend, the extraction retrieves for each precursor: (i) a merged fragment spectrum from all PASEF re-acquisition events, (ii) one-dimensional MS1 projections including the extracted ion chromatogram (XIC), ion mobilogram, and isotope envelope, and (iii) the complete raw MS1 point cloud---all individual peaks with their RT, $m/z$, ion mobility, and intensity coordinates within a configurable window around the precursor.
+Quality metrics are computed for each dimension, including Gaussian fit $R^2$ values for peak shape assessment and cosine similarity of the observed isotope pattern against the theoretical averagine model.
+Extraction proceeds in memory-efficient batches of 10,000 precursors.
+
+In \textbf{Step~5 (Merge)}, the precursor index from Step~3 is joined with the raw features from Step~4 to produce a single \texttt{precursor\_store.parquet} file per dataset.
+This file contains both scalar identification columns and variable-length list columns for all signal data, stored in Apache Parquet format with ZSTD compression.
+A manifest with QC metrics accompanies each merged store.
+
+In \textbf{Step~6 (Package)}, the complete dataset outputs are assembled into a self-contained, versioned zip archive for distribution, containing the precursor store, the precursor index, engine-specific results, consensus analyses, raw 4D blobs, and step-wise summary metadata.
+For multi-organism datasets, one archive is produced per sample group.
+
+% TODO: Add timing benchmarks once available
+
+\subsection*{Triple orthogonal validation reveals systematic engine disagreement}
+
+Each dataset processed by San Jos\'{e} produces a stratified view of search engine agreement.
+The three engines---FragPipe (spectrum-centric), DIA-NN (peptide-centric), and Sage (fast Rust engine)---represent fundamentally different algorithmic approaches to peptide identification, and their points of agreement and disagreement provide complementary information.
+
+% TODO: Fill with actual overlap statistics from processed datasets
+% Expected structure:
+% - Venn diagram of engine overlap for PXD019086
+% - 3/3 vs 2/3 vs 1/1 proportions
+% - Characteristics of engine-specific IDs (charge, sequence length, modification status)
+% - Supplementary: scatter plots of RT/IM/m/z correlation between engines
+
+San Jos\'{e} stores all results without applying FDR or posterior error probability thresholds during processing.
+All three engines are configured to report their complete result sets (FragPipe with \texttt{--no-fdr-filter}, DIA-NN with $q$-value threshold 1.0, Sage with \texttt{report\_psms: 1}).
+This design decision enables users to apply their own quality thresholds at query time, preserving maximum flexibility for downstream analyses.
+
+\subsection*{Full 4D raw signal preservation in a training-ready format}
+
+A key design goal of San Jos\'{e} is to preserve the complete raw signal for every identified precursor, going substantially beyond the summarized metrics reported by conventional search engines.
+
+For each precursor, the extraction yields: (i) the merged fragment spectrum with $m/z$, intensity, and ion mobility for each peak; (ii) the extracted ion chromatogram (XIC) capturing the full elution profile; (iii) the ion mobilogram showing the complete mobility distribution; (iv) the isotope envelope across the charge state envelope; and (v) the raw 4D point cloud---typically 1,000--10,000 individual MS1 peaks preserving the full RT $\times$ $m/z$ $\times$ IM $\times$ intensity signal structure.
+
+This data is stored in Apache Parquet using list columns for variable-length arrays, providing columnar access with predicate pushdown, natural batching via row groups, and ZSTD compression averaging 5--6~KB per precursor.
+The format supports efficient training workflows: columns can be read selectively, and the data can be filtered by scalar metadata (charge state, engine agreement level, quality scores) before loading any array data.
+
+% TODO: Add size benchmarks (e.g., 214k precursors → 1.3 GB)
+% TODO: Show example precursor visualization from dashboard
+
+\subsection*{Bias-aware metadata enables cross-laboratory analysis}
+
+PRIDE datasets are not independent samples from a uniform distribution.
+They cluster heavily by laboratory, sample preparation protocol, column chemistry, gradient length, instrument tuning, and organism.
+A model trained on naively aggregated PRIDE data would overrepresent the experimental practices of prolific laboratories.
+
+San Jos\'{e} addresses this by tracking, for every precursor observation, the full experimental context: the PRIDE accession, the laboratory of origin (inferred from the PRIDE project metadata and associated publication), the instrument model, the LC gradient length, the column type and dimensions, and the acquisition mode (DDA-PASEF, DIA-PASEF, or variants).
+Where publications are openly accessible, these parameters are automatically extracted from the Materials and Methods section.
+
+This metadata enables stratified sampling for model training, explicit bias analysis across experimental conditions, weighted loss functions that account for uneven laboratory representation, and cross-lab validation studies.
+Critically, bias-awareness is a design requirement of the system, not an afterthought---the metadata schema was defined before any data was processed.
+
+% TODO: Show distribution of datasets across labs/instruments/gradient lengths once catalog is populated
+
+\subsection*{An interactive dashboard for visual quality control}
+
+San Jos\'{e} includes a web-based precursor browser for visual exploration and quality control of processed datasets.
+The dashboard consists of a FastAPI backend that serves data from the Parquet store via columnar reads, and a React frontend with TypeScript and Tailwind~CSS.
+
+The precursor table supports filtering by charge state, engine agreement level, and quality scores, with pagination and sorting.
+Selecting a precursor displays its complete signal context: the fragment spectrum, a WebGL-rendered scatter plot of the 4D point cloud (via Deck.gl), the extracted ion chromatogram, the ion mobilogram, and the isotope envelope.
+
+The dashboard operates in two modes: single-dataset mode for inspecting an individual precursor store, and collection mode for browsing across multiple processed datasets in a unified interface.
+
+% TODO: Add dashboard screenshot figure
+
+\section{Discussion}
+
+We have presented San Jos\'{e}, a pipeline for systematic reprocessing of timsTOF datasets from the PRIDE archive into a bias-aware, signal-preserving reference layer.
+Three design decisions distinguish this work from conventional reprocessing efforts.
+
+First, the use of triple orthogonal validation with FragPipe, DIA-NN, and Sage, and the explicit retention of engine disagreements alongside consensus, provides a richer view of identification confidence than any single engine can offer.
+This approach treats consensus not as ground truth but as one of several stratification criteria, preserving the scientifically valuable information contained in where and why engines disagree.
+
+Second, the extraction and storage of full 4D raw signal data---chromatographic profiles, ion mobilograms, isotope envelopes, and complete MS1 point clouds---goes substantially beyond the summarized metrics available in conventional search engine outputs.
+This enables prediction targets that no existing reference dataset provides, including peak shape prediction, mobilogram modeling, and isotope pattern simulation, in addition to conventional CCS, RT, and MS2 intensity prediction.
+
+Third, the systematic tracking of experimental metadata transforms the dataset from a flat collection of peptide identifications into a structured corpus of peptide observations in experimental context.
+This enables questions that have previously been difficult to address at scale: How stable is CCS across laboratories and instrument configurations? Where do gradient conditions systematically affect chromatographic behavior? Which peptide properties are robust to experimental variation and which are not?
+
+% TODO: Discussion of limitations
+% - Computational cost of triple-engine search
+% - Dependence on PRIDE metadata quality
+% - Current scale (N datasets processed) and roadmap to full PRIDE coverage
+% - Comparison to related efforts (PeptideAtlas, MassIVE-KB, ProteomicsDB)
+
+The naming of San Jos\'{e} references the sunken galleon whose rediscovery revealed immense, carefully preserved value beneath the surface.
+PRIDE is similar: a vast repository where the real scientific value is hidden in raw experimental data, waiting to be systematically recovered, catalogued, and understood.
+
+\section{Software Availability}\label{sec:software_availability}
+
+The San Jos\'{e} pipeline is open-source and available at:
+
+% TODO: add public GitHub URL once repository is published
+\begin{itemize}
+    \item Pipeline code: \url{https://github.com/TODO/san-jose}
+    \item rustims framework: \url{https://github.com/theGreatHerrLebert/rustims}
+\end{itemize}
+
+The pipeline depends on three external search engines that must be provided by the user:
+FragPipe (\url{https://fragpipe.nesvilab.org/}, academic license),
+DIA-NN (\url{https://github.com/vdemichev/DiaNN}, academic license),
+and Sage (\url{https://github.com/lazear/sage}, MIT license).
+
+\section{Data Availability}\label{sec:data_availability}
+
+% TODO: Add Zenodo links for processed archives
+% TODO: Add PRIDE accessions used as input
+All input data is publicly available on the PRIDE archive.
+Processed San Jos\'{e} archives will be deposited on Zenodo with versioned DOIs.
+
+The initial proof-of-concept processing targets the following PRIDE accessions:
+\begin{itemize}
+    \item PXD019086 --- Meier et al. 2021 \cite{meier_deep_2021}: multi-organism CCS study ($>$1 million measurements)
+    \item PXD046675 --- 4D label-free quantification of pig muscle tissue
+\end{itemize}
+
+\section{Author Contributions}
+
+D.T. conceived and implemented the San Jos\'{e} pipeline, including the runner framework, search engine integration, raw data extraction, sequence standardization, quality metrics, dashboard, and collection management system.
+A.H. and S.T. supervised the project and acquired funding.
+% TODO: expand with co-author contributions
+
+\section{Acknowledgments}
+
+A.H., S.T., and D.T. acknowledge funding from Bundesministerium f\"{u}r Bildung und Forschung (BMBF) as part of the National Research Node ``Mass spectrometry in Systems Medicine'' (MSCoreSys) [031L0217A/B] and the German Research Foundation (DFG, Deutsche Forschungsgemeinschaft), grant numbers SFB~1292-Q1 to S.T., as well as the Research Center for Immunotherapy (FZI, Forschungszentrum f\"{u}r Immuntherapie) of the Johannes Gutenberg University Mainz.
+% TODO: add HPC acknowledgment (Mogon2)
+
+\section{Figures}
+
+\begin{figure}[!ht]
+    \centering
+    \fbox{\parbox{0.9\linewidth}{\centering\vspace{4cm}\textit{Figure placeholder --- pipeline overview}\vspace{4cm}}}
+    \caption{\textbf{San Jos\'{e} pipeline overview.}
+    The pipeline processes a PRIDE accession through six automated steps.
+    \textbf{Step~1:} Raw timsTOF \texttt{.d} folders and project metadata are downloaded from PRIDE, with optional extraction of LC-MS parameters from the associated publication.
+    \textbf{Step~2:} Raw files are searched independently by FragPipe (spectrum-centric), DIA-NN (peptide-centric), and Sage (Rust-based), all configured to report complete result sets without FDR filtering.
+    \textbf{Step~3:} Engine results are unified into a precursor index with stratified consensus (3/3, 2/3, 1/1 agreement).
+    \textbf{Step~4:} Full 4D raw signal (fragment spectra, XICs, mobilograms, isotope envelopes, raw point clouds) is extracted from the timsTOF files via the rustims Rust backend.
+    \textbf{Step~5:} Identifications and raw features are merged into a single Parquet store with rich metadata.
+    \textbf{Step~6:} Self-contained, versioned archives are packaged for distribution.
+    }
+    \label{fig:pipeline_overview}
+\end{figure}
+
+% TODO: Figure 2 - Engine overlap / consensus analysis
+% \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/engine_overlap.png}
+%     \caption{\textbf{Triple orthogonal validation reveals engine-specific identification patterns.}
+%     Venn diagram of precursor identifications across FragPipe, DIA-NN, and Sage for PXD019086.
+%     }
+%     \label{fig:engine_overlap}
+% \end{figure}
+
+% TODO: Figure 3 - Example precursor with full 4D context
+% \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/precursor_example.png}
+%     \caption{\textbf{Full 4D raw signal preserved for every precursor.}
+%     Example precursor showing (A) fragment spectrum, (B) extracted ion chromatogram,
+%     (C) ion mobilogram, (D) isotope envelope, and (E) raw MS1 point cloud in IM--RT space.
+%     }
+%     \label{fig:precursor_4d}
+% \end{figure}
+
+% TODO: Figure 4 - Dashboard screenshot
+% \begin{figure}[!ht]
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/dashboard.png}
+%     \caption{\textbf{Interactive precursor browser.}
+%     The San Jos\'{e} dashboard enables visual exploration of processed datasets with
+%     filtering, sorting, and detailed signal visualization for quality control.
+%     }
+%     \label{fig:dashboard}
+% \end{figure}
+
+\newpage
+
+\bibliographystyle{unsrt}
+\bibliography{resources/san_jose.bib}
+
+\end{document}

@@ -1,0 +1,109 @@
+\documentclass[10pt,twoside]{article}
+
+% Encoding and font
+\usepackage[T1]{fontenc}           % Modern font encoding
+\usepackage{lmodern}               % Scalable vector fonts (replaces Computer Modern)
+\renewcommand*\familydefault{\sfdefault}  % Sans-serif as default
+
+% Layout and math
+\usepackage[left=2.5cm, top=2.5cm, bottom=2.5cm, right=3cm]{geometry}
+\usepackage{graphicx, amssymb, amsmath}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{lineno}
+
+% Figures
+\usepackage{subcaption}            % Subfigure support
+
+% Author and affiliation support
+\usepackage{authblk}
+
+% Header/footer customization
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[RO,LE]{Supporting Information}
+\fancyfoot[RO,LE]{Page-\thepage}
+
+% Title and authorship
+\title{
+  Supporting Information - 2 - Figures: \\
+  \textit{San Jos\'{e}: A Reproducible, Bias-Aware Reference Layer for timsTOF Data on PRIDE}
+}
+
+\author[1,2]{David Teschner}
+% TODO: add co-authors
+\author[1,2]{Andreas Hildebrandt}
+\author[3,4,5]{Stefan Tenzer}
+
+\affil[1]{Institute of Computer Science, Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[2]{Institute for Quantitative and Computational Biosciences (IQCB), Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[3]{Helmholtz Institute for Translational Oncology, Mainz, Germany}
+\affil[4]{German Cancer Research Center (DKFZ), 69120 Heidelberg, Germany}
+\affil[5]{University Medical Center, Johannes Gutenberg University, 55131 Mainz, Germany}
+
+\date{\today}
+
+\begin{document}
+
+\onehalfspacing
+\maketitle
+
+\section{Supplementary Figures}
+
+% TODO: Supplementary Figure 1 - Parquet schema diagram
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/si/parquet_schema.png}
+%     \caption{\textbf{Precursor store Parquet schema.}
+%     Scalar columns (left) store identification metadata and quality scores.
+%     List columns (right) store variable-length signal arrays.
+%     Predicate pushdown on scalar columns enables efficient filtered reads without loading array data.}
+%     \label{fig:si_parquet_schema}
+% \end{figure}
+
+% TODO: Supplementary Figure 2 - Engine-specific RT/IM/m/z correlation
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/si/engine_rt_im_correlation.png}
+%     \caption{\textbf{Cross-engine correlation of precursor coordinates.}
+%     Scatter plots comparing retention time, ion mobility, and $m/z$ values reported
+%     by FragPipe, DIA-NN, and Sage for precursors identified by all three engines.}
+%     \label{fig:si_engine_correlation}
+% \end{figure}
+
+% TODO: Supplementary Figure 3 - Quality metric distributions
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/si/quality_metrics.png}
+%     \caption{\textbf{Distribution of quality metrics across extracted precursors.}
+%     (A) Gaussian fit $R^2$ for XIC peak shapes.
+%     (B) Gaussian fit $R^2$ for ion mobilograms.
+%     (C) Isotope pattern cosine similarity vs.\ theoretical averagine model.
+%     (D) Combined quality score distribution.}
+%     \label{fig:si_quality_metrics}
+% \end{figure}
+
+% TODO: Supplementary Figure 4 - PRIDE timsTOF landscape
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/si/pride_timstof_landscape.png}
+%     \caption{\textbf{Landscape of timsTOF datasets on PRIDE.}
+%     (A) Distribution by organism.
+%     (B) Distribution by instrument model.
+%     (C) Temporal trend of timsTOF submissions.
+%     (D) Distribution of dataset sizes (number of raw files).}
+%     \label{fig:si_pride_landscape}
+% \end{figure}
+
+% TODO: Supplementary Figure 5 - Sequence standardization examples
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=1.0\linewidth]{figures/si/sequence_standardization.png}
+%     \caption{\textbf{UniMod sequence standardization across engines.}
+%     Examples of the same modified peptide as reported by FragPipe, DIA-NN, and Sage,
+%     and the canonical UniMod format produced by San Jos\'{e}.}
+%     \label{fig:si_sequence_standardization}
+% \end{figure}
+
+\end{document}

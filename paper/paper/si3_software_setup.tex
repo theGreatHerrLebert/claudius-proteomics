@@ -1,0 +1,232 @@
+\documentclass[10pt,twoside]{article}
+
+% Encoding and font
+\usepackage[T1]{fontenc}           % Modern font encoding
+\usepackage{lmodern}               % Scalable vector fonts (replaces Computer Modern)
+\renewcommand*\familydefault{\sfdefault}  % Sans-serif as default
+
+% Layout and math
+\usepackage[left=2.5cm, top=2.5cm, bottom=2.5cm, right=3cm]{geometry}
+\usepackage{graphicx, amssymb, amsmath}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{lineno}
+\usepackage{longtable}
+\usepackage{pdflscape}     % For landscape pages
+\usepackage[table]{xcolor}
+\usepackage{url}
+
+% Figures
+\usepackage{subcaption}            % Subfigure support
+
+% Author and affiliation support
+\usepackage{authblk}
+
+% Header/footer customization
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[RO,LE]{Supporting Information}
+\fancyfoot[RO,LE]{Page-\thepage}
+
+% Title and authorship
+\title{
+  Supporting Information - 3 - Software Setup: \\
+  \textit{San Jos\'{e}: A Reproducible, Bias-Aware Reference Layer for timsTOF Data on PRIDE}
+}
+
+\author[1,2]{David Teschner}
+% TODO: add co-authors
+\author[1,2]{Andreas Hildebrandt}
+\author[3,4,5]{Stefan Tenzer}
+
+\affil[1]{Institute of Computer Science, Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[2]{Institute for Quantitative and Computational Biosciences (IQCB), Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[3]{Helmholtz Institute for Translational Oncology, Mainz, Germany}
+\affil[4]{German Cancer Research Center (DKFZ), 69120 Heidelberg, Germany}
+\affil[5]{University Medical Center, Johannes Gutenberg University, 55131 Mainz, Germany}
+
+\date{\today}
+
+\begin{document}
+
+\onehalfspacing
+\maketitle
+
+\section{Installation}
+
+\subsection{Python Environment}
+
+San Jos\'{e} requires Python~3.11 or later. We recommend creating a dedicated virtual environment:
+
+\begin{verbatim}
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+\end{verbatim}
+
+The rustims framework (imspy-core, imspy-connector) requires a Rust toolchain for compilation. If pre-built wheels are not available, install Rust via \url{https://rustup.rs/} before running pip install.
+
+\begin{verbatim}
+# Build imspy from source (if needed)
+./scripts/setup_imspy.sh
+\end{verbatim}
+
+\subsection{Search Engines}
+
+Three external search engines must be installed separately:
+
+\begin{longtable}{|l|l|l|p{6cm}|}
+\hline
+\rowcolor{gray!20}
+\textbf{Engine} & \textbf{Version} & \textbf{License} & \textbf{Installation} \\
+\hline
+FragPipe & 23+ & Academic & Download from \url{https://fragpipe.nesvilab.org/}. Requires academic license agreement. \\
+\hline
+DIA-NN & 1.9+ & Academic & Download from \url{https://github.com/vdemichev/DiaNN} \\
+\hline
+Sage & 0.14+ & MIT & Download from \url{https://github.com/lazear/sage/releases} or build from source with Rust \\
+\hline
+\end{longtable}
+
+\section{Configuration}
+
+All paths and parameters are configured in \texttt{config/config.yaml}:
+
+\begin{verbatim}
+# Dataset selection
+datasets:
+  - PXD019086
+  - PXD046675
+
+# Organism FASTA databases
+organisms:
+  human:
+    taxon_id: 9606
+    proteome_id: "UP000005640"
+    local_fasta: "/path/to/human.fasta"
+  yeast:
+    taxon_id: 559292
+    proteome_id: "UP000002311"
+
+# Search engine paths (user must provide)
+fragpipe:
+  path: "/path/to/fragpipe"
+  workflow: "LFQ-MBR"
+  threads: 64
+  memory_gb: 128
+
+diann:
+  path: "/path/to/diann"
+  threads: 64
+  qvalue: 1.0    # Report ALL results
+
+sage:
+  path: "/path/to/sage"
+  threads: 64
+
+# Extraction parameters
+extraction:
+  mz_tolerance_ppm: 20
+  rt_tolerance_sec: 15
+  batch_size: 10000
+
+# Test mode (for quick validation)
+test_mode:
+  enabled: false
+  max_files: 3
+\end{verbatim}
+
+\section{Usage}
+
+\subsection{Running the Pipeline}
+
+\begin{verbatim}
+# Full pipeline for a PRIDE accession
+.venv/bin/python runner/run_dataset.py PXD019086 \
+    --config config/config.yaml
+
+# Test mode (limited files for quick validation)
+.venv/bin/python runner/run_dataset.py PXD019086 \
+    --test-mode --max-files 1
+
+# Use local data (skip download)
+.venv/bin/python runner/run_dataset.py PXD019086 \
+    --local-data data/raw/PXD019086
+
+# Resume from checkpoint after interruption
+.venv/bin/python runner/run_dataset.py PXD019086 --resume
+
+# Run specific steps only
+.venv/bin/python runner/run_dataset.py PXD019086 --steps 4 5
+
+# Create distributable archive
+.venv/bin/python runner/run_dataset.py PXD019086 \
+    --package --package-version 1.0
+\end{verbatim}
+
+\subsection{Running the Dashboard}
+
+\begin{verbatim}
+# Backend (single dataset)
+.venv/bin/python dashboard/backend/main.py \
+    --store data/merged/PXD019086/precursor_store.parquet \
+    --port 8000
+
+# Backend (collection mode, multiple datasets)
+.venv/bin/python dashboard/backend/main.py \
+    --collection /path/to/san_jose_collection/ \
+    --port 8000
+
+# Frontend (serve pre-built files)
+cd dashboard/frontend/dist && python3 -m http.server 5173
+\end{verbatim}
+
+Open \url{http://localhost:5173} in a browser to access the precursor browser.
+
+\subsection{Adding Datasets to a Collection}
+
+\begin{verbatim}
+python scripts/add_to_collection.py \
+    --archive data/packages/PXD019086_v1.0.zip \
+    --collection /path/to/collection \
+    --study meier_2021_ccs
+\end{verbatim}
+
+\subsection{HPC Execution (SLURM)}
+
+For HPC environments with Singularity:
+
+\begin{verbatim}
+# Using Snakemake with SLURM profile
+snakemake add_all_datasets --profile profiles/mogon2
+
+# Or direct SLURM submission
+sbatch scripts/slurm_run_dataset.sh PXD019086
+\end{verbatim}
+
+\section{Output Structure}
+
+After processing, the following directory structure is produced:
+
+\begin{verbatim}
+data/
+  raw/{accession}/                  # Step 1: Bruker .d folders
+  processed/{accession}/            # Steps 2-3
+    fragpipe_output/                #   FragPipe results
+    diann/                          #   DIA-NN results
+    sage/                           #   Sage results
+    consensus/stratified/           #   Precursors by agreement tier
+    precursor_index.parquet         #   Unified index
+  extracted/{accession}/            # Step 4: Raw 4D signal
+    {raw_file}.d/blobs.bin          #   Raw 4D data blobs
+  merged/{accession}/               # Step 5: Final output
+    precursor_store.parquet         #   IDs + raw features joined
+    manifest.json                   #   QC metrics
+  packages/                         # Step 6: Archives
+    {accession}_v{version}.zip
+  checkpoints/{accession}/          # Pipeline state
+    state.json
+\end{verbatim}
+
+\end{document}

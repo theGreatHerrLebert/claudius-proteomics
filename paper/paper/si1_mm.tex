@@ -1,0 +1,183 @@
+\documentclass[10pt,twoside]{article}
+
+% Encoding and font
+\usepackage[T1]{fontenc}           % Modern font encoding
+\usepackage{lmodern}               % Scalable vector fonts (replaces Computer Modern)
+\renewcommand*\familydefault{\sfdefault}  % Sans-serif as default
+
+% Layout and math
+\usepackage[left=2.5cm, top=2.5cm, bottom=2.5cm, right=3cm]{geometry}
+\usepackage{graphicx, amssymb, amsmath}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{lineno}
+
+% Figures
+\usepackage{subcaption}            % Subfigure support
+
+% Author and affiliation support
+\usepackage{authblk}
+
+% Header/footer customization
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\fancyhead[RO,LE]{Supporting Information}
+\fancyfoot[RO,LE]{Page-\thepage}
+
+% Title and authorship
+\title{
+  Supporting Information - 1 - Materials and Methods: \\
+  \textit{San Jos\'{e}: A Reproducible, Bias-Aware Reference Layer for timsTOF Data on PRIDE}
+}
+
+\author[1,2]{David Teschner}
+% TODO: add co-authors
+\author[1,2]{Andreas Hildebrandt}
+\author[3,4,5]{Stefan Tenzer}
+
+\affil[1]{Institute of Computer Science, Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[2]{Institute for Quantitative and Computational Biosciences (IQCB), Johannes Gutenberg University, 55128 Mainz, Germany}
+\affil[3]{Helmholtz Institute for Translational Oncology, Mainz, Germany}
+\affil[4]{German Cancer Research Center (DKFZ), 69120 Heidelberg, Germany}
+\affil[5]{University Medical Center, Johannes Gutenberg University, 55131 Mainz, Germany}
+
+\date{\today}
+
+\begin{document}
+
+\onehalfspacing
+\maketitle
+
+\section{Materials and Methods}
+
+\subsection{Hardware}
+
+% TODO: Update with actual hardware used for processing
+Processing was performed on a workstation running Linux (Ubuntu 22.04), equipped with an AMD Ryzen Threadripper CPU (64 logical cores, 128 threads), 256~GB of RAM, and an NVIDIA RTX 4090 GPU.
+HPC processing was carried out on the Mogon2 cluster at Johannes Gutenberg University Mainz, using SLURM for job scheduling.
+
+\subsection{Software Development}
+
+The San Jos\'{e} pipeline is implemented in Python~3.11 with Rust-based data processing via the rustims framework.
+The core pipeline runner (\texttt{runner/run\_dataset.py}) orchestrates six sequential processing steps with JSON-based checkpointing for fault recovery.
+Raw timsTOF data access is provided by the \texttt{imspy-core} and \texttt{imspy-connector} packages, which expose Rust functionality to Python via PyO3.
+The interactive dashboard uses FastAPI (backend) and React with TypeScript (frontend).
+
+\subsection{Search Engine Configuration}
+
+All three search engines are configured to report complete result sets without FDR filtering, enabling users to apply quality thresholds at query time.
+
+\subsubsection{FragPipe}
+
+FragPipe (v23+) is executed using the LFQ-MBR workflow with the \texttt{--no-fdr-filter} flag.
+This disables internal FDR control and outputs all peptide-spectrum matches (PSMs), preserving the full search result space including low-confidence identifications.
+FragPipe reads Bruker \texttt{.d} folders directly without mzML conversion.
+
+\subsubsection{DIA-NN}
+
+DIA-NN (v1.9+) is executed in DDA mode (\texttt{--dda}) with library-free FASTA search (\texttt{--fasta-search}).
+The $q$-value threshold is set to 1.0 to retain all identifications.
+Library generation is performed once per FASTA file and reused for subsequent searches within the same organism group.
+
+\subsubsection{Sage}
+
+Sage (v0.14+) is an open-source Rust-based search engine that reads timsTOF \texttt{.d} files directly via its timsrust backend.
+It is configured with \texttt{report\_psms: 1} to output all PSMs.
+Sage provides fast, independent validation orthogonal to the other two engines.
+
+\subsection{Sequence Standardization}
+
+All engine outputs are normalized to a canonical UniMod sequence format:
+
+\begin{verbatim}
+[N-term]-SEQUENCE[UNIMOD:ID]-[C-term]
+
+Examples:
+[]-PEPTIDEK-[]                      # Unmodified
+[]-AAC[UNIMOD:4]PEPTIDEK-[]         # Carbamidomethyl (C)
+[]-M[UNIMOD:35]PEPTIDEK-[]          # Oxidation (M)
+[UNIMOD:1]-PEPTIDEK-[]              # N-term Acetyl
+\end{verbatim}
+
+The standardization module handles engine-specific modification formats:
+FragPipe reports mass shifts (e.g., \texttt{M[147.0354]}), DIA-NN uses UniMod notation (e.g., \texttt{(UniMod:35)}), and Sage reports delta masses (e.g., \texttt{[+15.9949]}).
+Mass values are mapped to the nearest UniMod identifier within a configurable tolerance.
+Carbamidomethylation of cysteine is applied as a fixed modification when not explicitly reported.
+Isoleucine and leucine are treated as equivalent (I/L normalization) for sequence matching across engines.
+
+The canonical join key across the pipeline is \texttt{(modified\_sequence, charge)}, which uniquely identifies a precursor ion species.
+
+\subsection{Precursor Index Construction}
+
+The precursor index is built using a FragPipe-anchored merging strategy:
+
+\begin{enumerate}
+    \item Raw timsTOF precursors (from PASEF acquisition) provide the anchor set of precursor IDs
+    \item FragPipe results are joined directly by \texttt{(raw\_file, precursor\_id)}
+    \item DIA-NN and Sage results are matched by \texttt{(modified\_sequence, charge)} with I/L normalization, falling back to coordinate-based matching (RT, IM, $m/z$) when sequence matching is ambiguous
+    \item Each precursor is annotated with its engine agreement profile: 3/3, 2/3, or 1/1
+\end{enumerate}
+
+This anchoring strategy avoids tolerance-based coordinate joins as the primary matching mechanism, which are fragile in the presence of systematic RT or IM offsets between engines.
+
+\subsection{Raw 4D Signal Extraction}
+
+For each precursor in the unified index, full 4D signal data is extracted from the timsTOF \texttt{.d} files using the rustims Rust backend:
+
+\begin{enumerate}
+    \item \textbf{Fragment spectrum}: PASEF fragment peaks are merged across all re-acquisition frames for the precursor, yielding a consensus MS2 spectrum with $m/z$, intensity, and ion mobility per peak.
+    \item \textbf{MS1 1D projections}: Within a configurable window around the precursor (default: $\pm$15~s RT, $\pm$20~ppm $m/z$, $\pm$0.05~1/K$_0$), the extracted ion chromatogram (XIC), ion mobilogram, and isotope envelope are computed as 1D intensity projections.
+    \item \textbf{Raw 4D point cloud}: All individual MS1 peaks within the extraction window are stored with their full coordinates (RT, $m/z$, IM, intensity), typically yielding 1,000--10,000 points per precursor.
+\end{enumerate}
+
+Extraction proceeds in batches of 10,000 precursors to manage memory consumption (peak usage $\sim$10~GB).
+
+\subsection{Quality Metrics}
+
+For each extracted precursor, quality metrics are computed across all signal dimensions:
+
+\begin{itemize}
+    \item \textbf{Peak shape}: Gaussian fit to XIC and mobilogram profiles, reporting $R^2$ goodness-of-fit, FWHM, and skewness
+    \item \textbf{Isotope similarity}: Cosine similarity between the observed isotope envelope and the theoretical pattern from the averagine model
+    \item \textbf{Fragment matching}: Cosine similarity between observed and Sage-predicted fragment spectra (when available)
+    \item \textbf{Moment statistics}: Mean, variance, skewness, and kurtosis for RT, $m/z$, and IM distributions
+\end{itemize}
+
+A combined quality score is derived from RT $R^2$, IM $R^2$, and isotope cosine similarity, with configurable thresholds for classification.
+
+\subsection{Storage Format}
+
+The merged precursor store uses Apache Parquet with list columns for variable-length arrays.
+Scalar columns (precursor ID, $m/z$, charge, RT, IM, engine peptides, quality scores) enable efficient filtering via predicate pushdown.
+List columns store variable-length signal data (fragment spectrum, XIC, mobilogram, isotope envelope, raw 4D point cloud) alongside the scalars.
+ZSTD compression achieves approximately 5--6~KB per precursor.
+Row groups of 10,000 precursors provide natural batching for machine learning training loops.
+
+\subsection{Metadata Extraction}
+
+Experimental metadata is collected from three sources:
+
+\begin{enumerate}
+    \item \textbf{PRIDE REST API}: Organisms, instrument model, experimental protocol, publication DOI, submitter information
+    \item \textbf{Filename pattern matching}: Organism, enzyme, and instrument model are inferred from raw file naming conventions
+    \item \textbf{Publication PDF extraction}: When an open-access PDF is available (resolved via Unpaywall), the Materials and Methods section is processed to extract gradient length, column type and dimensions, mobile phase composition, acquisition mode, and data processing software versions
+\end{enumerate}
+
+% TODO: Add details on Claude API usage for PDF extraction once finalized for publication
+
+All metadata fields track their provenance (PRIDE API, filename, paper), enabling downstream quality assessment.
+
+\subsection{Dashboard Architecture}
+
+The interactive precursor browser consists of:
+
+\begin{itemize}
+    \item \textbf{Backend}: FastAPI serving Parquet data via columnar reads.
+          Supports single-dataset mode (\texttt{--store}) and collection mode (\texttt{--collection}) for multi-dataset browsing.
+          Key endpoints: \texttt{GET /precursors} (filtered listing), \texttt{GET /precursor/\{id\}} (full 4D detail).
+    \item \textbf{Frontend}: React + TypeScript + Tailwind~CSS.
+          Uses TanStack~Query for data fetching with caching, TanStack~Table for virtualized pagination, and Deck.gl for WebGL-rendered scatter plots of 4D point clouds.
+\end{itemize}
+
+\end{document}
