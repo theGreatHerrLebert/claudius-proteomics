@@ -68,6 +68,7 @@ class EngineJob(ABC):
         max_files: int,
         d_files: Optional[List[Path]] = None,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         """Build the subprocess command list.
 
@@ -75,6 +76,8 @@ class EngineJob(ABC):
             d_files: Explicit list of .d paths to process. If None, glob raw_dir.
             enzyme_config: Enzyme settings dict from config["enzymes"][name].
                 If None, use hardcoded trypsin defaults.
+            mod_config: Modification profile dict from config["mod_profiles"][name].
+                If None, use hardcoded defaults (standard profile).
 
         Returns:
             Command list, or None if the engine should be skipped
@@ -126,12 +129,14 @@ class EngineJob(ABC):
         max_files: int = 0,
         d_files: Optional[List[Path]] = None,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> EngineResult:
         """Execute the engine job: subprocess -> parse -> canonical parquet.
 
         Args:
             d_files: Explicit list of .d paths. If None, engine globs raw_dir.
             enzyme_config: Enzyme settings dict. If None, use hardcoded trypsin.
+            mod_config: Modification profile dict. If None, use hardcoded defaults.
 
         This is the template method that orchestrates the full engine run.
         """
@@ -154,6 +159,7 @@ class EngineJob(ABC):
                 accession, config, raw_dir, processed_dir, fasta_path,
                 num_threads, max_files,
                 d_files=d_files, enzyme_config=enzyme_config,
+                mod_config=mod_config,
             )
 
             if cmd is None:

@@ -132,6 +132,7 @@ class SampleGroup:
     sample_type: str        # "biological" | "synthetic"
     source_archive: str     # "Raw_HeLa_Trp.zip"
     instrument_model: Optional[str] = None  # e.g. "timsTOF Pro"
+    mod_profile: str = "standard"  # "standard" | "phospho" | "hla"
     runs: List[str] = field(default_factory=list)  # .d folder names
 
     @property
@@ -148,6 +149,7 @@ class SampleGroup:
             "sample_type": self.sample_type,
             "source_archive": self.source_archive,
             "instrument_model": self.instrument_model,
+            "mod_profile": self.mod_profile,
             "n_runs": self.n_runs,
             "runs": self.runs,
         }
@@ -164,6 +166,7 @@ class SampleGroup:
             sample_type=d.get("sample_type", "biological"),
             source_archive=d.get("source_archive", ""),
             instrument_model=d.get("instrument_model"),
+            mod_profile=d.get("mod_profile", "standard"),
             runs=d.get("runs", []),
         )
 
@@ -607,6 +610,35 @@ def resolve_sample_groups(
     if raw_dir.exists():
         instrument_map = _scan_instruments(raw_dir)
         manifest = _refine_by_instrument(manifest, instrument_map)
+
+    # 8. Modification profile resolution
+    try:
+        from scripts.mod_profile_resolver import resolve_mod_profile, compare_profile_vs_paper
+
+        profile_name, source, paper_settings = resolve_mod_profile(
+            accession, config, metadata_dir,
+        )
+        mod_profiles = config.get("mod_profiles", {})
+        profile_config = mod_profiles.get(profile_name, {})
+
+        for group in manifest.groups:
+            group.mod_profile = profile_name
+            # If profile has enzyme_override, update the group's enzyme
+            enzyme_override = profile_config.get("enzyme_override")
+            if enzyme_override:
+                group.enzyme = enzyme_override
+
+        print(f"  Mod profile: {profile_name} (source: {source})")
+
+        # Log comparison against paper settings
+        if paper_settings and profile_config:
+            diffs = compare_profile_vs_paper(profile_name, profile_config, paper_settings)
+            if diffs:
+                print(f"  Profile vs paper diffs:")
+                for d in diffs:
+                    print(f"    - {d}")
+    except Exception as e:
+        print(f"  Warning: mod profile resolution failed: {e}")
 
     return manifest
 

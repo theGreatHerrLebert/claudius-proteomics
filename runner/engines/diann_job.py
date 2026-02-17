@@ -41,6 +41,7 @@ class DiannJob(EngineJob):
         max_files: int,
         d_files: Optional[List[Path]] = None,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         diann_config = config.get("diann", {})
         diann_path = diann_config.get("path")
@@ -83,23 +84,53 @@ class DiannJob(EngineJob):
                 "--predictor",  # Enable deep learning
             ])
 
-        # Digestion and modification settings (always needed)
+        # Digestion settings
         diann_cut = "K*,R*,!*P"  # Default: trypsin
         missed_cleavages = "2"
         if enzyme_config:
             diann_cut = enzyme_config.get("diann_cut", diann_cut)
             missed_cleavages = str(enzyme_config.get("missed_cleavages", 2))
+
+        # Nonspecific enzyme: omit --cut entirely, set --missed-cleavages 0
+        if diann_cut == "":
+            cmd.extend(["--missed-cleavages", "0"])
+        else:
+            cmd.extend([
+                "--cut", diann_cut,
+                "--missed-cleavages", missed_cleavages,
+            ])
+
+        # Modification settings
+        if mod_config:
+            # Dynamic: build from profile
+            for fm in mod_config.get("fixed_modifications", []):
+                residues = ",".join(fm["residues"])
+                cmd.extend(["--fixed-mod", f"UniMod:{fm['unimod_id']},{fm['mass']},{residues}"])
+            for vm in mod_config.get("variable_modifications", []):
+                if vm.get("site") == "N-term":
+                    cmd.extend(["--var-mod", f"UniMod:{vm['unimod_id']},{vm['mass']},*n"])
+                else:
+                    residues = ",".join(vm["residues"])
+                    cmd.extend(["--var-mod", f"UniMod:{vm['unimod_id']},{vm['mass']},{residues}"])
+            cmd.extend(["--max-var-mods", str(mod_config.get("max_variable_mods", 3))])
+            cmd.extend([
+                "--min-pep-len", str(mod_config.get("min_peptide_length", 7)),
+                "--max-pep-len", str(mod_config.get("max_peptide_length", 50)),
+            ])
+        else:
+            # Fallback to hardcoded defaults (standard profile)
+            cmd.extend([
+                "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
+                "--var-mod", "UniMod:1,42.010565,*n",  # N-term Acetyl
+                "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
+                "--max-var-mods", "3",
+                "--min-pep-len", "7",
+                "--max-pep-len", "50",
+            ])
+
         cmd.extend([
-            "--cut", diann_cut,
-            "--missed-cleavages", missed_cleavages,
-            "--min-pep-len", "7",
-            "--max-pep-len", "50",
             "--min-pr-charge", "1",
             "--max-pr-charge", "4",
-            "--var-mod", "UniMod:35,15.994915,M",  # Oxidation (M)
-            "--var-mod", "UniMod:1,42.010565,*n",  # N-term Acetyl
-            "--fixed-mod", "UniMod:4,57.021464,C",  # Carbamidomethyl (C)
-            "--max-var-mods", "3",
             "--met-excision",  # N-terminal methionine excision
         ])
 

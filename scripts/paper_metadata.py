@@ -312,7 +312,7 @@ Fields to extract:
 
 ## Study Context (never in raw data)
 19. "lab_id" - Corresponding author name and institution
-20. "study_type" - One of: benchmarking, method_development, clinical, biomarker, interactomics, structural, drug_treatment, other
+20. "study_type" - One of: benchmarking, method_development, clinical, biomarker, interactomics, structural, drug_treatment, phosphoproteomics, immunopeptidomics, other
 21. "number_of_replicates" - Object with biological and technical replicate counts (e.g., {{"biological": 3, "technical": 2}})
 22. "reported_ids" - Object with author-reported identification counts: proteins, peptides, and/or PSMs
 23. "key_findings" - 1-2 sentence summary of the main result relevant to proteomics methodology (e.g., reported R², prediction accuracy, coverage improvement)

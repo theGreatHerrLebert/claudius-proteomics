@@ -161,12 +161,23 @@ def _run_per_group(
             )
         print(f"      FASTA:    {group_fasta}")
 
-        # Resolve enzyme config
-        enzyme_config = config.get("enzymes", {}).get(group.enzyme)
-        if enzyme_config:
-            print(f"      Enzyme config: {group.enzyme}")
+        # Resolve modification profile
+        mod_config = config.get("mod_profiles", {}).get(group.mod_profile)
+        if mod_config:
+            print(f"      Mod profile:   {group.mod_profile}")
         else:
-            print(f"      Warning: no enzyme config for '{group.enzyme}', using defaults")
+            print(f"      Mod profile:   {group.mod_profile} (not in config, using defaults)")
+
+        # Resolve enzyme config (may be overridden by mod profile)
+        enzyme_name = group.enzyme
+        if mod_config and mod_config.get("enzyme_override"):
+            enzyme_name = mod_config["enzyme_override"]
+            print(f"      Enzyme override: {enzyme_name} (from mod profile)")
+        enzyme_config = config.get("enzymes", {}).get(enzyme_name)
+        if enzyme_config:
+            print(f"      Enzyme config: {enzyme_name}")
+        else:
+            print(f"      Warning: no enzyme config for '{enzyme_name}', using defaults")
 
         # Resolve .d file paths
         group_d_files = [raw_dir / run for run in group.runs]
@@ -197,6 +208,7 @@ def _run_per_group(
                 max_files=0,  # Already sliced via d_files
                 d_files=group_d_files,
                 enzyme_config=enzyme_config,
+                mod_config=mod_config,
             )
             engine_results[engine_name] = result.to_dict()
 
@@ -208,6 +220,7 @@ def _run_per_group(
         group_results[group.group_id] = {
             "organism": group.organism_key,
             "enzyme": group.enzyme,
+            "mod_profile": group.mod_profile,
             "n_runs": len(group_d_files),
             "fasta": str(group_fasta),
             "engines": engine_results,

@@ -5,6 +5,7 @@ Self-contained job module for running FragPipe search.
 Can be executed standalone: python -m runner.engines.fragpipe_job --help
 """
 
+import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -48,6 +49,7 @@ class FragPipeJob(EngineJob):
         max_files: int,
         d_files: Optional[List[Path]] = None,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         fragpipe_config = config.get("fragpipe", {})
         fragpipe_path = fragpipe_config.get("path")
@@ -75,6 +77,10 @@ class FragPipeJob(EngineJob):
         # Pass enzyme override if provided
         if enzyme_config and "fragpipe_name" in enzyme_config:
             cmd.extend(["--enzyme", enzyme_config["fragpipe_name"]])
+
+        # Pass modification profile as JSON if provided
+        if mod_config:
+            cmd.extend(["--mod-config-json", json.dumps(mod_config)])
 
         return cmd
 

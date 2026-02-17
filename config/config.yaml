@@ -5,6 +5,7 @@
 datasets:
   - PXD019086  # Meier et al. 2021 - CCS prediction study
   - PXD046675  # Pig muscle 4D-LFQ (Wannanhua, timsTOF Pro)
+  - PXD069059  # Ovine macrophage differentiation (timsTOF Pro, DDA)
 
 # Dataset metadata: bias-aware fields (manually verified from publication)
 # Organism mapping is now handled automatically by sample_group_resolver.py
@@ -21,6 +22,11 @@ dataset_metadata:
     organism: "pig"
     instrument: "timsTOF Pro"
     acquisition_mode: "PASEF"  # DDA-PASEF, 4D label-free
+  PXD069059:
+    description: "Ovine macrophage differentiation and polarization - cell lysates (Elkhamary et al. 2025)"
+    organism: "sheep"
+    instrument: "timsTOF Pro"
+    acquisition_mode: "PASEF"  # DDA-PASEF
 
 # Download settings for PRIDE data
 download:
@@ -29,6 +35,7 @@ download:
   file_patterns:
     - "*.d.zip"
     - "*.d.tar"
+    - "*.d.rar"
     - "*.d"
     - "*.raw"
 
@@ -64,6 +71,10 @@ organisms:
   pig:
     taxon_id: 9823
     proteome_id: "UP000008227"
+    local_fasta: null
+  sheep:
+    taxon_id: 9940
+    proteome_id: "UP000664991"
     local_fasta: null
 
 # Contaminants database (appended to all FASTA files)
@@ -102,6 +113,53 @@ enzymes:
     diann_cut: "*K"
     sage_cleave_at: "K"
     sage_restrict: null
+  nonspecific:
+    cleave_at: ""
+    restrict: null
+    terminal: null
+    missed_cleavages: 0
+    fragpipe_name: "nonspecific"
+    diann_cut: ""
+    sage_cleave_at: ""
+    sage_restrict: null
+
+# Modification profiles for different study types
+# Each engine translates from this canonical UNIMOD-based format
+mod_profiles:
+  standard:
+    description: "Standard: Cam(C) fixed, Ox(M) + Acetyl(N-term) variable"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+    max_variable_mods: 3
+    min_peptide_length: 7
+    max_peptide_length: 50
+
+  phospho:
+    description: "Phosphoproteomics: adds Phospho(STY) to standard"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+      - {unimod_id: 21, name: "Phospho", mass: 79.966331, residues: ["S", "T", "Y"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+
+  hla:
+    description: "Immunopeptidomics: non-specific enzyme, shorter peptides"
+    enzyme_override: "nonspecific"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+    max_variable_mods: 3
+    min_peptide_length: 7
+    max_peptide_length: 25
 
 # Local data paths (for testing without PRIDE download)
 local_data:
@@ -177,7 +235,7 @@ paper_extraction:
 
 # Test mode: use subset of data for quick validation
 test_mode:
-  enabled: true
+  enabled: false
   max_files: 1
 
 # Temp directory for MSFragger cache files (use SSD for performance)
