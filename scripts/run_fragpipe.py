@@ -6,10 +6,12 @@ Based on the fragpipe_executor pattern from timsim-validate.
 """
 
 import argparse
+import json
 import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 def create_manifest(raw_files: list[Path], output_path: Path, data_type: str = "DDA") -> None:
@@ -32,6 +34,7 @@ def update_workflow(
     is_timstof: bool = True,
     disable_fdr_filter: bool = True,
     enzyme_name: str | None = None,
+    mod_config: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Update workflow file with FASTA path and timsTOF settings.
@@ -41,6 +44,9 @@ def update_workflow(
 
     If enzyme_name is provided, override the enzyme in the workflow
     (msfragger.search_enzyme_name).
+
+    If mod_config is provided, override MSFragger modification settings
+    from the canonical UNIMOD-based profile.
     """
     with open(base_workflow) as f:
         lines = f.readlines()
@@ -106,6 +112,21 @@ def update_workflow(
                 final_lines.append(line)
         updated_lines = final_lines
 
+    # Override modifications if mod_config provided
+    if mod_config:
+        mod_overrides = _build_msfragger_mod_overrides(mod_config)
+        final_lines = []
+        for line in updated_lines:
+            key = line.split('=')[0] if '=' in line else None
+            if key and key in mod_overrides:
+                final_lines.append(f'{key}={mod_overrides.pop(key)}')
+            else:
+                final_lines.append(line)
+        # Append any overrides not found in existing lines
+        for key, value in mod_overrides.items():
+            final_lines.append(f'{key}={value}')
+        updated_lines = final_lines
+
     with open(output_workflow, 'w') as f:
         f.write('\n'.join(updated_lines))
 
@@ -114,8 +135,46 @@ def update_workflow(
     print(f"  timsTOF IM-MS: {is_timstof}")
     if enzyme_name:
         print(f"  Enzyme: {enzyme_name}")
+    if mod_config:
+        print(f"  Mod profile: {mod_config.get('description', 'custom')}")
     if disable_fdr_filter:
         print(f"  FDR filtering: DISABLED (San José mode - report ALL PSMs)")
+
+
+def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]:
+    """Build MSFragger workflow key overrides from a mod profile.
+
+    MSFragger format: mass residues max_per_peptide
+    N-term uses [^ as residue marker.
+
+    Returns:
+        Dict of workflow keys -> values (e.g. "msfragger.variable_mod_01" -> "15.994900 M 3")
+    """
+    overrides = {}
+
+    # Variable modifications
+    var_mods = mod_config.get("variable_modifications", [])
+    max_var = mod_config.get("max_variable_mods", 3)
+    for i, vm in enumerate(var_mods, start=1):
+        key = f"msfragger.variable_mod_0{i}" if i < 10 else f"msfragger.variable_mod_{i}"
+        if vm.get("site") == "N-term":
+            overrides[key] = f"{vm['mass']:.6f} [^ 1"
+        else:
+            residues = "".join(vm["residues"])
+            overrides[key] = f"{vm['mass']:.6f} {residues} {max_var}"
+
+    # Clear any remaining variable_mod slots (up to 07) to avoid stale entries
+    for j in range(len(var_mods) + 1, 8):
+        key = f"msfragger.variable_mod_0{j}"
+        overrides[key] = "0.0 X 0"
+
+    # Peptide length
+    min_len = mod_config.get("min_peptide_length", 7)
+    max_len = mod_config.get("max_peptide_length", 50)
+    overrides["msfragger.digest_min_length"] = str(min_len)
+    overrides["msfragger.digest_max_length"] = str(max_len)
+
+    return overrides
 
 
 def find_raw_files(input_dir: Path, max_files: int = 0) -> list[Path]:
@@ -242,6 +301,10 @@ def main():
         "--enzyme", type=str, default=None,
         help="Enzyme name to override in workflow (e.g. stricttrypsin, lysc, lysn)"
     )
+    parser.add_argument(
+        "--mod-config-json", type=str, default=None,
+        help="Modification profile as JSON string (from mod_profiles config)"
+    )
 
     args = parser.parse_args()
 
@@ -297,6 +360,14 @@ def main():
     manifest_path = output_dir / "manifest.fp-manifest"
     create_manifest(raw_files, manifest_path, "DDA")
 
+    # Parse mod config if provided
+    mod_config_dict = None
+    if args.mod_config_json:
+        try:
+            mod_config_dict = json.loads(args.mod_config_json)
+        except json.JSONDecodeError as e:
+            print(f"WARNING: Could not parse --mod-config-json: {e}")
+
     # Create updated workflow
     workflow_path = output_dir / "workflow.workflow"
     update_workflow(
@@ -306,6 +377,7 @@ def main():
         is_timstof=not args.no_timstof,
         disable_fdr_filter=not args.enable_fdr_filter,  # Default: disable FDR (San José mode)
         enzyme_name=args.enzyme,
+        mod_config=mod_config_dict,
     )
 
     # Resolve temp directory

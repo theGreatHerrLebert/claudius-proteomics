@@ -37,6 +37,7 @@ class SageJob(EngineJob):
         max_files: int,
         d_files: Optional[List[Path]] = None,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> Optional[List[str]]:
         sage_config = config.get("sage", {})
         sage_path = sage_config.get("path")
@@ -53,8 +54,8 @@ class SageJob(EngineJob):
         if not d_files:
             return None
 
-        # Generate per-group sage config JSON with enzyme settings
-        sage_config_json = self._write_sage_config(output_dir, enzyme_config)
+        # Generate per-group sage config JSON with enzyme and mod settings
+        sage_config_json = self._write_sage_config(output_dir, enzyme_config, mod_config)
 
         cmd = [
             str(sage_path),
@@ -75,8 +76,9 @@ class SageJob(EngineJob):
     def _write_sage_config(
         output_dir: Path,
         enzyme_config: Optional[Dict[str, Any]] = None,
+        mod_config: Optional[Dict[str, Any]] = None,
     ) -> Path:
-        """Write a Sage config JSON, applying enzyme overrides if provided."""
+        """Write a Sage config JSON, applying enzyme and mod overrides if provided."""
         base_config_path = Path(__file__).parent.parent.parent / "config" / "sage_config.json"
         with open(base_config_path) as f:
             sage_cfg = json.load(f)
@@ -92,6 +94,33 @@ class SageJob(EngineJob):
             if "missed_cleavages" in enzyme_config:
                 enzyme["missed_cleavages"] = enzyme_config["missed_cleavages"]
             sage_cfg.setdefault("database", {})["enzyme"] = enzyme
+
+        if mod_config:
+            db = sage_cfg.setdefault("database", {})
+
+            # Build static_mods: {"C": 57.021464}
+            static_mods = {}
+            for fm in mod_config.get("fixed_modifications", []):
+                for res in fm["residues"]:
+                    static_mods[res] = fm["mass"]
+            db["static_mods"] = static_mods
+
+            # Build variable_mods: {"M": [15.994915], "^": [42.010565]}
+            variable_mods = {}
+            for vm in mod_config.get("variable_modifications", []):
+                if vm.get("site") == "N-term":
+                    variable_mods.setdefault("^", []).append(vm["mass"])
+                else:
+                    for res in vm["residues"]:
+                        variable_mods.setdefault(res, []).append(vm["mass"])
+            db["variable_mods"] = variable_mods
+            db["max_variable_mods"] = mod_config.get("max_variable_mods", 3)
+
+            # Peptide length
+            enzyme = db.get("enzyme", {})
+            enzyme["min_len"] = mod_config.get("min_peptide_length", 7)
+            enzyme["max_len"] = mod_config.get("max_peptide_length", 50)
+            db["enzyme"] = enzyme
 
         config_path = output_dir / "sage_config.json"
         with open(config_path, "w") as f:
