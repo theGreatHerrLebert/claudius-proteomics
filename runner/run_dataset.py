@@ -53,6 +53,56 @@ from runner.steps import (
 )
 
 
+def _validate_step_outputs(step_num: int, accession: str, output_base_dir: Path) -> None:
+    """Verify expected output files exist before marking step complete.
+
+    Raises RuntimeError if the step produced no expected output files.
+    """
+    checks = {
+        1: (
+            output_base_dir / "raw" / accession,
+            lambda d: any(d.glob("*.d")) if d.exists() else False,
+            "no .d directories in data/raw/{accession}/",
+        ),
+        2: (
+            output_base_dir / "processed" / accession,
+            lambda d: (
+                any(d.rglob("*_canonical.parquet")) or any(d.rglob("*_status.json"))
+            ) if d.exists() else False,
+            "no *_canonical.parquet or *_status.json in data/processed/{accession}/",
+        ),
+        3: (
+            output_base_dir / "processed" / accession,
+            lambda d: any(d.rglob("precursor_index.parquet")) if d.exists() else False,
+            "no precursor_index.parquet in data/processed/{accession}/",
+        ),
+        4: (
+            output_base_dir / "extracted" / accession,
+            lambda d: any(d.rglob("raw_features.parquet")) if d.exists() else False,
+            "no raw_features.parquet in data/extracted/{accession}/",
+        ),
+        5: (
+            output_base_dir / "merged" / accession,
+            lambda d: any(d.rglob("precursor_store.parquet")) if d.exists() else False,
+            "no precursor_store.parquet in data/merged/{accession}/",
+        ),
+        6: (
+            output_base_dir / "packages",
+            lambda d: any(d.glob(f"{accession}*.zip")) if d.exists() else False,
+            "no .zip archive in data/packages/",
+        ),
+    }
+
+    if step_num not in checks:
+        return
+
+    directory, check_fn, description = checks[step_num]
+    if not check_fn(directory):
+        raise RuntimeError(
+            f"Step {step_num} produced no output: {description.format(accession=accession)}"
+        )
+
+
 def run_dataset(
     accession: str,
     config: Dict[str, Any],
@@ -105,7 +155,7 @@ def run_dataset(
         state = _create_new_state(accession, config, test_mode, max_files)
 
     # Determine which steps to run
-    all_steps = [1, 2, 3, 4, 5]
+    all_steps = [1, 2, 4, 3, 5]
     if package:
         all_steps.append(6)
     if steps:
@@ -150,6 +200,8 @@ def run_dataset(
                 package_version=package_version,
             )
             step_summaries.append(summary)
+
+            _validate_step_outputs(step_num, accession, output_base_dir)
 
             state.complete_step(
                 step_name,
