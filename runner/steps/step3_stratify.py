@@ -847,7 +847,8 @@ def _build_precursor_index_engines_only(
     """Build precursor index from engine results only (no raw precursors).
 
     Used as fallback when raw_features.parquet is not available.
-    Groups by sequence+charge and merges across engines.
+    Groups by (raw_file, sequence, charge) and merges across engines to
+    preserve per-run identity and avoid inflating consensus counts.
     """
     dfs_to_merge = []
 
@@ -859,11 +860,11 @@ def _build_precursor_index_engines_only(
         )
         fp_df['charge'] = fp_df['fragpipe_charge']
 
-        # Keep best per (raw_file, precursor_id) if available, else (sequence, charge)
+        # Keep best per (raw_file, precursor_id) if available, else (raw_file, sequence, charge)
         if 'precursor_id' in fp_df.columns:
             fp_summary = fp_df.groupby(['raw_file', 'precursor_id']).first().reset_index()
         else:
-            fp_summary = fp_df.groupby(['sequence_normalized', 'charge']).first().reset_index()
+            fp_summary = fp_df.groupby(['raw_file', 'sequence_normalized', 'charge']).first().reset_index()
 
         dfs_to_merge.append(fp_summary)
 
@@ -873,7 +874,7 @@ def _build_precursor_index_engines_only(
             lambda x: normalize_sequence_il(x) if pd.notna(x) else ''
         )
         dn_df['charge'] = dn_df['diann_charge']
-        dn_summary = dn_df.groupby(['sequence_normalized', 'charge']).first().reset_index()
+        dn_summary = dn_df.groupby(['raw_file', 'sequence_normalized', 'charge']).first().reset_index()
         dfs_to_merge.append(dn_summary)
 
     if sg_df is not None and not sg_df.empty:
@@ -882,16 +883,17 @@ def _build_precursor_index_engines_only(
             lambda x: normalize_sequence_il(x) if pd.notna(x) else ''
         )
         sg_df['charge'] = sg_df['sage_charge']
-        sg_summary = sg_df.groupby(['sequence_normalized', 'charge']).first().reset_index()
+        sg_summary = sg_df.groupby(['raw_file', 'sequence_normalized', 'charge']).first().reset_index()
         dfs_to_merge.append(sg_summary)
 
     if not dfs_to_merge:
-        return pd.DataFrame(columns=['sequence_normalized', 'charge', 'n_engines'])
+        return pd.DataFrame(columns=['raw_file', 'sequence_normalized', 'charge', 'n_engines'])
 
-    # Merge all on sequence_normalized + charge
+    # Merge all on (raw_file, sequence_normalized, charge) to preserve per-run identity
+    merge_keys = ['raw_file', 'sequence_normalized', 'charge']
     merged = dfs_to_merge[0]
     for df in dfs_to_merge[1:]:
-        merged = merged.merge(df, on=['sequence_normalized', 'charge'], how='outer', suffixes=('', '_dup'))
+        merged = merged.merge(df, on=merge_keys, how='outer', suffixes=('', '_dup'))
         # Remove duplicate columns
         merged = merged[[c for c in merged.columns if not c.endswith('_dup')]]
 
