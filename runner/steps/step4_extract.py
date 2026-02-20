@@ -271,16 +271,21 @@ def _extract_file_list(
     total_precursors = 0
     total_blob_size = 0
     quality_metrics = {"rt_r2": [], "im_r2": [], "isotope_cosim": [], "sage_cosine": []}
+    failed_files = []
 
     for i, d_file in enumerate(d_files):
         print(f"  [{i + 1}/{len(d_files)}] Processing {d_file.name}...")
 
-        file_features, file_stats = _extract_single_file(
-            d_file,
-            extracted_dir / d_file.name,
-            num_threads=num_threads,
-            batch_size=batch_size,
-        )
+        try:
+            file_features, file_stats = _extract_single_file(
+                d_file,
+                extracted_dir / d_file.name,
+                num_threads=num_threads,
+                batch_size=batch_size,
+            )
+        except Exception as e:
+            failed_files.append((d_file.name, str(e)))
+            continue
 
         if file_features is not None and not file_features.empty:
             all_features.append(file_features)
@@ -292,6 +297,13 @@ def _extract_file_list(
                     quality_metrics[col.replace("ms1_", "")].extend(
                         file_features[col].dropna().tolist()
                     )
+
+    # Fail if any files had extraction errors
+    if failed_files:
+        summary = "; ".join(f"{name}: {err}" for name, err in failed_files)
+        raise RuntimeError(
+            f"Extraction failed for {len(failed_files)}/{len(d_files)} files: {summary}"
+        )
 
     # Merge all features
     if all_features:
@@ -394,10 +406,6 @@ def _extract_single_file(
     except ImportError as e:
         print(f"    Warning: imspy not available, using fallback extraction: {e}")
         return _extract_fallback(d_file, output_dir)
-
-    except Exception as e:
-        print(f"    Error extracting {d_file.name}: {e}")
-        return pd.DataFrame(), {"n_precursors": 0, "blob_size_bytes": 0}
 
 
 def _extract_fallback(d_file: Path, output_dir: Path) -> tuple:

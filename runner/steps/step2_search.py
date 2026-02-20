@@ -110,6 +110,9 @@ def run_step2_search(
                 fasta_path=fasta_path,
             )
 
+        # Check for engine errors before marking success
+        _check_engine_errors(results)
+
         # Update summary
         summary.data = results
         summary.outputs = [str(processed_dir)]
@@ -123,6 +126,34 @@ def run_step2_search(
     write_step_summary(summary, processed_dir)
 
     return summary
+
+
+def _check_engine_errors(results: Dict[str, Any]) -> None:
+    """Raise RuntimeError if any enabled engine returned status='error'.
+
+    Works for both per_group and single mode result dicts.
+    """
+    errors = []
+
+    if results.get("mode") == "per_group":
+        for group_id, group_data in results.get("groups", {}).items():
+            engines = group_data.get("engines", {})
+            for engine_name, engine_data in engines.items():
+                if engine_data.get("status") == "error":
+                    msg = engine_data.get("error_message", "unknown error")
+                    errors.append(f"{group_id}/{engine_name}: {msg}")
+    else:
+        # Single mode: engine dicts are at top level
+        for engine_name in ["fragpipe", "diann", "sage"]:
+            engine_data = results.get(engine_name, {})
+            if engine_data.get("status") == "error":
+                msg = engine_data.get("error_message", "unknown error")
+                errors.append(f"{engine_name}: {msg}")
+
+    if errors:
+        raise RuntimeError(
+            f"Search failed for {len(errors)} engine(s): " + "; ".join(errors)
+        )
 
 
 def _run_per_group(
@@ -300,38 +331,97 @@ def _get_fasta_for_organism(
     config: Dict[str, Any],
     output_base_dir: Path,
 ) -> Path:
-    """Get FASTA database path for a specific organism."""
+    """
+    Get FASTA database path for a specific organism.
+
+    Prefers decoy FASTAs (required by FragPipe/Sage). If only a target FASTA
+    exists (local_fasta), auto-generates a decoy version with rev_ prefix.
+    """
+    resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta" / "search_db"
+
+    # 1. Check for pre-built decoy FASTA in search_db
+    organism_decoy = resources_dir / f"{organism_key}_decoys.fasta"
+    if organism_decoy.exists():
+        return organism_decoy
+
+    # 2. Check output dir for decoy FASTA
+    fasta_dir = output_base_dir / "resources" / "fasta"
+    organism_decoy_alt = fasta_dir / f"{organism_key}_decoys.fasta"
+    if organism_decoy_alt.exists():
+        return organism_decoy_alt
+
+    # 3. No decoy FASTA exists — try to generate from local_fasta
+    source_fasta = None
     organisms = config.get("organisms", {})
     if organism_key in organisms:
         org_config = organisms[organism_key]
         if isinstance(org_config, dict):
             local_fasta = org_config.get("local_fasta")
             if local_fasta:
-                org_fasta = Path(local_fasta)
-                if org_fasta.exists():
-                    return org_fasta
+                candidate = Path(local_fasta)
+                if candidate.exists():
+                    source_fasta = candidate
         elif isinstance(org_config, str):
-            org_fasta = Path(org_config)
-            if org_fasta.exists():
-                return org_fasta
+            candidate = Path(org_config)
+            if candidate.exists():
+                source_fasta = candidate
 
-    # Check resources/fasta/search_db for organism-specific FASTA
-    resources_dir = Path(__file__).parent.parent.parent / "resources" / "fasta" / "search_db"
-    organism_fasta = resources_dir / f"{organism_key}_decoys.fasta"
-    if organism_fasta.exists():
-        return organism_fasta
+    # Also check symlinked FASTA in resources/fasta/
+    if source_fasta is None:
+        symlink_fasta = Path(__file__).parent.parent.parent / "resources" / "fasta" / f"{organism_key}.fasta"
+        if symlink_fasta.exists():
+            source_fasta = symlink_fasta
 
-    # Check output dir
-    fasta_dir = output_base_dir / "resources" / "fasta"
-    organism_fasta_alt = fasta_dir / f"{organism_key}_decoys.fasta"
-    if organism_fasta_alt.exists():
-        return organism_fasta_alt
+    if source_fasta is not None:
+        print(f"      Generating decoy FASTA from {source_fasta.name}...")
+        _generate_decoy_fasta(source_fasta, organism_decoy)
+        return organism_decoy
 
     raise FileNotFoundError(
         f"No FASTA database found for organism '{organism_key}'. "
         f"Configure it in config.yaml under organisms.{organism_key}.local_fasta "
         f"or place {organism_key}_decoys.fasta in resources/fasta/search_db/"
     )
+
+
+def _generate_decoy_fasta(source_fasta: Path, output_fasta: Path) -> None:
+    """
+    Generate a target+decoy FASTA from a target-only FASTA.
+
+    Appends reversed sequences with 'rev_' header prefix, matching the
+    Snakemake add_decoys rule format.
+    """
+    output_fasta.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(source_fasta) as f_in, open(output_fasta, "w") as f_out:
+        sequences = []
+        current_header = None
+        current_seq = []
+
+        for line in f_in:
+            f_out.write(line)  # Write original
+            if line.startswith(">"):
+                if current_header and current_seq:
+                    sequences.append((current_header, "".join(current_seq)))
+                current_header = line.strip()
+                current_seq = []
+            else:
+                current_seq.append(line.strip())
+
+        if current_header and current_seq:
+            sequences.append((current_header, "".join(current_seq)))
+
+        # Write reversed decoys
+        f_out.write("\n")
+        for header, seq in sequences:
+            decoy_header = f">rev_{header[1:]}"
+            reversed_seq = seq[::-1]
+            f_out.write(f"{decoy_header}\n")
+            for i in range(0, len(reversed_seq), 80):
+                f_out.write(f"{reversed_seq[i:i+80]}\n")
+
+    n_target = len(sequences)
+    print(f"      Generated {output_fasta.name}: {n_target} targets + {n_target} decoys")
 
 
 def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Path) -> Path:
