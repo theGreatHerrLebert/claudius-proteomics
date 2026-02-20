@@ -192,8 +192,21 @@ def _run_per_group(
                 "error": str(e),
             }
 
-    # Write cross-group QC manifest
+    # Write cross-group QC manifest (always, for diagnostics)
     _write_qc_manifest(accession, group_results, processed_dir)
+
+    # Fail if any group had errors
+    failed_groups = [
+        gid for gid, r in group_results.items() if r.get("status") == "error"
+    ]
+    if failed_groups:
+        errors = "; ".join(
+            f"{gid}: {group_results[gid].get('error', 'unknown')}"
+            for gid in failed_groups
+        )
+        raise RuntimeError(
+            f"Stratification failed for {len(failed_groups)} group(s): {errors}"
+        )
 
     # Compute totals across groups
     total_precursors = sum(

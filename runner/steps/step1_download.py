@@ -57,7 +57,11 @@ def run_step1_download(
         # Check for local data path in config or argument
         local_path = local_data_path
         if local_path is None:
-            local_datasets = config.get("local_datasets", {})
+            local_datasets = config.get("local_data", {})
+            if not local_datasets:
+                local_datasets = config.get("local_datasets", {})
+                if local_datasets:
+                    print("  Warning: 'local_datasets' config key is deprecated, use 'local_data'")
             if accession in local_datasets:
                 local_path = Path(local_datasets[accession])
 
