@@ -363,19 +363,13 @@ def _add_consensus_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Add consensus peptide and confidence weight columns."""
     df = df.copy()
 
-    # Ensure n_engines column exists
-    if "n_engines" not in df.columns:
-        def count_engines(row):
-            n = 0
-            if pd.notna(row.get("fragpipe_peptide")) and row.get("fragpipe_peptide"):
-                n += 1
-            if pd.notna(row.get("diann_peptide")) and row.get("diann_peptide"):
-                n += 1
-            if pd.notna(row.get("sage_peptide")) and row.get("sage_peptide"):
-                n += 1
-            return n
-
-        df["n_engines"] = df.apply(count_engines, axis=1)
+    # Always recount n_engines from actual engine columns (Step 3 may have
+    # produced NaN when a column was missing, and Step 5 fillna'd to 0).
+    n = len(df)
+    fp = df['fragpipe_peptide'].notna() if 'fragpipe_peptide' in df.columns else pd.Series([False] * n)
+    dn = df['diann_peptide'].notna() if 'diann_peptide' in df.columns else pd.Series([False] * n)
+    sg = df['sage_peptide'].notna() if 'sage_peptide' in df.columns else pd.Series([False] * n)
+    df["n_engines"] = fp.astype(int) + dn.astype(int) + sg.astype(int)
 
     # Get consensus peptide (prefer more engines, then FragPipe)
     def get_consensus(row):
