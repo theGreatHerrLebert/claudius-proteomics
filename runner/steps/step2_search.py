@@ -110,8 +110,9 @@ def run_step2_search(
                 fasta_path=fasta_path,
             )
 
-        # Check for engine errors before marking success
-        _check_engine_errors(results)
+        # Check for engine errors (raises only when ALL engines failed)
+        engine_check = _check_engine_errors(results)
+        results["_engine_check"] = engine_check
 
         # Update summary
         summary.data = results
@@ -128,32 +129,72 @@ def run_step2_search(
     return summary
 
 
-def _check_engine_errors(results: Dict[str, Any]) -> None:
-    """Raise RuntimeError if any enabled engine returned status='error'.
+def _check_engine_errors(results: Dict[str, Any]) -> Dict[str, Any]:
+    """Check engine statuses and return a summary.
 
-    Works for both per_group and single mode result dicts.
+    Tolerates partial failures: only raises RuntimeError when ALL engines
+    failed.  When at least one engine succeeded, prints warnings for the
+    failed engines and returns normally so that Steps 3-6 can proceed.
+
+    Returns a dict with keys: succeeded, failed, skipped (each a list of
+    engine labels), plus a boolean ``all_failed``.
     """
-    errors = []
+    succeeded: List[str] = []
+    failed: List[str] = []
+    skipped: List[str] = []
+    error_details: List[str] = []
 
     if results.get("mode") == "per_group":
         for group_id, group_data in results.get("groups", {}).items():
             engines = group_data.get("engines", {})
             for engine_name, engine_data in engines.items():
-                if engine_data.get("status") == "error":
+                label = f"{group_id}/{engine_name}"
+                status = engine_data.get("status")
+                if status == "error":
                     msg = engine_data.get("error_message", "unknown error")
-                    errors.append(f"{group_id}/{engine_name}: {msg}")
+                    failed.append(label)
+                    error_details.append(f"{label}: {msg}")
+                elif status == "skipped":
+                    skipped.append(label)
+                else:
+                    succeeded.append(label)
     else:
-        # Single mode: engine dicts are at top level
         for engine_name in ["fragpipe", "diann", "sage"]:
             engine_data = results.get(engine_name, {})
-            if engine_data.get("status") == "error":
+            status = engine_data.get("status")
+            if status == "error":
                 msg = engine_data.get("error_message", "unknown error")
-                errors.append(f"{engine_name}: {msg}")
+                failed.append(engine_name)
+                error_details.append(f"{engine_name}: {msg}")
+            elif status == "skipped":
+                skipped.append(engine_name)
+            else:
+                succeeded.append(engine_name)
 
-    if errors:
+    check = {
+        "succeeded": succeeded,
+        "failed": failed,
+        "skipped": skipped,
+        "all_failed": len(succeeded) == 0 and len(failed) > 0,
+    }
+
+    if failed:
+        for detail in error_details:
+            print(f"  WARNING: engine error — {detail}")
+
+    if check["all_failed"]:
         raise RuntimeError(
-            f"Search failed for {len(errors)} engine(s): " + "; ".join(errors)
+            f"All {len(failed)} engine(s) failed — cannot continue: "
+            + "; ".join(error_details)
         )
+
+    if failed:
+        print(
+            f"  Step 2 partial success: {len(succeeded)} engine(s) OK, "
+            f"{len(failed)} failed, {len(skipped)} skipped"
+        )
+
+    return check
 
 
 def _run_per_group(
