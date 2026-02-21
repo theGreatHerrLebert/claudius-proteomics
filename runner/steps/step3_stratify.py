@@ -634,9 +634,12 @@ def _build_precursor_index_anchored(
         print(f"    Sage direct join: {n_sg_joined} matches")
 
     # === Step 5: Count engines ===
-    fp_present = index.get('fragpipe_peptide', pd.Series(dtype=str)).notna()
-    dn_present = index.get('diann_peptide', pd.Series(dtype=str)).notna()
-    sg_present = index.get('sage_peptide', pd.Series(dtype=str)).notna()
+    # Use False-filled Series (same length as index) for missing columns to
+    # avoid NaN propagation from empty-Series index misalignment.
+    n = len(index)
+    fp_present = index['fragpipe_peptide'].notna() if 'fragpipe_peptide' in index.columns else pd.Series([False] * n)
+    dn_present = index['diann_peptide'].notna() if 'diann_peptide' in index.columns else pd.Series([False] * n)
+    sg_present = index['sage_peptide'].notna() if 'sage_peptide' in index.columns else pd.Series([False] * n)
 
     index['n_engines'] = fp_present.astype(int) + dn_present.astype(int) + sg_present.astype(int)
 
@@ -897,10 +900,11 @@ def _build_precursor_index_engines_only(
         # Remove duplicate columns
         merged = merged[[c for c in merged.columns if not c.endswith('_dup')]]
 
-    # Count engines
-    fp_present = merged.get('fragpipe_peptide', pd.Series(dtype=str)).notna()
-    dn_present = merged.get('diann_peptide', pd.Series(dtype=str)).notna()
-    sg_present = merged.get('sage_peptide', pd.Series(dtype=str)).notna()
+    # Count engines (use False-filled Series for missing columns)
+    n = len(merged)
+    fp_present = merged['fragpipe_peptide'].notna() if 'fragpipe_peptide' in merged.columns else pd.Series([False] * n)
+    dn_present = merged['diann_peptide'].notna() if 'diann_peptide' in merged.columns else pd.Series([False] * n)
+    sg_present = merged['sage_peptide'].notna() if 'sage_peptide' in merged.columns else pd.Series([False] * n)
 
     merged['n_engines'] = fp_present.astype(int) + dn_present.astype(int) + sg_present.astype(int)
 
