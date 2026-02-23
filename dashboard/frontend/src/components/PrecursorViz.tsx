@@ -441,6 +441,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
             intensity={precursor.fragment_intensity}
             sageFragments={precursor.sage_matched_fragments}
             peptide={precursor.sage_modified || precursor.sage_peptide}
+            cosine={precursor.sage_cosine}
           />
         ) : (
           <SpectrumPlot

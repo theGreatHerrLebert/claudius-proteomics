@@ -264,6 +264,23 @@ def compute_spectrum_cosine(
     return float(np.dot(a, b) / (norm_a * norm_b))
 
 
+def one_over_k0_to_ccs(
+    one_over_k0: float, mz: float, charge: int,
+    mass_gas: float = 28.013, temp: float = 31.85, t_diff: float = 273.15,
+) -> float:
+    """Convert reduced ion mobility (1/K0) to CCS using Mason-Schamp equation.
+
+    Uses the same constants as imspy/rustims (mscore/src/chemistry/formulas.rs).
+    """
+    if one_over_k0 <= 0 or charge <= 0 or mz <= 0:
+        return 0.0
+    summary_constant = 18509.8632163405
+    reduced_mobility = 1.0 / one_over_k0
+    ion_mass = mz * charge
+    reduced_mass = (ion_mass * mass_gas) / (ion_mass + mass_gas)
+    return summary_constant * charge / (np.sqrt(reduced_mass * (temp + t_diff)) * reduced_mobility)
+
+
 class PrecursorSummary(BaseModel):
     precursor_id: int
     raw_file: str
@@ -271,6 +288,7 @@ class PrecursorSummary(BaseModel):
     charge: int
     rt_seconds: float
     mobility: float
+    ccs: Optional[float] = None
     n_engines: int
     confidence_weight: Optional[float] = None
     sage_cosine: Optional[float] = None
@@ -313,6 +331,7 @@ class PrecursorSummary(BaseModel):
     diann_match_tier: Optional[str] = None
     diann_match_score: Optional[float] = None
     # Raw
+    collision_energy: Optional[float] = None
     raw_intensity_meta: Optional[float] = None
     frame_id: Optional[int] = None
     isolation_mz: Optional[float] = None
@@ -508,7 +527,7 @@ async def list_precursors(
         'diann_qvalue', 'diann_pep', 'diann_global_qvalue', 'diann_pg_qvalue',
         'diann_rt', 'diann_mz', 'diann_mobility', 'diann_ccs', 'diann_match_tier', 'diann_match_score',
         # Raw (intensity_col is auto-detected: precursor_intensity, ms1_total_intensity, or raw_intensity_meta)
-        intensity_col, 'frame_id', 'isolation_mz',
+        'collision_energy', intensity_col, 'frame_id', 'isolation_mz',
         # Quality metrics
         'ms1_rt_sigma', 'ms1_rt_r2', 'ms1_im_sigma', 'ms1_im_r2', 'isotope_cosim',
         'sage_cosine',
@@ -667,13 +686,20 @@ async def list_precursors(
                             sage_fragments_by_psm[psm_id],
                         )
 
+        # Compute CCS from 1/K0, m/z, and charge (Mason-Schamp equation)
+        row_mz = float(mz_val) if pd.notna(mz_val) else 0.0
+        row_mobility = float(row[mobility_col]) if pd.notna(row.get(mobility_col)) else 0.0
+        row_charge = int(charge_val)
+        row_ccs = one_over_k0_to_ccs(row_mobility, row_mz, row_charge) if row_mobility > 0 and row_charge > 0 and row_mz > 0 else None
+
         results.append(PrecursorSummary(
             precursor_id=int(prec_id),
             raw_file=str(row['raw_file']) if pd.notna(row.get('raw_file')) else '',
-            mz=float(mz_val) if pd.notna(mz_val) else 0.0,
-            charge=int(charge_val),
+            mz=row_mz,
+            charge=row_charge,
             rt_seconds=float(row[rt_col]) if pd.notna(row.get(rt_col)) else 0.0,
-            mobility=float(row[mobility_col]) if pd.notna(row.get(mobility_col)) else 0.0,
+            mobility=row_mobility,
+            ccs=row_ccs,
             n_engines=int(n_engines_val),
             confidence_weight=safe_float(row.get('confidence_weight')),
             sage_cosine=row_sage_cosine,
@@ -716,6 +742,7 @@ async def list_precursors(
             diann_match_tier=safe_str(row.get('diann_match_tier')),
             diann_match_score=safe_float(row.get('diann_match_score')),
             # Raw
+            collision_energy=safe_float(row.get('collision_energy')),
             raw_intensity_meta=safe_float(row.get(intensity_col)),
             frame_id=safe_int(row.get('frame_id')),
             isolation_mz=safe_float(row.get('isolation_mz')),
@@ -1131,7 +1158,8 @@ async def get_dataset_info(accession: str):
 @app.post("/datasets/{accession}/load")
 async def load_dataset(accession: str):
     """Load a dataset from the collection (collection mode only)."""
-    global store_path, parquet_file, active_dataset
+    global store_path, parquet_file, active_dataset, blob_dir, blob_file_sizes
+    global sage_fragments_by_psm, sage_data_loaded
 
     if collection_path is None:
         raise HTTPException(400, "No collection loaded. Start with --collection flag.")
@@ -1147,7 +1175,8 @@ async def load_dataset(accession: str):
         raise HTTPException(404, f"Dataset not found: {accession}")
 
     # Build path to precursor store
-    dataset_path = collection_path / dataset["path"] / "precursor_store.parquet"
+    dataset_dir = collection_path / dataset["path"]
+    dataset_path = dataset_dir / "precursor_store.parquet"
 
     if not dataset_path.exists():
         raise HTTPException(404, f"Precursor store not found: {dataset_path}")
@@ -1157,11 +1186,35 @@ async def load_dataset(accession: str):
         store_path = dataset_path
         active_dataset = accession
 
+        # Set up blob directory for raw data reading
+        import os
+        extracted_dir = dataset_dir / "extracted"
+        blob_file_sizes = {}
+        if extracted_dir.exists():
+            blob_dir = extracted_dir
+            for d in sorted(extracted_dir.iterdir()):
+                if d.is_dir() and (d / "blobs.bin").exists():
+                    raw_name = d.name.replace('.d', '')
+                    blob_file_sizes[raw_name] = os.path.getsize(d / "blobs.bin")
+            print(f"  Blob directory: {blob_dir} ({len(blob_file_sizes)} files)")
+        else:
+            blob_dir = None
+            print(f"  No blob directory found at {extracted_dir}")
+
+        # Load Sage fragment data
+        sage_fragments_by_psm = {}
+        sage_data_loaded = False
+        sage_dir = dataset_dir / "engines" / "sage"
+        if sage_dir.exists():
+            load_sage_fragments(sage_dir)
+
         return {
             "status": "loaded",
             "accession": accession,
             "path": str(dataset_path),
             "num_precursors": parquet_file.metadata.num_rows,
+            "blob_files": len(blob_file_sizes),
+            "sage_fragments": sage_data_loaded,
         }
     except Exception as e:
         raise HTTPException(500, f"Failed to load dataset: {e}")

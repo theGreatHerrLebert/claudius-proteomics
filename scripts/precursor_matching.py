@@ -41,7 +41,7 @@ class MatchConfig:
     mz_tol_ppm: float = 20.0
 
     # RT tolerance (seconds)
-    rt_tol_sec: float = 30.0
+    rt_tol_sec: float = 5.0
 
     # Ion mobility tolerance (1/K0)
     im_tol: float = 0.05
