@@ -22,6 +22,7 @@ const SORTABLE_COLUMNS: Record<string, string> = {
   sage_hyperscore: 'sage_hyperscore',
   sage_qvalue: 'sage_qvalue',
   diann_qvalue: 'diann_qvalue',
+  diann_match_tier: 'diann_match_tier',
   ms1_rt_r2: 'ms1_rt_r2',
   ms1_im_r2: 'ms1_im_r2',
   isotope_cosim: 'isotope_cosim',
