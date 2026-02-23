@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tan
 import PrecursorTable from './components/PrecursorTable';
 import PrecursorViz from './components/PrecursorViz';
 import CollectionBrowser from './components/CollectionBrowser';
+import DatasetSummaryPage from './components/DatasetSummary';
 import {
   listPrecursors,
   getPrecursor,
@@ -18,6 +19,7 @@ import type { StudySummary } from './api';
 const queryClient = new QueryClient();
 
 type ViewMode = 'collection' | 'dataset';
+type SubView = 'summary' | 'browse';
 type LinkCopyState = 'idle' | 'copied' | 'failed';
 type OverlapFocusMode = 'all' | 'shared' | 'unique_a';
 
@@ -47,6 +49,7 @@ interface SavedView {
 }
 
 interface DatasetUrlState {
+  subView: SubView;
   filters: DatasetFilters;
   page: number;
   tableWidth: number;
@@ -262,7 +265,8 @@ function areFiltersEqual(a: DatasetFilters, b: DatasetFilters): boolean {
 }
 
 function readDatasetStateFromUrl(): DatasetUrlState {
-  const defaultState = {
+  const defaultState: DatasetUrlState = {
+    subView: 'summary',
     filters: { ...DEFAULT_FILTERS },
     page: 0,
     tableWidth: DEFAULT_TABLE_WIDTH,
@@ -275,6 +279,8 @@ function readDatasetStateFromUrl(): DatasetUrlState {
   if (typeof window === 'undefined') return defaultState;
 
   const params = new URLSearchParams(window.location.search);
+  const viewParam = params.get('view');
+  const subView: SubView = viewParam === 'browse' ? 'browse' : 'summary';
   const filters: DatasetFilters = { ...DEFAULT_FILTERS };
 
   const minEngines = parseNumberParam(params.get('minEng'));
@@ -333,6 +339,7 @@ function readDatasetStateFromUrl(): DatasetUrlState {
     overlapFocusRaw === 'shared' || overlapFocusRaw === 'unique_a' ? overlapFocusRaw : 'all';
 
   return {
+    subView,
     filters,
     page,
     tableWidth,
@@ -345,6 +352,7 @@ function readDatasetStateFromUrl(): DatasetUrlState {
 }
 
 function writeDatasetStateToUrl({
+  subView,
   filters,
   page,
   tableWidth,
@@ -355,6 +363,7 @@ function writeDatasetStateToUrl({
   datasetCompareTarget,
   overlapFocusMode,
 }: {
+  subView: SubView;
   filters: DatasetFilters;
   page: number;
   tableWidth: number;
@@ -376,6 +385,7 @@ function writeDatasetStateToUrl({
     params.set(key, value);
   };
 
+  setParam('view', subView !== 'summary' ? subView : undefined);
   setParam('ds', activeDataset ?? undefined);
   setParam('minEng', filters.minEngines > 0 ? String(filters.minEngines) : undefined);
   setParam('maxEng', filters.maxEngines !== undefined ? String(filters.maxEngines) : undefined);
@@ -480,6 +490,7 @@ function DatasetView({
   onNavigateToCollection: () => void;
 }) {
   const [initialUrlState] = useState<DatasetUrlState>(readDatasetStateFromUrl);
+  const [subView, setSubView] = useState<SubView>(initialUrlState.subView);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedRawFile, setSelectedRawFile] = useState<string | undefined>(undefined);
   const [filters, setFilters] = useState<DatasetFilters>(initialUrlState.filters);
@@ -532,6 +543,7 @@ function DatasetView({
   useEffect(() => {
     if (isResizing) return;
     writeDatasetStateToUrl({
+      subView,
       filters,
       page,
       tableWidth,
@@ -542,7 +554,7 @@ function DatasetView({
       datasetCompareTarget,
       overlapFocusMode,
     });
-  }, [filters, page, tableWidth, activeDataset, compareEnabled, compareTarget, datasetCompareEnabled, datasetCompareTarget, overlapFocusMode, isResizing]);
+  }, [subView, filters, page, tableWidth, activeDataset, compareEnabled, compareTarget, datasetCompareEnabled, datasetCompareTarget, overlapFocusMode, isResizing]);
 
   const persistSavedViews = (nextViews: SavedView[]) => {
     setSavedViews(nextViews);
@@ -690,6 +702,13 @@ function DatasetView({
       setSelectedViewId(matching.id);
     }
   }, [filters, page, tableWidth, compareEnabled, compareTarget, datasetCompareEnabled, datasetCompareTarget, overlapFocusMode, savedViews, selectedViewId]);
+
+  // Reset to summary view when a new dataset is loaded
+  const [prevDataset, setPrevDataset] = useState(activeDataset);
+  if (activeDataset !== prevDataset) {
+    setPrevDataset(activeDataset);
+    setSubView('summary');
+  }
 
   // Handle sorting - clicking same column toggles direction, new column sorts desc
   const handleSort = (column: string) => {
@@ -895,8 +914,34 @@ function DatasetView({
           </div>
         )}
 
+        {/* Summary / Browse tab toggle */}
+        <div className="flex items-center rounded-xl border border-[#2a4368] bg-[#0f2036cc] overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setSubView('summary')}
+            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+              subView === 'summary'
+                ? 'bg-cyan-700/40 text-cyan-100 border-r border-[#2a4368]'
+                : 'text-slate-400 hover:text-slate-200 border-r border-[#2a4368]'
+            }`}
+          >
+            Summary
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubView('browse')}
+            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+              subView === 'browse'
+                ? 'bg-cyan-700/40 text-cyan-100'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Browse
+          </button>
+        </div>
+
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 ml-auto">
+        <div className={`flex flex-wrap items-center gap-2 ml-auto ${subView === 'summary' ? 'hidden' : ''}`}>
           <div className="flex items-center gap-2 rounded-xl border border-[#2a4368] bg-[#0f2036cc] px-2 py-1">
             <span className="control-label">Views</span>
             <select
@@ -1132,7 +1177,16 @@ function DatasetView({
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col">
-        {datasetCompareEnabled && (
+        {subView === 'summary' && (
+          <div className="flex-1 min-h-0">
+            <DatasetSummaryPage
+              activeDataset={activeDataset}
+              onBrowse={() => setSubView('browse')}
+            />
+          </div>
+        )}
+
+        {subView === 'browse' && datasetCompareEnabled && (
           <div className="px-2 pb-0">
             <div className="chrome-panel p-3">
               <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -1253,7 +1307,7 @@ function DatasetView({
         )}
 
         {/* Main content */}
-        <div id="main-content" className={`flex-1 flex min-h-0 p-2 gap-2 ${isResizing ? 'select-none' : ''}`}>
+        {subView === 'browse' && <div id="main-content" className={`flex-1 flex min-h-0 p-2 gap-2 ${isResizing ? 'select-none' : ''}`}>
           {/* Table panel - resizable */}
           <div
             className="chrome-panel flex-none flex flex-col overflow-x-auto min-w-[280px]"
@@ -1368,7 +1422,7 @@ function DatasetView({
               </div>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );
@@ -1408,6 +1462,7 @@ function Dashboard() {
     queryClientHook.invalidateQueries({ queryKey: ['precursors'] });
     queryClientHook.invalidateQueries({ queryKey: ['stats'] });
     queryClientHook.invalidateQueries({ queryKey: ['raw_files'] });
+    queryClientHook.invalidateQueries({ queryKey: ['dataset-summary'] });
   };
 
   const handleNavigateToCollection = () => {

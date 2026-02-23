@@ -430,6 +430,77 @@ class CollectionInfo(BaseModel):
     n_total_precursors: int
 
 
+class EngineOverlapStats(BaseModel):
+    n_fragpipe: int = 0
+    n_diann: int = 0
+    n_sage: int = 0
+    n_all_three: int = 0
+    n_fp_dn_only: int = 0
+    n_fp_sg_only: int = 0
+    n_dn_sg_only: int = 0
+    n_fragpipe_only: int = 0
+    n_diann_only: int = 0
+    n_sage_only: int = 0
+    n_union: int = 0
+    n_at_least_two: int = 0
+    three_way_rate: float = 0.0
+    at_least_two_rate: float = 0.0
+
+
+class QualitySummary(BaseModel):
+    n_0_engines: int = 0
+    pct_0_engines: float = 0.0
+    n_1_engines: int = 0
+    pct_1_engines: float = 0.0
+    n_2_engines: int = 0
+    pct_2_engines: float = 0.0
+    n_3_engines: int = 0
+    pct_3_engines: float = 0.0
+    ms1_rt_r2_mean: Optional[float] = None
+    ms1_rt_r2_median: Optional[float] = None
+    ms1_im_r2_mean: Optional[float] = None
+    ms1_im_r2_median: Optional[float] = None
+    isotope_cosim_mean: Optional[float] = None
+    isotope_cosim_median: Optional[float] = None
+    n_high_quality: int = 0
+    pct_high_quality: float = 0.0
+
+
+class RawFileSummary(BaseModel):
+    name: str
+    count: int
+
+
+class QualityDistBucket(BaseModel):
+    """One bucket in a quality metric histogram."""
+    lower: float
+    upper: float
+    count: int
+    pct: float
+
+
+class DatasetFullSummary(BaseModel):
+    accession: Optional[str] = None
+    pipeline_version: Optional[str] = None
+    generated_at: Optional[str] = None
+    n_total_precursors: int = 0
+    n_per_engine: Optional[Dict[str, int]] = None
+    n_unidentified: int = 0
+    quality_summary: Optional[QualitySummary] = None
+    overlap_stats: Optional[EngineOverlapStats] = None
+    by_charge: Dict[str, int] = {}
+    mz_range: Optional[List[float]] = None
+    rt_range_minutes: Optional[List[float]] = None
+    mobility_range: Optional[List[float]] = None
+    collision_energy_range: Optional[List[float]] = None
+    raw_files: List[RawFileSummary] = []
+    n_unique_peptides: Optional[Dict[str, int]] = None
+    quality_distributions: Optional[Dict[str, List[QualityDistBucket]]] = None
+    organism: Optional[str] = None
+    study_id: Optional[str] = None
+    group_id: Optional[str] = None
+
+
 class DatasetOverlapSummary(BaseModel):
     dataset_a: str
     dataset_b: str
@@ -1242,6 +1313,206 @@ async def get_stats():
         "mz_range": [float(df[mz_col].min()), float(df[mz_col].max())],
         "raw_files": df['raw_file'].value_counts().to_dict(),
     }
+
+
+def _find_dataset_dir() -> Optional[Path]:
+    """Find the dataset directory from the currently loaded store path.
+
+    Works in both single-dataset and collection modes by walking up from the
+    precursor_store.parquet to the dataset root (which contains manifest.json,
+    consensus/, etc.).
+    """
+    if store_path is None:
+        return None
+    # store_path is the .parquet file; parent is the dataset dir
+    candidate = store_path.parent
+    # In collection mode the store is at {dataset_dir}/precursor_store.parquet
+    if (candidate / "manifest.json").exists():
+        return candidate
+    # Try one level up (for group_id layouts like PXD046675/pig_trypsin/)
+    if (candidate.parent / "manifest.json").exists():
+        return candidate.parent
+    # Fallback: just return the parent anyway
+    return candidate
+
+
+def _find_overlap_stats(dataset_dir: Path) -> Optional[Path]:
+    """Find overlap_stats.json inside consensus/ relative to dataset dir."""
+    candidate = dataset_dir / "consensus" / "overlap_stats.json"
+    if candidate.exists():
+        return candidate
+    return None
+
+
+@app.get("/summary", response_model=DatasetFullSummary)
+async def get_dataset_summary():
+    """Get a consolidated dataset summary for the currently loaded dataset.
+
+    Reads from manifest.json, overlap_stats.json, and the parquet store to
+    build a full bird's-eye view of the dataset.
+    """
+    if parquet_file is None:
+        raise HTTPException(400, "No store loaded")
+
+    result: Dict[str, Any] = {}
+
+    # --- 1. Read manifest.json ---
+    dataset_dir = _find_dataset_dir()
+    manifest = None
+    if dataset_dir:
+        manifest_path = dataset_dir / "manifest.json"
+        if manifest_path.exists():
+            try:
+                with open(manifest_path) as f:
+                    manifest = json.load(f)
+            except Exception:
+                pass
+
+    if manifest:
+        result["accession"] = manifest.get("accession")
+        result["pipeline_version"] = manifest.get("pipeline_version")
+        result["generated_at"] = manifest.get("generated_at")
+        result["n_total_precursors"] = manifest.get("n_total_precursors", 0)
+        result["n_per_engine"] = manifest.get("n_per_engine")
+        result["n_unidentified"] = manifest.get("n_unidentified", 0)
+        result["group_id"] = manifest.get("group_id")
+        qs = manifest.get("quality_summary")
+        if qs:
+            result["quality_summary"] = QualitySummary(**qs)
+    else:
+        # Derive total from parquet
+        result["n_total_precursors"] = parquet_file.metadata.num_rows
+
+    # --- 2. Read overlap_stats.json ---
+    if dataset_dir:
+        overlap_path = _find_overlap_stats(dataset_dir)
+        if overlap_path:
+            try:
+                with open(overlap_path) as f:
+                    overlap = json.load(f)
+                if overlap.get("n_union", 0) > 0:
+                    result["overlap_stats"] = EngineOverlapStats(**overlap)
+            except Exception:
+                pass
+
+    # --- 3. Parquet-derived stats ---
+    available_cols = set(parquet_file.schema_arrow.names)
+    # Determine column naming convention
+    charge_col = 'charge' if 'charge' in available_cols else 'raw_charge'
+    mz_col = 'mz' if 'mz' in available_cols else 'raw_mz'
+    rt_col = 'rt_seconds' if 'rt_seconds' in available_cols else 'raw_rt_seconds'
+    mobility_col = 'mobility' if 'mobility' in available_cols else 'raw_mobility'
+
+    # Columns to read: base + optional
+    base_cols = ['n_engines', charge_col, mz_col, 'raw_file']
+    extra_cols = [rt_col, mobility_col, 'collision_energy',
+                  'fragpipe_peptide', 'sage_peptide', 'diann_peptide',
+                  'ms1_rt_r2', 'ms1_im_r2', 'isotope_cosim']
+    cols_to_read = base_cols + [c for c in extra_cols if c in available_cols]
+
+    try:
+        table = pq.read_table(str(store_path), columns=cols_to_read)
+    except Exception:
+        return DatasetFullSummary(**result)
+
+    df = table.to_pandas()
+
+    # Charge distribution
+    charge_counts = df[charge_col].value_counts()
+    result["by_charge"] = {str(int(k)): int(v) for k, v in charge_counts.items() if pd.notna(k)}
+
+    # m/z range
+    mz_min = float(df[mz_col].min()) if len(df) > 0 else 0.0
+    mz_max = float(df[mz_col].max()) if len(df) > 0 else 0.0
+    result["mz_range"] = [mz_min, mz_max]
+
+    # RT range (in minutes)
+    if rt_col in df.columns:
+        rt_vals = df[rt_col].dropna()
+        if len(rt_vals) > 0:
+            result["rt_range_minutes"] = [float(rt_vals.min()) / 60.0, float(rt_vals.max()) / 60.0]
+
+    # Mobility range (1/K0)
+    if mobility_col in df.columns:
+        im_vals = df[mobility_col].dropna()
+        if len(im_vals) > 0:
+            result["mobility_range"] = [float(im_vals.min()), float(im_vals.max())]
+
+    # Collision energy range
+    if 'collision_energy' in df.columns:
+        ce_vals = df['collision_energy'].dropna()
+        if len(ce_vals) > 0:
+            result["collision_energy_range"] = [float(ce_vals.min()), float(ce_vals.max())]
+
+    # Raw file breakdown
+    file_counts = df['raw_file'].value_counts()
+    result["raw_files"] = [
+        RawFileSummary(name=str(name), count=int(count))
+        for name, count in file_counts.items()
+    ]
+
+    # Unique peptide counts per engine
+    unique_peps: Dict[str, int] = {}
+    for eng in ['fragpipe', 'sage', 'diann']:
+        col = f'{eng}_peptide'
+        if col in df.columns:
+            unique_peps[eng] = int(df[col].dropna().nunique())
+    if unique_peps:
+        result["n_unique_peptides"] = unique_peps
+
+    # Quality metric distributions (histogram buckets)
+    quality_bins = [0.0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0]
+    quality_dists: Dict[str, List[Dict]] = {}
+    for col_name in ['ms1_rt_r2', 'ms1_im_r2', 'isotope_cosim']:
+        if col_name in df.columns:
+            vals = df[col_name].dropna()
+            if len(vals) > 0:
+                buckets = []
+                for i in range(len(quality_bins) - 1):
+                    lo, hi = quality_bins[i], quality_bins[i + 1]
+                    if i < len(quality_bins) - 2:
+                        cnt = int(((vals >= lo) & (vals < hi)).sum())
+                    else:
+                        cnt = int(((vals >= lo) & (vals <= hi)).sum())
+                    buckets.append(QualityDistBucket(
+                        lower=lo, upper=hi, count=cnt,
+                        pct=round(cnt / len(vals) * 100, 1),
+                    ))
+                quality_dists[col_name] = buckets
+    if quality_dists:
+        result["quality_distributions"] = quality_dists
+
+    # If no manifest, derive engine stats from parquet
+    if not manifest and 'n_engines' in df.columns:
+        result["n_total_precursors"] = len(df)
+        engine_counts = df['n_engines'].value_counts()
+        qs = QualitySummary(
+            n_0_engines=int(engine_counts.get(0, 0)),
+            pct_0_engines=round(float(engine_counts.get(0, 0)) / max(len(df), 1) * 100, 1),
+            n_1_engines=int(engine_counts.get(1, 0)),
+            pct_1_engines=round(float(engine_counts.get(1, 0)) / max(len(df), 1) * 100, 1),
+            n_2_engines=int(engine_counts.get(2, 0)),
+            pct_2_engines=round(float(engine_counts.get(2, 0)) / max(len(df), 1) * 100, 1),
+            n_3_engines=int(engine_counts.get(3, 0)),
+            pct_3_engines=round(float(engine_counts.get(3, 0)) / max(len(df), 1) * 100, 1),
+        )
+        result["quality_summary"] = qs
+
+    # --- 4. Collection metadata (organism, study_id) ---
+    if collection_manifest and active_dataset:
+        datasets = collection_manifest.get("datasets", [])
+        ds_entry = next((d for d in datasets if d.get("accession") == active_dataset), None)
+        if ds_entry:
+            result["study_id"] = ds_entry.get("study_id")
+        # Try to find organism from studies config
+        if studies_config and result.get("study_id"):
+            study_id = result["study_id"]
+            studies_yaml = studies_config.get("studies", [])
+            study_entry = next((s for s in studies_yaml if s.get("id") == study_id), None)
+            if study_entry:
+                result["organism"] = study_entry.get("organism")
+
+    return DatasetFullSummary(**result)
 
 
 @app.get("/raw_files")
