@@ -79,6 +79,7 @@ interface OverlapVisualProps {
 }
 
 const SAVED_VIEWS_STORAGE_KEY = 'sanjose.dashboard.savedViews';
+const DEFAULT_TABLE_WIDTH = 60;
 const DEFAULT_FILTERS: DatasetFilters = {
   minEngines: 0,
   maxEngines: undefined,
@@ -264,7 +265,7 @@ function readDatasetStateFromUrl(): DatasetUrlState {
   const defaultState = {
     filters: { ...DEFAULT_FILTERS },
     page: 0,
-    tableWidth: 60,
+    tableWidth: DEFAULT_TABLE_WIDTH,
     compareEnabled: false,
     compareTarget: null,
     datasetCompareEnabled: false,
@@ -313,7 +314,7 @@ function readDatasetStateFromUrl(): DatasetUrlState {
   const page = pageParam !== undefined && pageParam >= 0 ? Math.floor(pageParam) : 0;
 
   const widthParam = parseNumberParam(params.get('table'));
-  const tableWidth = widthParam !== undefined ? clampTableWidth(widthParam) : 60;
+  const tableWidth = widthParam !== undefined ? clampTableWidth(widthParam) : DEFAULT_TABLE_WIDTH;
 
   const compareEnabled = params.get('cmp') === '1';
   const compareId = parseNumberParam(params.get('cmpId'));
@@ -385,7 +386,7 @@ function writeDatasetStateToUrl({
   setParam('sort', filters.sortBy !== DEFAULT_FILTERS.sortBy ? filters.sortBy : undefined);
   setParam('desc', filters.sortDesc ? undefined : '0');
   setParam('page', page > 0 ? String(page) : undefined);
-  setParam('table', tableWidth !== 60 ? String(Math.round(tableWidth)) : undefined);
+  setParam('table', tableWidth !== DEFAULT_TABLE_WIDTH ? String(Math.round(tableWidth)) : undefined);
   setParam('cmp', compareEnabled ? '1' : undefined);
   setParam('cmpId', compareEnabled && compareTarget ? String(compareTarget.id) : undefined);
   setParam('cmpRaw', compareEnabled && compareTarget ? compareTarget.rawFile : undefined);
@@ -548,6 +549,18 @@ function DatasetView({
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(nextViews));
     }
+  };
+
+  const handleResetToDefaultView = () => {
+    setFilters({ ...DEFAULT_FILTERS });
+    setPage(0);
+    setTableWidth(DEFAULT_TABLE_WIDTH);
+    setCompareEnabled(false);
+    setCompareTarget(null);
+    setDatasetCompareEnabled(false);
+    setDatasetCompareTarget(null);
+    setOverlapFocusMode('all');
+    setSelectedViewId('');
   };
 
   const handleApplySavedView = (id: string) => {
@@ -838,6 +851,29 @@ function DatasetView({
     };
   }, [activeDatasetInfo, datasetComparisonInfo]);
 
+  const isDefaultSingleView = useMemo(
+    () =>
+      areFiltersEqual(filters, DEFAULT_FILTERS) &&
+      page === 0 &&
+      clampTableWidth(tableWidth) === DEFAULT_TABLE_WIDTH &&
+      !compareEnabled &&
+      compareTarget === null &&
+      !datasetCompareEnabled &&
+      datasetCompareTarget === null &&
+      overlapFocusMode === 'all',
+    [
+      filters,
+      page,
+      tableWidth,
+      compareEnabled,
+      compareTarget,
+      datasetCompareEnabled,
+      datasetCompareTarget,
+      overlapFocusMode,
+    ]
+  );
+  const viewSelectorValue = selectedViewId || (isDefaultSingleView ? '__default__' : '');
+
   return (
     <div className="app-shell h-screen flex flex-col">
       {/* Header */}
@@ -864,9 +900,13 @@ function DatasetView({
           <div className="flex items-center gap-2 rounded-xl border border-[#2a4368] bg-[#0f2036cc] px-2 py-1">
             <span className="control-label">Views</span>
             <select
-              value={selectedViewId}
+              value={viewSelectorValue}
               onChange={(e) => {
                 const id = e.target.value;
+                if (id === '__default__') {
+                  handleResetToDefaultView();
+                  return;
+                }
                 if (!id) {
                   setSelectedViewId('');
                   return;
@@ -875,6 +915,7 @@ function DatasetView({
               }}
               className="control-select max-w-[180px]"
             >
+              <option value="__default__">Default (Single)</option>
               <option value="">Custom</option>
               {savedViews.map((view) => (
                 <option key={view.id} value={view.id}>
@@ -882,6 +923,9 @@ function DatasetView({
                 </option>
               ))}
             </select>
+            <button onClick={handleResetToDefaultView} className="btn-secondary" type="button">
+              Reset
+            </button>
             <button onClick={handleSaveView} className="btn-secondary" type="button">
               Save
             </button>
