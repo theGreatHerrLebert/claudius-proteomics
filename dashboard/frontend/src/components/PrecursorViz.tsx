@@ -58,8 +58,8 @@ function SpectrumPlot({
 }) {
   if (!mz.length) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-        No data
+      <div className="h-full flex items-center justify-center">
+        <span className="metric-pill">No data</span>
       </div>
     );
   }
@@ -77,28 +77,28 @@ function SpectrumPlot({
 
   return (
     <div className="h-full relative">
-      <div className="absolute top-1 left-2 text-xs text-gray-400 z-10">{title}</div>
+      <div className="absolute top-1 left-2 text-xs text-slate-300 z-10">{title}</div>
       <svg className="w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#1f2937" />
-        <line x1={margin.left} y1={margin.top} x2={margin.left} y2={margin.top + plotH} stroke="#4b5563" strokeWidth={1} />
-        <text x={margin.left - 5} y={margin.top + 5} fill="#9ca3af" fontSize={9} textAnchor="end">
+        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#12253c" />
+        <line x1={margin.left} y1={margin.top} x2={margin.left} y2={margin.top + plotH} stroke="#436286" strokeWidth={1} />
+        <text x={margin.left - 5} y={margin.top + 5} fill="#9db5d8" fontSize={9} textAnchor="end">
           {formatAxisValue(maxInt)}
         </text>
-        <text x={margin.left - 5} y={margin.top + plotH} fill="#9ca3af" fontSize={9} textAnchor="end">
+        <text x={margin.left - 5} y={margin.top + plotH} fill="#9db5d8" fontSize={9} textAnchor="end">
           0
         </text>
-        <text x={15} y={margin.top + plotH / 2} fill="#9ca3af" fontSize={9} textAnchor="middle"
+        <text x={15} y={margin.top + plotH / 2} fill="#9db5d8" fontSize={9} textAnchor="middle"
           transform={`rotate(-90, 15, ${margin.top + plotH / 2})`}>
           {yLabel}
         </text>
-        <line x1={margin.left} y1={margin.top + plotH} x2={margin.left + plotW} y2={margin.top + plotH} stroke="#4b5563" strokeWidth={1} />
-        <text x={margin.left} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="start">
+        <line x1={margin.left} y1={margin.top + plotH} x2={margin.left + plotW} y2={margin.top + plotH} stroke="#436286" strokeWidth={1} />
+        <text x={margin.left} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="start">
           {minMz.toFixed(0)}
         </text>
-        <text x={margin.left + plotW} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="end">
+        <text x={margin.left + plotW} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="end">
           {maxMz.toFixed(0)}
         </text>
-        <text x={margin.left + plotW / 2} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="middle">
+        <text x={margin.left + plotW / 2} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="middle">
           m/z
         </text>
         {mz.map((m, i) => {
@@ -106,7 +106,7 @@ function SpectrumPlot({
           const h = (intensity[i] / maxInt) * plotH;
           return (
             <line key={i} x1={x} y1={margin.top + plotH} x2={x} y2={margin.top + plotH - h}
-              stroke="#3b82f6" strokeWidth={1} />
+              stroke="#5ebad4" strokeWidth={1} />
           );
         })}
       </svg>
@@ -126,8 +126,8 @@ function ProfilePlot({
 }) {
   if (!x.length) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-        No data
+      <div className="h-full flex items-center justify-center">
+        <span className="metric-pill">No data</span>
       </div>
     );
   }
@@ -154,26 +154,26 @@ function ProfilePlot({
   return (
     <div className="h-full relative">
       <svg className="w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
-        <text x={margin.left + plotW / 2} y={12} fill="#9ca3af" fontSize={10} textAnchor="middle">
+        <text x={margin.left + plotW / 2} y={12} fill="#9db5d8" fontSize={10} textAnchor="middle">
           {title}
         </text>
-        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#1f2937" />
-        <line x1={margin.left} y1={margin.top} x2={margin.left} y2={margin.top + plotH} stroke="#4b5563" strokeWidth={1} />
-        <text x={margin.left - 3} y={margin.top + 8} fill="#6b7280" fontSize={7} textAnchor="end">
+        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#12253c" />
+        <line x1={margin.left} y1={margin.top} x2={margin.left} y2={margin.top + plotH} stroke="#436286" strokeWidth={1} />
+        <text x={margin.left - 3} y={margin.top + 8} fill="#7f9fc8" fontSize={7} textAnchor="end">
           {formatAxisValue(maxY)}
         </text>
-        <text x={10} y={margin.top + plotH / 2} fill="#6b7280" fontSize={7} textAnchor="middle"
+        <text x={10} y={margin.top + plotH / 2} fill="#7f9fc8" fontSize={7} textAnchor="middle"
           transform={`rotate(-90, 10, ${margin.top + plotH / 2})`}>
           {yLabel}
         </text>
-        <line x1={margin.left} y1={margin.top + plotH} x2={margin.left + plotW} y2={margin.top + plotH} stroke="#4b5563" strokeWidth={1} />
-        <text x={margin.left} y={height - 5} fill="#6b7280" fontSize={7} textAnchor="start">
+        <line x1={margin.left} y1={margin.top + plotH} x2={margin.left + plotW} y2={margin.top + plotH} stroke="#436286" strokeWidth={1} />
+        <text x={margin.left} y={height - 5} fill="#7f9fc8" fontSize={7} textAnchor="start">
           {formatAxisValue(minX)}
         </text>
-        <text x={margin.left + plotW} y={height - 5} fill="#6b7280" fontSize={7} textAnchor="end">
+        <text x={margin.left + plotW} y={height - 5} fill="#7f9fc8" fontSize={7} textAnchor="end">
           {formatAxisValue(maxX)}
         </text>
-        <text x={margin.left + plotW / 2} y={height - 5} fill="#6b7280" fontSize={7} textAnchor="middle">
+        <text x={margin.left + plotW / 2} y={height - 5} fill="#7f9fc8" fontSize={7} textAnchor="middle">
           {xLabel}
         </text>
         <path d={areaD} fill={color} fillOpacity={0.3} />
@@ -325,8 +325,8 @@ function HeatmapPlot({
 
   if (!grid || !bounds) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-        No data
+      <div className="h-full flex items-center justify-center">
+        <span className="metric-pill">No data</span>
       </div>
     );
   }
@@ -335,22 +335,22 @@ function HeatmapPlot({
     <div className="h-full relative flex flex-col">
       {/* Title bar */}
       <div className="flex-none flex justify-between px-2 py-1">
-        <span className="text-xs text-gray-400">{title}</span>
-        <span className="text-xs text-gray-500">{xData.length.toLocaleString()} pts</span>
+        <span className="text-xs text-slate-300">{title}</span>
+        <span className="text-xs text-slate-400">{xData.length.toLocaleString()} pts</span>
       </div>
 
       {/* Main plot area */}
       <div className="flex-1 flex min-h-0">
         {/* Y axis label (top = max, bottom = min) */}
         <div className="flex-none w-12 flex flex-col justify-between items-end pr-1 py-1">
-          <span className="text-[10px] text-gray-400">{yFormat(bounds.maxY)}</span>
+          <span className="text-[10px] text-slate-300">{yFormat(bounds.maxY)}</span>
           <span
-            className="text-[10px] text-gray-400 origin-center"
+            className="text-[10px] text-slate-300 origin-center"
             style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
           >
             {yLabel}
           </span>
-          <span className="text-[10px] text-gray-400">{yFormat(bounds.minY)}</span>
+          <span className="text-[10px] text-slate-300">{yFormat(bounds.minY)}</span>
         </div>
 
         {/* Canvas container */}
@@ -366,9 +366,9 @@ function HeatmapPlot({
       {/* X axis */}
       <div className="flex-none h-5 flex pl-12 pr-2">
         <div className="flex-1 flex justify-between items-start">
-          <span className="text-[10px] text-gray-400">{xFormat(bounds.minX)}</span>
-          <span className="text-[10px] text-gray-400">{xLabel}</span>
-          <span className="text-[10px] text-gray-400">{xFormat(bounds.maxX)}</span>
+          <span className="text-[10px] text-slate-300">{xFormat(bounds.minX)}</span>
+          <span className="text-[10px] text-slate-300">{xLabel}</span>
+          <span className="text-[10px] text-slate-300">{xFormat(bounds.maxX)}</span>
         </div>
       </div>
     </div>
@@ -378,16 +378,18 @@ function HeatmapPlot({
 export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps) {
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-400">
-        Loading...
+      <div className="h-full flex items-center justify-center">
+        <div className="metric-pill">Loading precursor detail...</div>
       </div>
     );
   }
 
   if (!precursor) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500">
-        Select a precursor to view details
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="chrome-panel px-6 py-4 text-slate-300">
+          Select a precursor to view details
+        </div>
       </div>
     );
   }
@@ -396,45 +398,45 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
   const hasFragmentData = precursor.fragment_mobility && precursor.fragment_mobility.length > 0;
 
   return (
-    <div className="h-full flex flex-col gap-2 p-2">
+    <div className="h-full flex flex-col gap-2 p-2 reveal-up">
       {/* Header */}
-      <div className="flex-none bg-gray-800 rounded p-3">
-        <div className="flex items-center gap-4">
-          <span className="text-lg font-semibold text-white">
+      <div className="flex-none chrome-panel p-3">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <span className="text-lg font-semibold text-slate-100">
             Precursor {precursor.precursor_id}
           </span>
-          <span className="text-gray-400">
-            m/z: <span className="text-white">{precursor.mz.toFixed(4)}</span>
+          <span className="metric-pill">
+            m/z: <span className="metric-value mono">{precursor.mz.toFixed(4)}</span>
           </span>
-          <span className="text-gray-400">
-            z: <span className="text-white">{precursor.charge}+</span>
+          <span className="metric-pill">
+            z: <span className="metric-value">{precursor.charge}+</span>
           </span>
-          <span className="text-gray-400">
-            RT: <span className="text-white">{(precursor.rt_seconds / 60).toFixed(2)} min</span>
+          <span className="metric-pill">
+            RT: <span className="metric-value">{(precursor.rt_seconds / 60).toFixed(2)} min</span>
           </span>
-          <span className="text-gray-400">
-            1/K0: <span className="text-white">{precursor.mobility.toFixed(3)}</span>
+          <span className="metric-pill">
+            1/K0: <span className="metric-value">{precursor.mobility.toFixed(3)}</span>
           </span>
         </div>
-        <div className="mt-2 flex gap-4 text-sm">
-          <div>
-            <span className="text-gray-500">FragPipe: </span>
-            <span className="font-mono text-blue-400">{precursor.fragpipe_modified || precursor.fragpipe_peptide || '-'}</span>
+        <div className="mt-2 flex flex-wrap gap-2 text-xs md:text-sm">
+          <div className="metric-pill">
+            <span className="subtle-label text-[0.62rem] text-[#9fb4d4]">FragPipe</span>
+            <span className="mono text-cyan-200">{precursor.fragpipe_modified || precursor.fragpipe_peptide || '-'}</span>
           </div>
-          <div>
-            <span className="text-gray-500">Sage: </span>
-            <span className="font-mono text-green-400">{precursor.sage_modified || precursor.sage_peptide || '-'}</span>
+          <div className="metric-pill">
+            <span className="subtle-label text-[0.62rem] text-[#9fb4d4]">Sage</span>
+            <span className="mono text-emerald-200">{precursor.sage_modified || precursor.sage_peptide || '-'}</span>
           </div>
-          <div>
-            <span className="text-gray-500">DIA-NN: </span>
-            <span className="font-mono text-purple-400">{precursor.diann_modified || precursor.diann_peptide || '-'}</span>
+          <div className="metric-pill">
+            <span className="subtle-label text-[0.62rem] text-[#9fb4d4]">DIA-NN</span>
+            <span className="mono text-sky-200">{precursor.diann_modified || precursor.diann_peptide || '-'}</span>
           </div>
         </div>
       </div>
 
       {/* Fragment spectrum - full width */}
       {/* Show mirror plot if Sage fragments available, otherwise simple spectrum */}
-      <div className={`flex-none bg-gray-800 rounded overflow-hidden ${precursor.sage_matched_fragments?.length ? 'h-56' : 'h-44'}`}>
+      <div className={`flex-none chrome-panel overflow-hidden ${precursor.sage_matched_fragments?.length ? 'h-56' : 'h-44'}`}>
         {precursor.sage_matched_fragments?.length ? (
           <MirrorSpectrumPlot
             mz={precursor.fragment_mz}
@@ -453,9 +455,9 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
       </div>
 
       {/* Second row: heatmaps */}
-      <div className="flex-1 grid grid-cols-2 gap-2 min-h-0">
+      <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-2 min-h-0">
         {/* Fragment m/z vs 1/K0 heatmap */}
-        <div className="bg-gray-800 rounded overflow-hidden">
+        <div className="chrome-panel overflow-hidden">
           {hasFragmentData ? (
             <HeatmapPlot
               xData={precursor.fragment_mz}
@@ -469,14 +471,14 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
               useDiscreteY={true}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-              No fragment data
+            <div className="h-full flex items-center justify-center">
+              <span className="metric-pill">No fragment data</span>
             </div>
           )}
         </div>
 
         {/* Raw 4D: 1/K0 vs RT heatmap */}
-        <div className="bg-gray-800 rounded overflow-hidden">
+        <div className="chrome-panel overflow-hidden">
           {precursor.raw_rt.length > 0 ? (
             <HeatmapPlot
               xData={precursor.raw_rt.map(rt => rt / 60)}
@@ -491,16 +493,16 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
               useDiscreteY={false}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-              No MS1 data
+            <div className="h-full flex items-center justify-center">
+              <span className="metric-pill">No MS1 data</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Third row: profiles (taller) */}
-      <div className="flex-none h-56 grid grid-cols-3 gap-2">
-        <div className="bg-gray-800 rounded overflow-hidden">
+      <div className="flex-none h-[36rem] lg:h-56 grid grid-cols-1 lg:grid-cols-3 gap-2">
+        <div className="chrome-panel overflow-hidden">
           <ProfilePlot
             x={precursor.xic_rt.map((rt) => rt / 60)}
             y={precursor.xic_intensity}
@@ -510,7 +512,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
             color="#22c55e"
           />
         </div>
-        <div className="bg-gray-800 rounded overflow-hidden">
+        <div className="chrome-panel overflow-hidden">
           <ProfilePlot
             x={precursor.mobilogram_im}
             y={precursor.mobilogram_intensity}
@@ -520,7 +522,7 @@ export default function PrecursorViz({ precursor, isLoading }: PrecursorVizProps
             color="#a855f7"
           />
         </div>
-        <div className="bg-gray-800 rounded overflow-hidden">
+        <div className="chrome-panel overflow-hidden">
           <SpectrumPlot
             mz={precursor.isotope_mz}
             intensity={precursor.isotope_intensity}

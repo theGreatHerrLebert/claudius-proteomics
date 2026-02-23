@@ -4,10 +4,8 @@ import {
   getStudyDatasets,
   loadDataset,
   getCollectionInfo,
-  type StudySummary,
-  type DatasetSummary,
-  type CollectionInfo,
 } from '../api';
+import type { StudySummary, DatasetSummary, CollectionInfo } from '../api';
 
 interface CollectionBrowserProps {
   onDatasetLoaded: (accession: string) => void;
@@ -31,12 +29,12 @@ function QualityBar({ pct }: { pct: number | null }) {
           <div
             key={i}
             className={`w-1.5 h-3 rounded-sm ${
-              i < bars ? 'bg-green-500' : 'bg-gray-700'
+              i < bars ? 'bg-emerald-300' : 'bg-slate-700/80'
             }`}
           />
         ))}
       </div>
-      <span className="text-xs text-gray-400">{p.toFixed(1)}%</span>
+      <span className="text-xs text-slate-300">{p.toFixed(1)}%</span>
     </div>
   );
 }
@@ -51,20 +49,24 @@ function StudyCard({
   return (
     <button
       onClick={onClick}
-      className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-left hover:border-blue-500 hover:bg-gray-750 transition-colors w-full"
+      className="chrome-panel reveal-up p-4 text-left w-full transition-all duration-150 hover:border-cyan-400/55 hover:-translate-y-0.5 hover:shadow-[0_16px_30px_#0410218a]"
     >
       <div className="flex items-start justify-between mb-2">
-        <h3 className="font-semibold text-white truncate flex-1">{study.title}</h3>
+        <h3 className="font-semibold text-slate-100 truncate flex-1">{study.title}</h3>
       </div>
       {study.organism && (
-        <p className="text-sm text-gray-400 italic mb-2">{study.organism}</p>
+        <p className="text-sm text-cyan-200/90 italic mb-2">{study.organism}</p>
       )}
       {study.description && (
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2">{study.description}</p>
+        <p className="text-sm text-slate-400 mb-3 line-clamp-2">{study.description}</p>
       )}
-      <div className="flex items-center gap-4 text-sm text-gray-400">
-        <span>{study.n_datasets} dataset{study.n_datasets !== 1 ? 's' : ''}</span>
-        <span>{formatNumber(study.n_total_precursors)} precursors</span>
+      <div className="flex items-center gap-2 text-sm text-slate-300">
+        <span className="metric-pill">
+          {study.n_datasets} dataset{study.n_datasets !== 1 ? 's' : ''}
+        </span>
+        <span className="metric-pill">
+          {formatNumber(study.n_total_precursors)} precursors
+        </span>
       </div>
     </button>
   );
@@ -80,21 +82,21 @@ function DatasetRow({
   isLoading: boolean;
 }) {
   return (
-    <tr className="border-b border-gray-700 hover:bg-gray-800">
+    <tr className="border-b border-slate-700/45 hover:bg-slate-700/15 transition-colors">
       <td className="px-4 py-3">
-        <span className="font-mono text-blue-400">{dataset.accession}</span>
-        <span className="text-gray-500 text-sm ml-2">v{dataset.version}</span>
+        <span className="mono text-cyan-200">{dataset.accession}</span>
+        <span className="text-slate-400 text-sm ml-2">v{dataset.version}</span>
       </td>
       <td className="px-4 py-3 text-right">
         {formatNumber(dataset.n_precursors)}
       </td>
       <td className="px-4 py-3 text-right">
-        <span className="text-green-400">
+        <span className="text-emerald-300">
           {dataset.n_all_three !== null ? formatNumber(dataset.n_all_three) : '-'}
         </span>
       </td>
       <td className="px-4 py-3 text-right">
-        <span className="text-blue-400">
+        <span className="text-cyan-300">
           {dataset.n_at_least_two !== null ? formatNumber(dataset.n_at_least_two) : '-'}
         </span>
       </td>
@@ -105,7 +107,7 @@ function DatasetRow({
         <button
           onClick={onLoad}
           disabled={isLoading}
-          className="px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white text-sm rounded transition-colors"
+          className="btn-primary"
         >
           {isLoading ? 'Loading...' : 'Open'}
         </button>
@@ -179,7 +181,7 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
   if (loading && !collectionInfo) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-gray-400">Loading collection...</div>
+        <div className="metric-pill">Loading collection...</div>
       </div>
     );
   }
@@ -187,23 +189,23 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
   if (error) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-red-400">Error: {error}</div>
+        <div className="metric-pill border-rose-400/35 text-rose-200">Error: {error}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 max-w-[1240px] mx-auto reveal-up">
       {/* Active dataset banner */}
       {activeDataset && onReturnToDataset && (
         <button
           onClick={onReturnToDataset}
-          className="mb-4 w-full bg-blue-900/40 border border-blue-700 rounded-lg px-4 py-3 flex items-center justify-between hover:bg-blue-900/60 transition-colors"
+          className="chrome-panel mb-4 w-full px-4 py-3 flex items-center justify-between hover:border-cyan-400/55 transition-colors"
         >
-          <span className="text-sm text-gray-300">
-            Currently viewing: <span className="font-mono text-blue-400 font-medium">{activeDataset}</span>
+          <span className="text-sm text-slate-200">
+            Currently viewing: <span className="mono text-cyan-200 font-medium">{activeDataset}</span>
           </span>
-          <span className="text-sm text-blue-400 flex items-center gap-1">
+          <span className="text-sm text-cyan-300 flex items-center gap-1">
             Return to dataset <span>&rarr;</span>
           </span>
         </button>
@@ -215,33 +217,34 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
           {selectedStudy && (
             <button
               onClick={() => setSelectedStudy(null)}
-              className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
+              className="btn-secondary flex items-center gap-1"
             >
               <span>&larr;</span>
               <span>Back</span>
             </button>
           )}
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl md:text-3xl font-semibold text-slate-100 tracking-tight">
             {selectedStudy ? selectedStudy.title : 'San Jose Collection'}
           </h1>
         </div>
         {!selectedStudy && collectionInfo && (
-          <p className="text-gray-400">
-            {collectionInfo.n_studies} studies, {collectionInfo.n_datasets} datasets,{' '}
-            {formatNumber(collectionInfo.n_total_precursors)} total precursors
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="metric-pill">{collectionInfo.n_studies} studies</span>
+            <span className="metric-pill">{collectionInfo.n_datasets} datasets</span>
+            <span className="metric-pill">{formatNumber(collectionInfo.n_total_precursors)} precursors</span>
+          </div>
         )}
         {selectedStudy && (
           <>
             {selectedStudy.organism && (
-              <p className="text-gray-400 italic">{selectedStudy.organism}</p>
+              <p className="text-slate-300 italic">{selectedStudy.organism}</p>
             )}
             {selectedStudy.publication && (
               <a
                 href={selectedStudy.publication}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline text-sm"
+                className="text-cyan-300 hover:text-cyan-100 underline decoration-cyan-400/40 text-sm"
               >
                 View Publication
               </a>
@@ -253,7 +256,7 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
       {/* Content */}
       {!selectedStudy ? (
         // Studies grid
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {studies.map((study) => (
             <StudyCard
               key={study.id}
@@ -262,16 +265,16 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
             />
           ))}
           {studies.length === 0 && (
-            <div className="col-span-full text-center text-gray-500 py-12">
+            <div className="col-span-full text-center text-slate-400 py-12 chrome-panel">
               No studies found in this collection.
             </div>
           )}
         </div>
       ) : (
         // Datasets table
-        <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
-          <table className="w-full">
-            <thead className="bg-gray-900 text-gray-400 text-sm">
+        <div className="chrome-panel overflow-hidden">
+          <table className="data-table">
+            <thead className="text-sm">
               <tr>
                 <th className="px-4 py-3 text-left">Accession</th>
                 <th className="px-4 py-3 text-right">Precursors</th>
@@ -281,7 +284,7 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="text-gray-200">
+            <tbody className="text-slate-200">
               {datasets.map((dataset) => (
                 <DatasetRow
                   key={dataset.accession}
@@ -292,7 +295,7 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
               ))}
               {datasets.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
                     No datasets found in this study.
                   </td>
                 </tr>

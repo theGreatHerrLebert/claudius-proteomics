@@ -1,7 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --bg-0: #040a14;
+  --bg-1: #091427;
+  --surface-1: #121f35cc;
+  --surface-2: #192a44cc;
+  --surface-3: #0f1a2d;
+  --border-1: #2a4368;
+  --border-2: #1f3658;
+  --text-1: #e5edf8;
+  --text-2: #afc0db;
+  --text-3: #7f94b8;
+  --accent-1: #52bad8;
+  --accent-2: #8dd6e8;
+  --success-1: #69da9e;
+  --warning-1: #ffcd78;
+  --danger-1: #ff8f8f;
+  --mono: "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
+  --sans: "IBM Plex Sans", "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+
+  font-family: var(--sans);
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -14,8 +32,204 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  color: var(--text-1);
+  background:
+    radial-gradient(circle at 12% 4%, #1f43631f 0%, transparent 36%),
+    radial-gradient(circle at 88% 0%, #1f667d2e 0%, transparent 30%),
+    radial-gradient(circle at 50% 100%, #13334d42 0%, transparent 35%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
 }
 
 #root {
   min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+  color: var(--text-1);
+  background: transparent;
+}
+
+.chrome-header {
+  border-bottom: 1px solid var(--border-2);
+  background: color-mix(in srgb, var(--surface-2) 78%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.chrome-panel {
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
+  box-shadow:
+    inset 0 1px 0 #ffffff14,
+    0 12px 28px #01081455;
+}
+
+.subtle-label {
+  color: var(--text-3);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: #0f2138c9;
+  color: var(--text-2);
+  padding: 0.22rem 0.72rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.metric-value {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.control-label {
+  color: var(--text-3);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.control-select {
+  background: #0f223acc;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  color: var(--text-1);
+  font-size: 0.85rem;
+  padding: 0.38rem 0.65rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--accent-1);
+  box-shadow: 0 0 0 2px #52bad833;
+}
+
+.control-check {
+  color: var(--text-2);
+  font-size: 0.82rem;
+}
+
+.control-check input {
+  accent-color: #63cbde;
+}
+
+.btn-secondary {
+  border: 1px solid var(--border-1);
+  background: #0e2138;
+  color: var(--text-2);
+  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all 120ms ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: #3f6594;
+  color: var(--text-1);
+}
+
+.btn-primary {
+  border: 1px solid #5bbfd5;
+  background: linear-gradient(180deg, #4a9ab1 0%, #2f7186 100%);
+  color: #f7fcff;
+  border-radius: 10px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: all 140ms ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 0 0 2px #66cbde2d;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border-1);
+  border-top: 1px solid #ffffff08;
+  background: #132640;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.data-table td {
+  color: #d8e4f6;
+  border-bottom: 1px solid #2e42620f;
+}
+
+.split-handle {
+  background: linear-gradient(180deg, #1f3654 0%, #1a2f4b 100%);
+  border-left: 1px solid var(--border-2);
+  border-right: 1px solid var(--border-2);
+}
+
+.split-handle:hover {
+  background: linear-gradient(180deg, #29537b 0%, #224565 100%);
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.status-good {
+  color: var(--success-1);
+}
+
+.status-warn {
+  color: var(--warning-1);
+}
+
+.status-bad {
+  color: var(--danger-1);
+}
+
+.surface-grid {
+  background-image:
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: center;
+}
+
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-up {
+  animation: revealUp 320ms ease-out;
 }
