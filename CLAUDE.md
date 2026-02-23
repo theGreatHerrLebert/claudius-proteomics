@@ -48,6 +48,15 @@ snakemake train_model --config snapshot=v1.0 model=ccs_v1 --cores 16
 
 # HPC execution (Mogon2 SLURM)
 snakemake add_all_datasets --profile profiles/mogon2
+
+# Smoke test (simulated data, full pipeline + ground truth validation)
+.venv/bin/python scripts/smoke_test_setup.py          # One-time: generate 3 simulated .d files (~20 min)
+.venv/bin/python scripts/smoke_test_setup.py --check   # Check if simulations exist
+.venv/bin/python scripts/smoke_test.py                 # Full pipeline + validation report
+.venv/bin/python scripts/smoke_test.py --validate-only # Validate existing outputs only
+.venv/bin/python scripts/smoke_test.py --skip-package  # Skip step 6
+.venv/bin/python scripts/smoke_test.py --clean         # Clean outputs, keep sims + DIA-NN lib
+.venv/bin/python scripts/smoke_test.py --clean-all     # Clean all outputs (keep sims)
 ```
 
 ## Local Development Setup
