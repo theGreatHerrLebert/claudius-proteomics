@@ -57,6 +57,7 @@ def update_workflow(
     # FDR-related settings to override for San José (report ALL results)
     fdr_overrides = {
         'msfragger.report-fdr': '1.0',
+        'percolator.min-prob': '0.0',
         'percolator.protein-level-fdr-cutoff': '1.0',
         'percolator.peptide-level-fdr-cutoff': '1.0',
         'percolator.psm-level-fdr-cutoff': '1.0',
@@ -68,6 +69,8 @@ def update_workflow(
         'filter.psm-fdr': '1.0',
         'ptmprophet.fdr': '1.0',
     }
+
+    applied_overrides = set()
 
     for line in lines:
         line = line.rstrip('\n')
@@ -86,10 +89,17 @@ def update_workflow(
             key = line.split('=')[0] if '=' in line else None
             if key and key in fdr_overrides:
                 updated_lines.append(f'{key}={fdr_overrides[key]}')
+                applied_overrides.add(key)
             else:
                 updated_lines.append(line)
         else:
             updated_lines.append(line)
+
+    # Append any FDR overrides not already in the base workflow
+    if disable_fdr_filter:
+        for key, value in fdr_overrides.items():
+            if key not in applied_overrides:
+                updated_lines.append(f'{key}={value}')
 
     # Add database path if not found
     if not found_db_path:
