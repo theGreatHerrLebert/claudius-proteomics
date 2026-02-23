@@ -165,7 +165,7 @@ function OverlapVisualCard({
   const uniqueBWidth = `${Math.max((uniqueB / union) * 100, uniqueB > 0 ? 2 : 0)}%`;
 
   return (
-    <div className="border border-[#25415f] rounded-lg p-3 bg-slate-950/25">
+    <div className="panel-inset p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="control-label">{title}</div>
         <div className="metric-pill">Jaccard <span className="metric-value mono">{formatPercent(jaccard)}</span></div>
@@ -508,6 +508,7 @@ function DatasetView({
   const [datasetCompareEnabled, setDatasetCompareEnabled] = useState(initialUrlState.datasetCompareEnabled);
   const [datasetCompareTarget, setDatasetCompareTarget] = useState<string | null>(initialUrlState.datasetCompareTarget);
   const [overlapFocusMode, setOverlapFocusMode] = useState<OverlapFocusMode>(initialUrlState.overlapFocusMode);
+  const [showAdvancedControls, setShowAdvancedControls] = useState(false);
 
   // Handle resize drag
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -681,6 +682,12 @@ function DatasetView({
       if (overlapFocusMode !== 'all') setOverlapFocusMode('all');
     }
   }, [datasetCompareEnabled, datasetCompareTarget, overlapFocusMode]);
+
+  useEffect(() => {
+    if (subView !== 'browse' && showAdvancedControls) {
+      setShowAdvancedControls(false);
+    }
+  }, [subView, showAdvancedControls]);
 
   useEffect(() => {
     const matching = savedViews.find(
@@ -896,284 +903,301 @@ function DatasetView({
   return (
     <div className="app-shell h-screen flex flex-col">
       {/* Header */}
-      <header className="chrome-header flex-none px-3 py-2 md:px-4 md:py-3 flex flex-wrap items-center gap-2 md:gap-4">
-        <Breadcrumb
-          mode="dataset"
-          activeDataset={activeDataset}
-          onNavigateToCollection={onNavigateToCollection}
-        />
+      <header className="chrome-header flex-none px-3 py-2 md:px-4 md:py-3">
+        <div className="toolbar-lane">
+          <Breadcrumb
+            mode="dataset"
+            activeDataset={activeDataset}
+            onNavigateToCollection={onNavigateToCollection}
+          />
 
-        {stats && (
-          <div className="flex items-center gap-2 text-sm reveal-up">
-            <span className="metric-pill">
-              Precursors <span className="metric-value">{stats.total_precursors.toLocaleString()}</span>
-            </span>
-            <span className="metric-pill">
-              m/z <span className="metric-value">{stats.mz_range[0].toFixed(0)}-{stats.mz_range[1].toFixed(0)}</span>
-            </span>
-          </div>
-        )}
-
-        {/* Summary / Browse tab toggle */}
-        <div className="flex items-center rounded-xl border border-[#2a4368] bg-[#0f2036cc] overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setSubView('summary')}
-            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-              subView === 'summary'
-                ? 'bg-cyan-700/40 text-cyan-100 border-r border-[#2a4368]'
-                : 'text-slate-400 hover:text-slate-200 border-r border-[#2a4368]'
-            }`}
-          >
-            Summary
-          </button>
-          <button
-            type="button"
-            onClick={() => setSubView('browse')}
-            className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-              subView === 'browse'
-                ? 'bg-cyan-700/40 text-cyan-100'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Browse
-          </button>
-        </div>
-
-        {/* Filters */}
-        <div className={`flex flex-wrap items-center gap-2 ml-auto ${subView === 'summary' ? 'hidden' : ''}`}>
-          <div className="flex items-center gap-2 rounded-xl border border-[#2a4368] bg-[#0f2036cc] px-2 py-1">
-            <span className="control-label">Views</span>
-            <select
-              value={viewSelectorValue}
-              onChange={(e) => {
-                const id = e.target.value;
-                if (id === '__default__') {
-                  handleResetToDefaultView();
-                  return;
-                }
-                if (!id) {
-                  setSelectedViewId('');
-                  return;
-                }
-                handleApplySavedView(id);
-              }}
-              className="control-select max-w-[180px]"
-            >
-              <option value="__default__">Default (Single)</option>
-              <option value="">Custom</option>
-              {savedViews.map((view) => (
-                <option key={view.id} value={view.id}>
-                  {view.name}
-                </option>
-              ))}
-            </select>
-            <button onClick={handleResetToDefaultView} className="btn-secondary" type="button">
-              Reset
-            </button>
-            <button onClick={handleSaveView} className="btn-secondary" type="button">
-              Save
-            </button>
-            <button
-              onClick={handleDeleteView}
-              disabled={!selectedViewId}
-              className="btn-secondary"
-              type="button"
-            >
-              Delete
-            </button>
-            <button onClick={handleCopyLink} className="btn-secondary" type="button">
-              {linkCopyState === 'copied' ? 'Copied' : linkCopyState === 'failed' ? 'Retry' : 'Copy Link'}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-[#2a4368] bg-[#0f2036cc] px-2 py-1">
-            <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
-              <input
-                type="checkbox"
-                checked={compareEnabled}
-                onChange={(e) => setCompareEnabled(e.target.checked)}
-                className="rounded border-slate-500/70 bg-slate-900/80"
-              />
-              <span>Compare</span>
-            </label>
-            <button
-              onClick={handleSetCurrentAsCompare}
-              disabled={selectedId === null}
-              className="btn-secondary"
-              type="button"
-            >
-              Set Current as B
-            </button>
-            <select
-              value={buildCompareKey(compareTarget)}
-              onChange={(e) => setCompareTarget(parseCompareKey(e.target.value))}
-              disabled={!compareEnabled}
-              className="control-select max-w-[210px]"
-            >
-              <option value="">B precursor</option>
-              {compareOptions.map((target) => (
-                <option key={buildCompareKey(target)} value={buildCompareKey(target)}>
-                  #{target.id} {target.rawFile ? `(${target.rawFile.slice(-16)})` : ''}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setCompareTarget(null)}
-              disabled={!compareEnabled || compareTarget === null}
-              className="btn-secondary"
-              type="button"
-            >
-              Clear
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-[#2a4368] bg-[#0f2036cc] px-2 py-1">
-            <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
-              <input
-                type="checkbox"
-                checked={datasetCompareEnabled}
-                onChange={(e) => setDatasetCompareEnabled(e.target.checked)}
-                className="rounded border-slate-500/70 bg-slate-900/80"
-                disabled={!activeDataset}
-              />
-              <span>Dataset Compare</span>
-            </label>
-            <select
-              value={datasetCompareTarget ?? ''}
-              onChange={(e) => setDatasetCompareTarget(e.target.value || null)}
-              disabled={!datasetCompareEnabled || !activeDataset}
-              className="control-select max-w-[220px]"
-            >
-              <option value="">B dataset</option>
-              {datasetCompareOptions.map((accession) => (
-                <option key={accession} value={accession}>
-                  {accession}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setDatasetCompareTarget(null)}
-              disabled={!datasetCompareEnabled || datasetCompareTarget === null}
-              className="btn-secondary"
-              type="button"
-            >
-              Clear
-            </button>
-          </div>
-
-          <label className="flex items-center gap-2 text-sm">
-            <span className="control-label">Engines</span>
-            <select
-              value={filters.maxEngines === 0 ? 'unid' : (filters.minEngines > 0 ? `min${filters.minEngines}` : 'all')}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'unid') {
-                  setFilters({ ...filters, minEngines: 0, maxEngines: 0 });
-                } else if (val === 'all') {
-                  setFilters({ ...filters, minEngines: 0, maxEngines: undefined });
-                } else {
-                  setFilters({ ...filters, minEngines: Number(val.slice(3)), maxEngines: undefined });
-                }
-                setPage(0);
-              }}
-              className="control-select"
-            >
-              <option value="all">All</option>
-              <option value="unid">Unidentified (0)</option>
-              <option value="min1">≥1</option>
-              <option value="min2">≥2</option>
-              <option value="min3">3 only</option>
-            </select>
-          </label>
-
-          <label className="flex items-center gap-2 text-sm">
-            <span className="control-label">Charge</span>
-            <select
-              value={filters.charge ?? ''}
-              onChange={(e) => {
-                setFilters({
-                  ...filters,
-                  charge: e.target.value ? Number(e.target.value) : undefined,
-                });
-                setPage(0);
-              }}
-              className="control-select"
-            >
-              <option value="">All</option>
-              <option value={1}>1+</option>
-              <option value={2}>2+</option>
-              <option value={3}>3+</option>
-              <option value={4}>4+</option>
-              <option value={5}>5+</option>
-            </select>
-          </label>
-
-          {rawFiles && rawFiles.length > 1 && (
-            <label className="flex items-center gap-2 text-sm">
-              <span className="control-label">File</span>
-              <select
-                value={filters.rawFile ?? ''}
-                onChange={(e) => {
-                  setFilters({
-                    ...filters,
-                    rawFile: e.target.value || undefined,
-                  });
-                  setPage(0);
-                }}
-                className="control-select max-w-[220px]"
-              >
-                <option value="">All files</option>
-                {rawFiles.map((f) => (
-                  <option key={f.name} value={f.name}>
-                    {f.name.slice(-30)} ({f.count.toLocaleString()})
-                  </option>
-                ))}
-              </select>
-            </label>
+          {stats && (
+            <div className="flex items-center gap-2 text-sm reveal-up">
+              <span className="metric-pill">
+                Precursors <span className="metric-value">{stats.total_precursors.toLocaleString()}</span>
+              </span>
+              <span className="metric-pill">
+                m/z <span className="metric-value">{stats.mz_range[0].toFixed(0)}-{stats.mz_range[1].toFixed(0)}</span>
+              </span>
+            </div>
           )}
 
-          <label className="flex items-center gap-2 text-sm">
-            <span className="control-label">Sort</span>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="control-select"
+          <div className="segmented-toggle ml-auto">
+            <button
+              type="button"
+              onClick={() => setSubView('summary')}
+              className={subView === 'summary' ? 'active' : ''}
             >
-              <option value="n_engines">Engines</option>
-              <option value="raw_intensity_meta">Intensity</option>
-              <option value="mz">m/z</option>
-              <option value="rt_seconds">RT</option>
-              <option value="precursor_id">ID</option>
-            </select>
-          </label>
-
-          <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1">
-            <input
-              type="checkbox"
-              checked={filters.hasMs1}
-              onChange={(e) => {
-                setFilters({ ...filters, hasMs1: e.target.checked });
-                setPage(0);
-              }}
-              className="rounded border-slate-500/70 bg-slate-900/80"
-            />
-            <span>MS1 data</span>
-          </label>
-
-          <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1">
-            <input
-              type="checkbox"
-              checked={filters.hasRawData}
-              onChange={(e) => {
-                setFilters({ ...filters, hasRawData: e.target.checked });
-                setPage(0);
-              }}
-              className="rounded border-slate-500/70 bg-slate-900/80"
-            />
-            <span>Raw data</span>
-          </label>
+              Summary
+            </button>
+            <button
+              type="button"
+              onClick={() => setSubView('browse')}
+              className={subView === 'browse' ? 'active' : ''}
+            >
+              Browse
+            </button>
+          </div>
         </div>
+
+        {subView === 'browse' && (
+          <div className="toolbar-stack mt-2 md:mt-3 reveal-up">
+            <div className="toolbar-lane">
+              <div className="toolbar-cluster toolbar-cluster--accent">
+                <div className="toolbar-field">
+                  <span className="toolbar-label">View</span>
+                  <select
+                    value={viewSelectorValue}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      if (id === '__default__') {
+                        handleResetToDefaultView();
+                        return;
+                      }
+                      if (!id) {
+                        setSelectedViewId('');
+                        return;
+                      }
+                      handleApplySavedView(id);
+                    }}
+                    className="control-select max-w-[180px]"
+                  >
+                    <option value="__default__">Default (Single)</option>
+                    <option value="">Custom</option>
+                    {savedViews.map((view) => (
+                      <option key={view.id} value={view.id}>
+                        {view.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button onClick={handleResetToDefaultView} className="btn-secondary" type="button">
+                  Reset
+                </button>
+                <button onClick={handleSaveView} className="btn-secondary" type="button">
+                  Save
+                </button>
+                <button
+                  onClick={handleDeleteView}
+                  disabled={!selectedViewId}
+                  className="btn-secondary"
+                  type="button"
+                >
+                  Delete
+                </button>
+                <button onClick={handleCopyLink} className="btn-secondary" type="button">
+                  {linkCopyState === 'copied' ? 'Copied' : linkCopyState === 'failed' ? 'Retry' : 'Copy Link'}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className="btn-secondary md:hidden ml-auto"
+                onClick={() => setShowAdvancedControls((prev) => !prev)}
+                aria-expanded={showAdvancedControls}
+              >
+                {showAdvancedControls ? 'Hide filters' : 'More filters'}
+              </button>
+            </div>
+
+            <div className={`${showAdvancedControls ? 'block' : 'hidden'} md:block space-y-[0.55rem]`}>
+              <div className="toolbar-lane">
+                <div className="toolbar-cluster">
+                  <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                    <input
+                      type="checkbox"
+                      checked={compareEnabled}
+                      onChange={(e) => setCompareEnabled(e.target.checked)}
+                      className="rounded border-slate-500/70 bg-slate-900/80"
+                    />
+                    <span>Precursor Compare</span>
+                  </label>
+                  <button
+                    onClick={handleSetCurrentAsCompare}
+                    disabled={selectedId === null}
+                    className="btn-secondary"
+                    type="button"
+                  >
+                    Set Current as B
+                  </button>
+                  <select
+                    value={buildCompareKey(compareTarget)}
+                    onChange={(e) => setCompareTarget(parseCompareKey(e.target.value))}
+                    disabled={!compareEnabled}
+                    className="control-select max-w-[210px]"
+                  >
+                    <option value="">B precursor</option>
+                    {compareOptions.map((target) => (
+                      <option key={buildCompareKey(target)} value={buildCompareKey(target)}>
+                        #{target.id} {target.rawFile ? `(${target.rawFile.slice(-16)})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setCompareTarget(null)}
+                    disabled={!compareEnabled || compareTarget === null}
+                    className="btn-secondary"
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <div className="toolbar-cluster">
+                  <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                    <input
+                      type="checkbox"
+                      checked={datasetCompareEnabled}
+                      onChange={(e) => setDatasetCompareEnabled(e.target.checked)}
+                      className="rounded border-slate-500/70 bg-slate-900/80"
+                      disabled={!activeDataset}
+                    />
+                    <span>Dataset Compare</span>
+                  </label>
+                  <select
+                    value={datasetCompareTarget ?? ''}
+                    onChange={(e) => setDatasetCompareTarget(e.target.value || null)}
+                    disabled={!datasetCompareEnabled || !activeDataset}
+                    className="control-select max-w-[220px]"
+                  >
+                    <option value="">B dataset</option>
+                    {datasetCompareOptions.map((accession) => (
+                      <option key={accession} value={accession}>
+                        {accession}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setDatasetCompareTarget(null)}
+                    disabled={!datasetCompareEnabled || datasetCompareTarget === null}
+                    className="btn-secondary"
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div className="toolbar-lane">
+                <div className="toolbar-cluster">
+                  <label className="toolbar-field text-sm">
+                    <span className="toolbar-label">Engines</span>
+                    <select
+                      value={filters.maxEngines === 0 ? 'unid' : (filters.minEngines > 0 ? `min${filters.minEngines}` : 'all')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'unid') {
+                          setFilters({ ...filters, minEngines: 0, maxEngines: 0 });
+                        } else if (val === 'all') {
+                          setFilters({ ...filters, minEngines: 0, maxEngines: undefined });
+                        } else {
+                          setFilters({ ...filters, minEngines: Number(val.slice(3)), maxEngines: undefined });
+                        }
+                        setPage(0);
+                      }}
+                      className="control-select"
+                    >
+                      <option value="all">All</option>
+                      <option value="unid">Unidentified (0)</option>
+                      <option value="min1">≥1</option>
+                      <option value="min2">≥2</option>
+                      <option value="min3">3 only</option>
+                    </select>
+                  </label>
+
+                  <label className="toolbar-field text-sm">
+                    <span className="toolbar-label">Charge</span>
+                    <select
+                      value={filters.charge ?? ''}
+                      onChange={(e) => {
+                        setFilters({
+                          ...filters,
+                          charge: e.target.value ? Number(e.target.value) : undefined,
+                        });
+                        setPage(0);
+                      }}
+                      className="control-select"
+                    >
+                      <option value="">All</option>
+                      <option value={1}>1+</option>
+                      <option value={2}>2+</option>
+                      <option value={3}>3+</option>
+                      <option value={4}>4+</option>
+                      <option value={5}>5+</option>
+                    </select>
+                  </label>
+
+                  {rawFiles && rawFiles.length > 1 && (
+                    <label className="toolbar-field text-sm">
+                      <span className="toolbar-label">File</span>
+                      <select
+                        value={filters.rawFile ?? ''}
+                        onChange={(e) => {
+                          setFilters({
+                            ...filters,
+                            rawFile: e.target.value || undefined,
+                          });
+                          setPage(0);
+                        }}
+                        className="control-select max-w-[220px]"
+                      >
+                        <option value="">All files</option>
+                        {rawFiles.map((f) => (
+                          <option key={f.name} value={f.name}>
+                            {f.name.slice(-30)} ({f.count.toLocaleString()})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  <label className="toolbar-field text-sm">
+                    <span className="toolbar-label">Sort</span>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                      className="control-select"
+                    >
+                      <option value="n_engines">Engines</option>
+                      <option value="raw_intensity_meta">Intensity</option>
+                      <option value="mz">m/z</option>
+                      <option value="rt_seconds">RT</option>
+                      <option value="precursor_id">ID</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="toolbar-cluster">
+                  <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                    <input
+                      type="checkbox"
+                      checked={filters.hasMs1}
+                      onChange={(e) => {
+                        setFilters({ ...filters, hasMs1: e.target.checked });
+                        setPage(0);
+                      }}
+                      className="rounded border-slate-500/70 bg-slate-900/80"
+                    />
+                    <span>MS1 data</span>
+                  </label>
+
+                  <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                    <input
+                      type="checkbox"
+                      checked={filters.hasRawData}
+                      onChange={(e) => {
+                        setFilters({ ...filters, hasRawData: e.target.checked });
+                        setPage(0);
+                      }}
+                      className="rounded border-slate-500/70 bg-slate-900/80"
+                    />
+                    <span>Raw data</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="flex-1 min-h-0 flex flex-col">
@@ -1236,8 +1260,8 @@ function DatasetView({
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
-                <div className="border border-[#25415f] rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 bg-slate-950/25 border-b border-[#25415f] flex items-center justify-between">
+                <div className="panel-inset">
+                  <div className="panel-inset-head">
                     <span className="control-label">Dataset A</span>
                     <span className="mono text-xs text-slate-300">{activeDataset ?? '-'}</span>
                   </div>
@@ -1253,8 +1277,8 @@ function DatasetView({
                   </table>
                 </div>
 
-                <div className="border border-[#25415f] rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 bg-slate-950/25 border-b border-[#25415f] flex items-center justify-between">
+                <div className="panel-inset">
+                  <div className="panel-inset-head">
                     <span className="control-label">Dataset B</span>
                     <span className="mono text-xs text-slate-300">{datasetCompareTarget ?? '-'}</span>
                   </div>
@@ -1385,8 +1409,8 @@ function DatasetView({
                 </div>
 
                 <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-2 gap-2 p-2 overflow-auto">
-                  <div className="chrome-panel flex flex-col min-h-[34rem] xl:min-h-0 overflow-hidden">
-                    <div className="flex-none px-3 py-2 border-b border-[#25415f] bg-slate-950/25 flex items-center justify-between gap-2">
+                  <div className="panel-inset flex flex-col min-h-[34rem] xl:min-h-0">
+                    <div className="panel-inset-head">
                       <span className="control-label">A / Current Selection</span>
                       {selectedId !== null && (
                         <span className="mono text-xs text-slate-300">
@@ -1399,8 +1423,8 @@ function DatasetView({
                     </div>
                   </div>
 
-                  <div className="chrome-panel flex flex-col min-h-[34rem] xl:min-h-0 overflow-hidden">
-                    <div className="flex-none px-3 py-2 border-b border-[#25415f] bg-slate-950/25 flex items-center justify-between gap-2">
+                  <div className="panel-inset flex flex-col min-h-[34rem] xl:min-h-0">
+                    <div className="panel-inset-head">
                       <span className="control-label">B / Comparison</span>
                       {compareTarget && (
                         <span className="mono text-xs text-slate-300">

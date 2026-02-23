@@ -96,7 +96,7 @@ function EngineAgreementCard({
               const psms = engines[e.key] ?? 0;
               const peps = uniquePeptides?.[e.key];
               return (
-                <div key={e.key} className="border border-[#25415f] rounded-lg p-2 bg-slate-950/25">
+                <div key={e.key} className="panel-inset p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: e.color }}>{e.label}</div>
                   <div className="mono text-sm text-[#8dd6e8]">{fmtNum(psms)}</div>
                   <div className="text-[10px] text-slate-400">PSMs</div>
@@ -241,19 +241,19 @@ function DataSpaceCard({ summary }: { summary: DatasetFullSummary }) {
     <div className="space-y-2.5">
       {/* Ranges */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="border border-[#25415f] rounded-lg p-2 bg-slate-950/25">
+        <div className="panel-inset p-2">
           <div className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">m/z</div>
           <div className="mono text-sm text-[#8dd6e8]">{fmtRange(summary.mz_range)}</div>
         </div>
-        <div className="border border-[#25415f] rounded-lg p-2 bg-slate-950/25">
+        <div className="panel-inset p-2">
           <div className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">RT (min)</div>
           <div className="mono text-sm text-[#8dd6e8]">{fmtRange(summary.rt_range_minutes)}</div>
         </div>
-        <div className="border border-[#25415f] rounded-lg p-2 bg-slate-950/25">
+        <div className="panel-inset p-2">
           <div className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">1/K0</div>
           <div className="mono text-sm text-[#8dd6e8]">{fmtRange(summary.mobility_range, 3)}</div>
         </div>
-        <div className="border border-[#25415f] rounded-lg p-2 bg-slate-950/25">
+        <div className="panel-inset p-2">
           <div className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">CE (eV)</div>
           <div className="mono text-sm text-[#8dd6e8]">{fmtRange(summary.collision_energy_range)}</div>
         </div>
@@ -349,10 +349,21 @@ export default function DatasetSummaryPage({ activeDataset, onBrowse }: DatasetS
   return (
     <div className="h-full overflow-y-auto p-4 space-y-3 reveal-up">
       {/* Header */}
-      <div className="chrome-panel p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="chrome-panel overflow-hidden">
+        <div className="panel-inset-head">
           <div className="flex flex-wrap items-center gap-2">
+            <span className="control-label">Dataset Summary</span>
             <h2 className="text-lg font-bold tracking-tight">{accession}</h2>
+          </div>
+          <button onClick={onBrowse} className="btn-primary">
+            Browse Precursors &rarr;
+          </button>
+        </div>
+        <div className="p-3">
+          <div className="toolbar-lane">
+            <span className="metric-pill text-sm">
+              Total Precursors <span className="metric-value text-base">{fmtNum(summary.n_total_precursors)}</span>
+            </span>
             {summary.organism && (
               <span className="metric-pill">
                 <span className="subtle-label text-[0.6rem]">Organism</span>
@@ -384,50 +395,58 @@ export default function DatasetSummaryPage({ activeDataset, onBrowse }: DatasetS
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="metric-pill text-sm">
-              Total Precursors <span className="metric-value text-base">{fmtNum(summary.n_total_precursors)}</span>
-            </span>
-            <button onClick={onBrowse} className="btn-primary">
-              Browse Precursors &rarr;
-            </button>
-          </div>
         </div>
       </div>
 
       {/* 2x2 Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
         {/* Engine Agreement + Per-Engine + Overlap */}
-        <div className="chrome-panel p-3">
-          <div className="control-label mb-2">Engine Agreement & Identifications</div>
-          <EngineAgreementCard
-            quality={summary.quality_summary}
-            engines={summary.n_per_engine}
-            unidentified={summary.n_unidentified}
-            overlap={summary.overlap_stats}
-            uniquePeptides={summary.n_unique_peptides}
-          />
+        <div className="chrome-panel overflow-hidden">
+          <div className="panel-inset-head">
+            <div className="control-label">Engine Agreement & Identifications</div>
+          </div>
+          <div className="p-3">
+            <EngineAgreementCard
+              quality={summary.quality_summary}
+              engines={summary.n_per_engine}
+              unidentified={summary.n_unidentified}
+              overlap={summary.overlap_stats}
+              uniquePeptides={summary.n_unique_peptides}
+            />
+          </div>
         </div>
 
         {/* Quality Metrics + Distributions */}
-        <div className="chrome-panel p-3">
-          <div className="control-label mb-2">Quality Metrics</div>
-          <QualityMetricsCard
-            quality={summary.quality_summary}
-            distributions={summary.quality_distributions}
-          />
+        <div className="chrome-panel overflow-hidden">
+          <div className="panel-inset-head">
+            <div className="control-label">Quality Metrics</div>
+          </div>
+          <div className="p-3">
+            <QualityMetricsCard
+              quality={summary.quality_summary}
+              distributions={summary.quality_distributions}
+            />
+          </div>
         </div>
 
         {/* Data Space: ranges + charge */}
-        <div className="chrome-panel p-3">
-          <div className="control-label mb-2">Data Space</div>
-          <DataSpaceCard summary={summary} />
+        <div className="chrome-panel overflow-hidden">
+          <div className="panel-inset-head">
+            <div className="control-label">Data Space</div>
+          </div>
+          <div className="p-3">
+            <DataSpaceCard summary={summary} />
+          </div>
         </div>
 
         {/* Raw Files */}
-        <div className="chrome-panel p-3">
-          <div className="control-label mb-2">Raw Files</div>
-          <RawFilesCard summary={summary} />
+        <div className="chrome-panel overflow-hidden">
+          <div className="panel-inset-head">
+            <div className="control-label">Raw Files</div>
+          </div>
+          <div className="p-3">
+            <RawFilesCard summary={summary} />
+          </div>
         </div>
       </div>
     </div>
