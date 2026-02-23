@@ -75,8 +75,19 @@ def extract_im_calibration(d_path: str, verbose: bool = False) -> np.ndarray:
     except Exception as e:
         if verbose:
             print(f"  Warning: Could not extract calibration via SDK: {e}")
-            print("  Returning empty calibration (will use linear interpolation)")
-        return np.array([], dtype=np.float64)
+        im_lookup = None
+
+    # If SDK returned all zeros (common with simulated data where libtimsdata.so
+    # has no calibration coefficients), fall back to no-SDK linear interpolation
+    if im_lookup is None or np.count_nonzero(im_lookup) == 0:
+        if verbose:
+            print("  SDK calibration returned all zeros, falling back to no-SDK mode...")
+        dataset_nosdk = TimsDatasetDDA(str(d_path), in_memory=False, use_bruker_sdk=False)
+        im_lookup = np.array(
+            dataset_nosdk.scan_to_inverse_mobility(1, scans.tolist()), dtype=np.float64
+        )
+        if verbose and np.count_nonzero(im_lookup) > 0:
+            print(f"  No-SDK fallback successful: 1/K0 range {im_lookup.min():.4f} - {im_lookup.max():.4f}")
 
     if verbose:
         print(f"  1/K0 range: {im_lookup.min():.4f} - {im_lookup.max():.4f}")
