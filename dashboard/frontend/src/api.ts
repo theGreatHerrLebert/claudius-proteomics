@@ -171,6 +171,76 @@ export interface CollectionInfo {
   n_total_precursors: number;
 }
 
+export interface EngineOverlapStats {
+  n_fragpipe: number;
+  n_diann: number;
+  n_sage: number;
+  n_all_three: number;
+  n_fp_dn_only: number;
+  n_fp_sg_only: number;
+  n_dn_sg_only: number;
+  n_fragpipe_only: number;
+  n_diann_only: number;
+  n_sage_only: number;
+  n_union: number;
+  n_at_least_two: number;
+  three_way_rate: number;
+  at_least_two_rate: number;
+}
+
+export interface QualitySummaryData {
+  n_0_engines: number;
+  pct_0_engines: number;
+  n_1_engines: number;
+  pct_1_engines: number;
+  n_2_engines: number;
+  pct_2_engines: number;
+  n_3_engines: number;
+  pct_3_engines: number;
+  ms1_rt_r2_mean: number | null;
+  ms1_rt_r2_median: number | null;
+  ms1_im_r2_mean: number | null;
+  ms1_im_r2_median: number | null;
+  isotope_cosim_mean: number | null;
+  isotope_cosim_median: number | null;
+  n_high_quality: number;
+  pct_high_quality: number;
+}
+
+export interface RawFileSummaryData {
+  name: string;
+  count: number;
+}
+
+export interface QualityDistBucket {
+  lower: number;
+  upper: number;
+  count: number;
+  pct: number;
+}
+
+export interface DatasetFullSummary {
+  accession: string | null;
+  pipeline_version: string | null;
+  generated_at: string | null;
+  n_total_precursors: number;
+  n_per_engine: Record<string, number> | null;
+  n_unidentified: number;
+  quality_summary: QualitySummaryData | null;
+  overlap_stats: EngineOverlapStats | null;
+  by_charge: Record<string, number>;
+  mz_range: [number, number] | null;
+  rt_range_minutes: [number, number] | null;
+  mobility_range: [number, number] | null;
+  collision_energy_range: [number, number] | null;
+  raw_files: RawFileSummaryData[];
+  n_unique_peptides: Record<string, number> | null;
+  quality_distributions: Record<string, QualityDistBucket[]> | null;
+  organism: string | null;
+  study_id: string | null;
+  group_id: string | null;
+}
+
 export interface AppStatus {
   status: string;
   mode: 'single' | 'collection';
@@ -262,6 +332,11 @@ export async function getDatasetOverlap(datasetA: string, datasetB: string): Pro
 
 export async function loadDataset(accession: string): Promise<{ status: string; accession: string; path: string; num_precursors: number }> {
   const response = await api.post(`/datasets/${accession}/load`);
+  return response.data;
+}
+
+export async function getDatasetFullSummary(): Promise<DatasetFullSummary> {
+  const response = await api.get('/summary');
   return response.data;
 }
 
