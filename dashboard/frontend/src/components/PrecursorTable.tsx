@@ -45,7 +45,7 @@ function SortIndicator({ column, currentSort, sortDesc }: { column: string; curr
   if (!isSortable) return null;
 
   return (
-    <span className={`ml-1 inline-block ${isActive ? 'text-blue-400' : 'text-gray-600'}`}>
+    <span className={`ml-1 inline-block ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}>
       {isActive ? (sortDesc ? '▼' : '▲') : '⇅'}
     </span>
   );
@@ -73,7 +73,7 @@ export default function PrecursorTable({
           const val = info.getValue();
           // Show last portion for readability
           const short = val && val.length > 20 ? '...' + val.slice(-20) : val;
-          return <span className="text-xs truncate max-w-28 block" title={val}>{short || '-'}</span>;
+          return <span className="text-xs truncate max-w-28 block text-slate-300" title={val}>{short || '-'}</span>;
         },
         size: 130,
       }),
@@ -109,9 +109,9 @@ export default function PrecursorTable({
         header: '#',
         cell: (info) => {
           const n = info.getValue();
-          const colors = ['bg-gray-600', 'bg-yellow-600', 'bg-blue-600', 'bg-green-600'];
+          const colors = ['bg-slate-600', 'bg-amber-600', 'bg-sky-700', 'bg-emerald-700'];
           return (
-            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${colors[n]}`}>
+            <span className={`px-1.5 py-0.5 rounded text-xs font-semibold text-slate-50 ${colors[n]}`}>
               {n}
             </span>
           );
@@ -125,7 +125,7 @@ export default function PrecursorTable({
           const modified = info.getValue();
           const plain = info.row.original.fragpipe_peptide;
           return (
-            <span className="font-mono text-xs truncate max-w-32 block" title={modified || plain || ''}>
+            <span className="mono text-xs truncate max-w-32 block text-cyan-100" title={modified || plain || ''}>
               {modified || plain || '-'}
             </span>
           );
@@ -175,7 +175,7 @@ export default function PrecursorTable({
           const seq = modified || plain || '-';
           return (
             <span
-              className={`font-mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-400/60 line-through decoration-orange-500/40' : ''}`}
+              className={`mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-300/65 line-through decoration-orange-300/40' : 'text-emerald-100'}`}
               title={isCoord ? `${seq} (coordinate match - unreliable)` : seq}
             >
               {seq}
@@ -222,7 +222,7 @@ export default function PrecursorTable({
           const tier = info.getValue();
           if (!tier) return '-';
           const short = tier.replace('SEQUENCE_', 'SEQ_').replace('COORDINATE_', 'COORD_');
-          const color = tier.includes('SEQUENCE') ? 'text-green-400' : tier.includes('COORDINATE') ? 'text-orange-400' : 'text-yellow-400';
+          const color = tier.includes('SEQUENCE') ? 'text-emerald-300' : tier.includes('COORDINATE') ? 'text-orange-300' : 'text-amber-300';
           return <span className={`text-xs ${color}`} title={tier}>{short}</span>;
         },
         size: 80,
@@ -238,7 +238,7 @@ export default function PrecursorTable({
           const seq = modified || plain || '-';
           return (
             <span
-              className={`font-mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-400/60 line-through decoration-orange-500/40' : ''}`}
+              className={`mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-300/65 line-through decoration-orange-300/40' : 'text-sky-100'}`}
               title={isCoord ? `${seq} (coordinate match - unreliable)` : seq}
             >
               {seq}
@@ -277,7 +277,7 @@ export default function PrecursorTable({
           const tier = info.getValue();
           if (!tier) return '-';
           const short = tier.replace('SEQUENCE_', 'SEQ_').replace('COORDINATE_', 'COORD_');
-          const color = tier.includes('SEQUENCE') ? 'text-green-400' : tier.includes('COORDINATE') ? 'text-orange-400' : 'text-yellow-400';
+          const color = tier.includes('SEQUENCE') ? 'text-emerald-300' : tier.includes('COORDINATE') ? 'text-orange-300' : 'text-amber-300';
           return <span className={`text-xs ${color}`} title={tier}>{short}</span>;
         },
         size: 80,
@@ -305,7 +305,7 @@ export default function PrecursorTable({
         cell: (info) => {
           const val = info.getValue();
           if (val === null) return '-';
-          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          const color = val >= 0.9 ? 'status-good' : val >= 0.7 ? 'status-warn' : 'status-bad';
           return <span className={color}>{val.toFixed(2)}</span>;
         },
         size: 55,
@@ -315,7 +315,7 @@ export default function PrecursorTable({
         cell: (info) => {
           const val = info.getValue();
           if (val === null) return '-';
-          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          const color = val >= 0.9 ? 'status-good' : val >= 0.7 ? 'status-warn' : 'status-bad';
           return <span className={color}>{val.toFixed(2)}</span>;
         },
         size: 55,
@@ -325,7 +325,7 @@ export default function PrecursorTable({
         cell: (info) => {
           const val = info.getValue();
           if (val === null) return '-';
-          const color = val >= 0.95 ? 'text-green-400' : val >= 0.85 ? 'text-yellow-400' : 'text-red-400';
+          const color = val >= 0.95 ? 'status-good' : val >= 0.85 ? 'status-warn' : 'status-bad';
           return <span className={color}>{val.toFixed(2)}</span>;
         },
         size: 50,
@@ -335,7 +335,7 @@ export default function PrecursorTable({
         cell: (info) => {
           const val = info.getValue();
           if (val === null || val === undefined) return '-';
-          const color = val >= 0.9 ? 'text-green-400' : val >= 0.7 ? 'text-yellow-400' : 'text-red-400';
+          const color = val >= 0.9 ? 'status-good' : val >= 0.7 ? 'status-warn' : 'status-bad';
           return <span className={color}>{val.toFixed(3)}</span>;
         },
         size: 55,
@@ -358,16 +358,16 @@ export default function PrecursorTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400">
-        Loading precursors...
+      <div className="flex items-center justify-center h-64">
+        <div className="metric-pill">Loading precursors...</div>
       </div>
     );
   }
 
   return (
     <div className="overflow-auto h-full">
-      <table className="w-full text-sm">
-        <thead className="sticky top-0 bg-gray-800 text-gray-300">
+      <table className="data-table text-sm">
+        <thead className="sticky top-0">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
@@ -376,8 +376,8 @@ export default function PrecursorTable({
                 return (
                   <th
                     key={header.id}
-                    className={`px-3 py-2 text-left font-medium border-b border-gray-700 ${
-                      isSortable ? 'cursor-pointer hover:bg-gray-700 select-none' : ''
+                    className={`px-3 py-2 text-left ${
+                      isSortable ? 'cursor-pointer hover:bg-slate-700/50 select-none transition-colors' : ''
                     }`}
                     style={{ width: header.getSize() }}
                     onClick={() => handleHeaderClick(columnId)}
@@ -398,12 +398,12 @@ export default function PrecursorTable({
                 key={row.id}
                 onClick={() => onSelect(row.original.precursor_id, row.original.raw_file)}
                 className={`
-                  cursor-pointer border-b border-gray-800 transition-colors
-                  ${isSelected ? 'bg-blue-900/50' : 'hover:bg-gray-800/50'}
+                  cursor-pointer border-b border-[#24395633] transition-colors
+                  ${isSelected ? 'bg-cyan-800/25' : 'hover:bg-slate-700/20'}
                 `}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 text-gray-300">
+                  <td key={cell.id} className="px-3 py-2 text-slate-200">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

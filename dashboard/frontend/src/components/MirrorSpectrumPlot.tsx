@@ -56,8 +56,8 @@ export default function MirrorSpectrumPlot({
 
   if (!plotData) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-500 text-sm">
-        No data
+      <div className="h-full flex items-center justify-center">
+        <span className="metric-pill">No data</span>
       </div>
     );
   }
@@ -71,9 +71,9 @@ export default function MirrorSpectrumPlot({
   const centerY = margin.top + halfPlotH;
 
   // Colors
-  const bIonColor = '#3b82f6';  // blue-500
-  const yIonColor = '#ef4444';  // red-500
-  const expColor = '#6b7280';   // gray-500
+  const bIonColor = '#5fb3ff';
+  const yIonColor = '#f78f64';
+  const expColor = '#89a0c0';
 
   // Scale functions
   const xScale = (m: number) => margin.left + ((m - plotData.minMz) / plotData.mzRange) * plotW;
@@ -93,7 +93,7 @@ export default function MirrorSpectrumPlot({
   return (
     <div className="h-full relative">
       {/* Title and legend */}
-      <div className="absolute top-1 left-2 text-xs text-gray-400 z-10 flex items-center gap-4">
+      <div className="absolute top-1 left-2 text-xs text-slate-300 z-10 flex items-center gap-4">
         <span>Mirror Spectrum ({mz.length} peaks)</span>
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: bIonColor }}></span>
@@ -104,20 +104,20 @@ export default function MirrorSpectrumPlot({
           <span>y ({nYIons})</span>
         </span>
         {cosine != null && (
-          <span className={`font-medium ${cosine >= 0.9 ? 'text-green-400' : cosine >= 0.7 ? 'text-yellow-400' : 'text-red-400'}`}>
+          <span className={`font-medium ${cosine >= 0.9 ? 'status-good' : cosine >= 0.7 ? 'status-warn' : 'status-bad'}`}>
             cos={cosine.toFixed(3)}
           </span>
         )}
       </div>
       {peptide && (
-        <div className="absolute top-1 right-2 text-xs text-green-400 z-10 font-mono">
+        <div className="absolute top-1 right-2 text-xs text-emerald-200 z-10 mono">
           {peptide}
         </div>
       )}
 
       <svg className="w-full h-full" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
         {/* Background */}
-        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#1f2937" />
+        <rect x={margin.left} y={margin.top} width={plotW} height={plotH} fill="#12253c" />
 
         {/* Center axis line (m/z axis) */}
         <line
@@ -125,7 +125,7 @@ export default function MirrorSpectrumPlot({
           y1={centerY}
           x2={margin.left + plotW}
           y2={centerY}
-          stroke="#4b5563"
+          stroke="#436286"
           strokeWidth={1}
         />
 
@@ -135,18 +135,18 @@ export default function MirrorSpectrumPlot({
           y1={margin.top}
           x2={margin.left}
           y2={margin.top + plotH}
-          stroke="#4b5563"
+          stroke="#436286"
           strokeWidth={1}
         />
 
         {/* Y-axis labels */}
-        <text x={margin.left - 5} y={margin.top + 10} fill="#9ca3af" fontSize={8} textAnchor="end">
+        <text x={margin.left - 5} y={margin.top + 10} fill="#9db5d8" fontSize={8} textAnchor="end">
           {formatAxisValue(plotData.maxExpInt)}
         </text>
-        <text x={margin.left - 5} y={centerY - 5} fill="#9ca3af" fontSize={8} textAnchor="end">
+        <text x={margin.left - 5} y={centerY - 5} fill="#9db5d8" fontSize={8} textAnchor="end">
           0
         </text>
-        <text x={margin.left - 5} y={margin.top + plotH - 5} fill="#9ca3af" fontSize={8} textAnchor="end">
+        <text x={margin.left - 5} y={margin.top + plotH - 5} fill="#9db5d8" fontSize={8} textAnchor="end">
           {formatAxisValue(plotData.maxFragInt)}
         </text>
 
@@ -154,7 +154,7 @@ export default function MirrorSpectrumPlot({
         <text
           x={15}
           y={margin.top + halfPlotH / 2}
-          fill="#9ca3af"
+          fill="#9db5d8"
           fontSize={8}
           textAnchor="middle"
           transform={`rotate(-90, 15, ${margin.top + halfPlotH / 2})`}
@@ -166,7 +166,7 @@ export default function MirrorSpectrumPlot({
         <text
           x={15}
           y={centerY + halfPlotH / 2}
-          fill="#9ca3af"
+          fill="#9db5d8"
           fontSize={8}
           textAnchor="middle"
           transform={`rotate(-90, 15, ${centerY + halfPlotH / 2})`}
@@ -175,13 +175,13 @@ export default function MirrorSpectrumPlot({
         </text>
 
         {/* X-axis labels */}
-        <text x={margin.left} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="start">
+        <text x={margin.left} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="start">
           {plotData.minMz.toFixed(0)}
         </text>
-        <text x={margin.left + plotW} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="end">
+        <text x={margin.left + plotW} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="end">
           {plotData.maxMz.toFixed(0)}
         </text>
-        <text x={margin.left + plotW / 2} y={height - 5} fill="#9ca3af" fontSize={9} textAnchor="middle">
+        <text x={margin.left + plotW / 2} y={height - 5} fill="#9db5d8" fontSize={9} textAnchor="middle">
           m/z
         </text>
 

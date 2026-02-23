@@ -24,22 +24,28 @@ interface BreadcrumbProps {
 function Breadcrumb({ mode, activeDataset, onNavigateToCollection }: BreadcrumbProps) {
   if (mode === 'collection') {
     return (
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-white font-medium">Collection</span>
+      <div className="flex items-center gap-2 text-sm reveal-up">
+        <span className="metric-pill">
+          <span className="subtle-label text-[0.62rem] text-[#9fb4d4]">View</span>
+          <span className="metric-value">Collection</span>
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
+    <div className="flex items-center gap-2 text-sm reveal-up">
       <button
         onClick={onNavigateToCollection}
-        className="text-blue-400 hover:text-blue-300"
+        className="text-cyan-300 hover:text-cyan-100 transition-colors"
       >
         Collection
       </button>
-      <span className="text-gray-500">/</span>
-      <span className="text-white font-medium">{activeDataset}</span>
+      <span className="text-slate-500">/</span>
+      <span className="metric-pill">
+        <span className="subtle-label text-[0.62rem] text-[#9fb4d4]">Dataset</span>
+        <span className="mono text-[0.77rem] tracking-wide">{activeDataset}</span>
+      </span>
     </div>
   );
 }
@@ -152,9 +158,9 @@ function DatasetView({
   });
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
+    <div className="app-shell h-screen flex flex-col">
       {/* Header */}
-      <header className="flex-none h-14 bg-gray-800 border-b border-gray-700 flex items-center px-4 gap-6">
+      <header className="chrome-header flex-none px-3 py-2 md:px-4 md:py-3 flex flex-wrap items-center gap-2 md:gap-4">
         <Breadcrumb
           mode="dataset"
           activeDataset={activeDataset}
@@ -162,19 +168,20 @@ function DatasetView({
         />
 
         {stats && (
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <span>{stats.total_precursors.toLocaleString()} precursors</span>
-            <span className="text-gray-600">|</span>
-            <span>
-              m/z: {stats.mz_range[0].toFixed(0)} - {stats.mz_range[1].toFixed(0)}
+          <div className="flex items-center gap-2 text-sm reveal-up">
+            <span className="metric-pill">
+              Precursors <span className="metric-value">{stats.total_precursors.toLocaleString()}</span>
+            </span>
+            <span className="metric-pill">
+              m/z <span className="metric-value">{stats.mz_range[0].toFixed(0)}-{stats.mz_range[1].toFixed(0)}</span>
             </span>
           </div>
         )}
 
         {/* Filters */}
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">Engines:</span>
+            <span className="control-label">Engines</span>
             <select
               value={filters.maxEngines === 0 ? 'unid' : (filters.minEngines > 0 ? `min${filters.minEngines}` : 'all')}
               onChange={(e) => {
@@ -188,7 +195,7 @@ function DatasetView({
                 }
                 setPage(0);
               }}
-              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+              className="control-select"
             >
               <option value="all">All</option>
               <option value="unid">Unidentified (0)</option>
@@ -199,7 +206,7 @@ function DatasetView({
           </label>
 
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">Charge:</span>
+            <span className="control-label">Charge</span>
             <select
               value={filters.charge ?? ''}
               onChange={(e) => {
@@ -209,7 +216,7 @@ function DatasetView({
                 });
                 setPage(0);
               }}
-              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+              className="control-select"
             >
               <option value="">All</option>
               <option value={1}>1+</option>
@@ -222,7 +229,7 @@ function DatasetView({
 
           {rawFiles && rawFiles.length > 1 && (
             <label className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400">File:</span>
+              <span className="control-label">File</span>
               <select
                 value={filters.rawFile ?? ''}
                 onChange={(e) => {
@@ -232,7 +239,7 @@ function DatasetView({
                   });
                   setPage(0);
                 }}
-                className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm max-w-[200px]"
+                className="control-select max-w-[220px]"
               >
                 <option value="">All files</option>
                 {rawFiles.map((f) => (
@@ -245,11 +252,11 @@ function DatasetView({
           )}
 
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">Sort:</span>
+            <span className="control-label">Sort</span>
             <select
               value={filters.sortBy}
               onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-              className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+              className="control-select"
             >
               <option value="n_engines">Engines</option>
               <option value="raw_intensity_meta">Intensity</option>
@@ -259,7 +266,7 @@ function DatasetView({
             </select>
           </label>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1">
             <input
               type="checkbox"
               checked={filters.hasMs1}
@@ -267,12 +274,12 @@ function DatasetView({
                 setFilters({ ...filters, hasMs1: e.target.checked });
                 setPage(0);
               }}
-              className="rounded bg-gray-700 border-gray-600"
+              className="rounded border-slate-500/70 bg-slate-900/80"
             />
-            <span className="text-gray-400">Has MS1 data</span>
+            <span>MS1 data</span>
           </label>
 
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-2 py-1">
             <input
               type="checkbox"
               checked={filters.hasRawData}
@@ -280,18 +287,18 @@ function DatasetView({
                 setFilters({ ...filters, hasRawData: e.target.checked });
                 setPage(0);
               }}
-              className="rounded bg-gray-700 border-gray-600"
+              className="rounded border-slate-500/70 bg-slate-900/80"
             />
-            <span className="text-gray-400">Has raw data</span>
+            <span>Raw data</span>
           </label>
         </div>
       </header>
 
       {/* Main content */}
-      <div id="main-content" className={`flex-1 flex min-h-0 ${isResizing ? 'select-none' : ''}`}>
+      <div id="main-content" className={`flex-1 flex min-h-0 p-2 gap-2 ${isResizing ? 'select-none' : ''}`}>
         {/* Table panel - resizable */}
         <div
-          className="flex-none border-r border-gray-700 flex flex-col overflow-x-auto"
+          className="chrome-panel flex-none flex flex-col overflow-x-auto min-w-[280px]"
           style={{ width: `${tableWidth}%` }}
         >
           <div className="flex-1 min-h-0">
@@ -307,21 +314,21 @@ function DatasetView({
           </div>
 
           {/* Pagination */}
-          <div className="flex-none h-10 bg-gray-800 border-t border-gray-700 flex items-center justify-between px-4">
+          <div className="flex-none h-11 bg-slate-950/25 border-t border-[#25415f] flex items-center justify-between px-3">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
-              className="px-3 py-1 bg-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+              className="btn-secondary"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-400">
+            <span className="text-xs md:text-sm text-slate-300">
               Page {page + 1} ({page * pageSize + 1} - {page * pageSize + (precursors?.length || 0)})
             </span>
             <button
               onClick={() => setPage(page + 1)}
               disabled={(precursors?.length || 0) < pageSize}
-              className="px-3 py-1 bg-gray-700 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+              className="btn-secondary"
             >
               Next
             </button>
@@ -330,17 +337,17 @@ function DatasetView({
 
         {/* Resize handle */}
         <div
-          className="w-2 bg-gray-600 hover:bg-blue-500 cursor-col-resize flex-none transition-colors active:bg-blue-600"
+          className="split-handle w-2 rounded cursor-col-resize flex-none transition-colors active:brightness-110"
           onMouseDown={handleMouseDown}
           title="Drag to resize"
         >
           <div className="h-full w-full flex items-center justify-center">
-            <div className="h-8 w-0.5 bg-gray-400 rounded" />
+            <div className="h-9 w-0.5 bg-cyan-200/50 rounded" />
           </div>
         </div>
 
         {/* Visualization panel */}
-        <div className="flex-1 min-h-0">
+        <div className="chrome-panel flex-1 min-h-0 overflow-hidden">
           <PrecursorViz precursor={selectedPrecursor || null} isLoading={isLoadingDetail} />
         </div>
       </div>
@@ -390,8 +397,8 @@ function Dashboard() {
 
   if (isLoadingStatus) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-900 text-gray-100">
-        <div className="text-gray-400">Loading...</div>
+      <div className="app-shell h-screen flex items-center justify-center">
+        <div className="metric-pill">Loading dashboard status...</div>
       </div>
     );
   }
@@ -400,7 +407,7 @@ function Dashboard() {
   if (isCollectionMode) {
     if (viewMode === 'collection') {
       return (
-        <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
+        <div className="app-shell h-screen flex flex-col surface-grid">
           <CollectionBrowser
             onDatasetLoaded={handleDatasetLoaded}
             activeDataset={activeDataset}
