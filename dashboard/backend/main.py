@@ -479,7 +479,7 @@ async def list_precursors(
     raw_file: Optional[str] = Query(None, description="Filter by raw file name"),
     has_ms1: bool = Query(False, description="Only show precursors with MS1 signal data"),
     has_raw_data: bool = Query(False, description="Only show precursors with readable raw blob data"),
-    sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|ms1_rt_r2|ms1_im_r2|isotope_cosim|sage_cosine)$"),
+    sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|diann_match_tier|ms1_rt_r2|ms1_im_r2|isotope_cosim|sage_cosine)$"),
     sort_desc: bool = Query(True),
 ):
     """List precursors with pagination and filtering."""
