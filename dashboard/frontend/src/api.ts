@@ -135,6 +135,23 @@ export interface DatasetSummary {
   added_at: string | null;
 }
 
+export interface DatasetOverlapSummary {
+  dataset_a: string;
+  dataset_b: string;
+  precursors_a: number;
+  precursors_b: number;
+  shared_precursors: number;
+  unique_precursors_a: number;
+  unique_precursors_b: number;
+  precursor_jaccard: number;
+  peptides_a: number;
+  peptides_b: number;
+  shared_peptides: number;
+  unique_peptides_a: number;
+  unique_peptides_b: number;
+  peptide_jaccard: number;
+}
+
 export interface StudySummary {
   id: string;
   title: string;
@@ -188,6 +205,8 @@ export async function listPrecursors(params: {
   has_raw_data?: boolean;
   sort_by?: string;
   sort_desc?: boolean;
+  overlap_mode?: 'shared' | 'unique_a';
+  overlap_dataset?: string;
 }): Promise<PrecursorSummary[]> {
   const response = await api.get('/precursors', { params });
   return response.data;
@@ -228,6 +247,16 @@ export async function getStudyDatasets(studyId: string): Promise<DatasetSummary[
 
 export async function getDatasetInfo(accession: string): Promise<DatasetSummary> {
   const response = await api.get(`/datasets/${accession}/info`);
+  return response.data;
+}
+
+export async function getDatasetOverlap(datasetA: string, datasetB: string): Promise<DatasetOverlapSummary> {
+  const response = await api.get('/datasets/overlap', {
+    params: {
+      dataset_a: datasetA,
+      dataset_b: datasetB,
+    },
+  });
   return response.data;
 }
 
