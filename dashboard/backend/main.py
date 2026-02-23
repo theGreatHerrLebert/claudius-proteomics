@@ -15,7 +15,7 @@ import json
 import re
 import struct
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Set
 import numpy as np
 import pandas as pd
 
@@ -124,6 +124,9 @@ collection_path: Optional[Path] = None
 collection_manifest: Optional[Dict[str, Any]] = None
 studies_config: Optional[Dict[str, Any]] = None
 active_dataset: Optional[str] = None  # Currently loaded dataset accession
+
+# Cache derived overlap identifiers per dataset accession
+dataset_identity_cache: Dict[str, Dict[str, Any]] = {}
 
 
 def load_sage_fragments(sage_dir: Path) -> bool:
@@ -427,6 +430,193 @@ class CollectionInfo(BaseModel):
     n_total_precursors: int
 
 
+class DatasetOverlapSummary(BaseModel):
+    dataset_a: str
+    dataset_b: str
+    precursors_a: int
+    precursors_b: int
+    shared_precursors: int
+    unique_precursors_a: int
+    unique_precursors_b: int
+    precursor_jaccard: float
+    peptides_a: int
+    peptides_b: int
+    shared_peptides: int
+    unique_peptides_a: int
+    unique_peptides_b: int
+    peptide_jaccard: float
+
+
+def _clean_str(value: Any) -> Optional[str]:
+    """Return a stripped string value or None for empty/NaN."""
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    return text
+
+
+def _to_float(value: Any) -> Optional[float]:
+    """Convert numeric-like value to float, returning None on failure/NaN."""
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def normalize_peptide_sequence(sequence: str) -> str:
+    """Normalize a modified peptide string to bare amino-acid sequence."""
+    if not sequence:
+        return ""
+    seq = standardize_modified_sequence(sequence)
+    # Remove UNIMOD and other bracketed/parenthesized modification annotations.
+    seq = re.sub(r"\[UNIMOD:\d+\]", "", seq, flags=re.IGNORECASE)
+    seq = re.sub(r"\[[^\]]*\]", "", seq)
+    seq = re.sub(r"\([^)]*\)", "", seq)
+    return "".join(ch for ch in seq if "A" <= ch <= "Z")
+
+
+IDENTITY_SEQUENCE_COLUMNS = [
+    "fragpipe_modified",
+    "sage_modified",
+    "diann_modified",
+    "fragpipe_peptide",
+    "sage_peptide",
+    "diann_peptide",
+]
+
+
+def _select_sequence_value(row: Any, sequence_cols: List[str]) -> Optional[str]:
+    """Pick first available sequence value from prioritized columns."""
+    for col in sequence_cols:
+        candidate = _clean_str(row.get(col))
+        if candidate:
+            return candidate
+    return None
+
+
+def _build_precursor_identity_key(
+    row: Any,
+    sequence_cols: List[str],
+    charge_col: Optional[str],
+    mz_col: Optional[str],
+    rt_col: Optional[str],
+    im_col: Optional[str],
+) -> Optional[str]:
+    """Build a stable precursor identity key for overlap matching."""
+    charge_val = _to_float(row.get(charge_col)) if charge_col else None
+    charge = int(charge_val) if charge_val is not None and charge_val > 0 else None
+
+    seq_value = _select_sequence_value(row, sequence_cols)
+    if seq_value and charge is not None:
+        seq_key = standardize_modified_sequence(seq_value)
+        if seq_key:
+            return f"{seq_key}|z{charge}"
+
+    # Fallback identity for rows without peptide strings.
+    if charge is not None and mz_col:
+        mz_val = _to_float(row.get(mz_col))
+        if mz_val is not None:
+            rt_val = _to_float(row.get(rt_col)) if rt_col else None
+            im_val = _to_float(row.get(im_col)) if im_col else None
+            rt_key = f"{rt_val:.1f}" if rt_val is not None else "na"
+            im_key = f"{im_val:.3f}" if im_val is not None else "na"
+            return f"coord:{mz_val:.4f}|z{charge}|rt:{rt_key}|im:{im_key}"
+
+    return None
+
+
+def _get_collection_dataset_entry(accession: str) -> Dict[str, Any]:
+    """Resolve dataset manifest entry in collection mode."""
+    if collection_manifest is None:
+        raise HTTPException(400, "No collection loaded. Start with --collection flag.")
+    dataset = next((d for d in collection_manifest.get("datasets", []) if d.get("accession") == accession), None)
+    if dataset is None:
+        raise HTTPException(404, f"Dataset not found: {accession}")
+    return dataset
+
+
+def _resolve_dataset_store_path(accession: str) -> Path:
+    """Get the precursor_store.parquet path for a collection dataset accession."""
+    if collection_path is None:
+        raise HTTPException(400, "No collection loaded. Start with --collection flag.")
+    dataset = _get_collection_dataset_entry(accession)
+    store = collection_path / dataset.get("path", "") / "precursor_store.parquet"
+    if not store.exists():
+        raise HTTPException(404, f"Precursor store not found: {store}")
+    return store
+
+
+def _extract_dataset_identity_sets(dataset_store: Path) -> Dict[str, Set[str]]:
+    """Build overlap-ready precursor and peptide identity sets for one dataset."""
+    pf = pq.ParquetFile(str(dataset_store))
+    available = set(pf.schema_arrow.names)
+
+    sequence_cols = [c for c in IDENTITY_SEQUENCE_COLUMNS if c in available]
+    charge_col = "charge" if "charge" in available else ("raw_charge" if "raw_charge" in available else None)
+    mz_col = "mz" if "mz" in available else ("raw_mz" if "raw_mz" in available else None)
+    rt_col = "rt_seconds" if "rt_seconds" in available else ("raw_rt_seconds" if "raw_rt_seconds" in available else None)
+    im_col = "mobility" if "mobility" in available else ("raw_mobility" if "raw_mobility" in available else None)
+
+    cols_to_read = [c for c in sequence_cols if c in available]
+    for col in [charge_col, mz_col, rt_col, im_col]:
+        if col and col not in cols_to_read:
+            cols_to_read.append(col)
+
+    if not cols_to_read:
+        return {"precursor_keys": set(), "peptide_keys": set()}
+
+    table = pq.read_table(str(dataset_store), columns=cols_to_read)
+    df = table.to_pandas()
+
+    precursor_keys: Set[str] = set()
+    peptide_keys: Set[str] = set()
+
+    for _, row in df.iterrows():
+        seq_value = _select_sequence_value(row, sequence_cols)
+
+        if seq_value:
+            pep_key = normalize_peptide_sequence(seq_value)
+            if pep_key:
+                peptide_keys.add(pep_key)
+
+        precursor_key = _build_precursor_identity_key(
+            row=row,
+            sequence_cols=sequence_cols,
+            charge_col=charge_col,
+            mz_col=mz_col,
+            rt_col=rt_col,
+            im_col=im_col,
+        )
+        if precursor_key:
+            precursor_keys.add(precursor_key)
+
+    return {"precursor_keys": precursor_keys, "peptide_keys": peptide_keys}
+
+
+def _get_dataset_identity(accession: str) -> Dict[str, Set[str]]:
+    """Get or compute cached overlap identity sets for one dataset accession."""
+    if accession in dataset_identity_cache:
+        return dataset_identity_cache[accession]
+    dataset_store = _resolve_dataset_store_path(accession)
+    identity = _extract_dataset_identity_sets(dataset_store)
+    dataset_identity_cache[accession] = identity
+    return identity
+
+
 @app.get("/")
 async def root():
     return {
@@ -481,6 +671,8 @@ async def list_precursors(
     has_raw_data: bool = Query(False, description="Only show precursors with readable raw blob data"),
     sort_by: str = Query("quality", pattern="^(quality|raw_intensity_meta|precursor_intensity|n_engines|mz|rt_seconds|precursor_id|mobility|fragpipe_probability|fragpipe_hyperscore|sage_hyperscore|sage_qvalue|diann_qvalue|diann_match_tier|ms1_rt_r2|ms1_im_r2|isotope_cosim|sage_cosine)$"),
     sort_desc: bool = Query(True),
+    overlap_mode: Optional[str] = Query(None, pattern="^(shared|unique_a)$", description="Overlap filter mode relative to overlap_dataset"),
+    overlap_dataset: Optional[str] = Query(None, description="Comparison dataset accession for overlap filtering"),
 ):
     """List precursors with pagination and filtering."""
     if parquet_file is None:
@@ -564,6 +756,38 @@ async def list_precursors(
         file_size_series = raw_clean.map(blob_file_sizes).fillna(0)
         blob_end = df['blob_offset'].fillna(0) + df['blob_size'].fillna(0)
         df = df[blob_end <= file_size_series]
+
+    # Optional overlap-based filtering (collection mode only)
+    if overlap_mode is not None:
+        if overlap_dataset is None:
+            raise HTTPException(400, "overlap_dataset is required when overlap_mode is set.")
+        if collection_manifest is None or active_dataset is None:
+            raise HTTPException(400, "Overlap filtering requires collection mode with an active dataset.")
+
+        compare_identity = _get_dataset_identity(overlap_dataset)
+        compare_precursor_keys = compare_identity["precursor_keys"]
+        sequence_cols_present = [c for c in IDENTITY_SEQUENCE_COLUMNS if c in df.columns]
+
+        row_keys = [
+            _build_precursor_identity_key(
+                row=row,
+                sequence_cols=sequence_cols_present,
+                charge_col=charge_col,
+                mz_col=mz_col,
+                rt_col=rt_col,
+                im_col=mobility_col,
+            )
+            for _, row in df.iterrows()
+        ]
+        shared_mask = pd.Series(
+            [(k in compare_precursor_keys) if k else False for k in row_keys],
+            index=df.index,
+        )
+
+        if overlap_mode == "shared":
+            df = df[shared_mask]
+        else:  # unique_a
+            df = df[~shared_mask]
 
     # Sort - when sorting by n_engines, also sort by intensity within each group
     # Map sort column to actual column name
@@ -1155,6 +1379,55 @@ async def get_dataset_info(accession: str):
     )
 
 
+@app.get("/datasets/overlap", response_model=DatasetOverlapSummary)
+async def get_dataset_overlap(
+    dataset_a: str = Query(..., description="Primary dataset accession"),
+    dataset_b: str = Query(..., description="Comparison dataset accession"),
+):
+    """Compute cross-dataset overlap for precursor and peptide identities."""
+    if collection_manifest is None or collection_path is None:
+        raise HTTPException(400, "No collection loaded. Start with --collection flag.")
+    if dataset_a == dataset_b:
+        raise HTTPException(400, "dataset_a and dataset_b must be different.")
+
+    identity_a = _get_dataset_identity(dataset_a)
+    identity_b = _get_dataset_identity(dataset_b)
+
+    precursor_a = identity_a["precursor_keys"]
+    precursor_b = identity_b["precursor_keys"]
+    peptide_a = identity_a["peptide_keys"]
+    peptide_b = identity_b["peptide_keys"]
+
+    shared_precursors = len(precursor_a & precursor_b)
+    unique_precursors_a = len(precursor_a - precursor_b)
+    unique_precursors_b = len(precursor_b - precursor_a)
+    precursor_union = len(precursor_a | precursor_b)
+    precursor_jaccard = (shared_precursors / precursor_union) if precursor_union > 0 else 0.0
+
+    shared_peptides = len(peptide_a & peptide_b)
+    unique_peptides_a = len(peptide_a - peptide_b)
+    unique_peptides_b = len(peptide_b - peptide_a)
+    peptide_union = len(peptide_a | peptide_b)
+    peptide_jaccard = (shared_peptides / peptide_union) if peptide_union > 0 else 0.0
+
+    return DatasetOverlapSummary(
+        dataset_a=dataset_a,
+        dataset_b=dataset_b,
+        precursors_a=len(precursor_a),
+        precursors_b=len(precursor_b),
+        shared_precursors=shared_precursors,
+        unique_precursors_a=unique_precursors_a,
+        unique_precursors_b=unique_precursors_b,
+        precursor_jaccard=precursor_jaccard,
+        peptides_a=len(peptide_a),
+        peptides_b=len(peptide_b),
+        shared_peptides=shared_peptides,
+        unique_peptides_a=unique_peptides_a,
+        unique_peptides_b=unique_peptides_b,
+        peptide_jaccard=peptide_jaccard,
+    )
+
+
 @app.post("/datasets/{accession}/load")
 async def load_dataset(accession: str):
     """Load a dataset from the collection (collection mode only)."""
@@ -1232,9 +1505,10 @@ async def get_active_dataset():
 
 def load_collection(path: Path) -> None:
     """Load a collection from disk."""
-    global collection_path, collection_manifest, studies_config
+    global collection_path, collection_manifest, studies_config, dataset_identity_cache
 
     collection_path = path
+    dataset_identity_cache = {}
 
     # Load collection manifest
     manifest_path = path / "collection_manifest.json"
