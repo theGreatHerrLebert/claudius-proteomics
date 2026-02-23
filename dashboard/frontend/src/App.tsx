@@ -943,7 +943,7 @@ function DatasetView({
         {subView === 'browse' && (
           <div className="toolbar-stack mt-2 md:mt-3 reveal-up">
             <div className="toolbar-lane">
-              <div className="toolbar-cluster toolbar-cluster--accent">
+              <div className="toolbar-cluster toolbar-cluster--accent md:flex-1">
                 <div className="toolbar-field">
                   <span className="toolbar-label">View</span>
                   <select
@@ -990,6 +990,81 @@ function DatasetView({
                 </button>
               </div>
 
+              <div className="hidden md:flex toolbar-cluster">
+                <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                  <input
+                    type="checkbox"
+                    checked={compareEnabled}
+                    onChange={(e) => setCompareEnabled(e.target.checked)}
+                    className="rounded border-slate-500/70 bg-slate-900/80"
+                  />
+                  <span>Precursor Compare</span>
+                </label>
+                <button
+                  onClick={handleSetCurrentAsCompare}
+                  disabled={selectedId === null}
+                  className="btn-secondary"
+                  type="button"
+                >
+                  Set Current as B
+                </button>
+                <select
+                  value={buildCompareKey(compareTarget)}
+                  onChange={(e) => setCompareTarget(parseCompareKey(e.target.value))}
+                  disabled={!compareEnabled}
+                  className="control-select max-w-[210px]"
+                >
+                  <option value="">B precursor</option>
+                  {compareOptions.map((target) => (
+                    <option key={buildCompareKey(target)} value={buildCompareKey(target)}>
+                      #{target.id} {target.rawFile ? `(${target.rawFile.slice(-16)})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setCompareTarget(null)}
+                  disabled={!compareEnabled || compareTarget === null}
+                  className="btn-secondary"
+                  type="button"
+                >
+                  Clear
+                </button>
+              </div>
+
+              <div className="hidden md:flex toolbar-cluster">
+                <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
+                  <input
+                    type="checkbox"
+                    checked={datasetCompareEnabled}
+                    onChange={(e) => setDatasetCompareEnabled(e.target.checked)}
+                    className="rounded border-slate-500/70 bg-slate-900/80"
+                    disabled={!activeDataset}
+                  />
+                  <span>Dataset Compare</span>
+                </label>
+                <select
+                  value={datasetCompareTarget ?? ''}
+                  onChange={(e) => setDatasetCompareTarget(e.target.value || null)}
+                  disabled={!datasetCompareEnabled || !activeDataset}
+                  className="control-select max-w-[220px]"
+                >
+                  <option value="">B dataset</option>
+                  {datasetCompareOptions.map((accession) => (
+                    <option key={accession} value={accession}>
+                      {accession}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setDatasetCompareTarget(null)}
+                  disabled={!datasetCompareEnabled || datasetCompareTarget === null}
+                  className="btn-secondary"
+                  type="button"
+                >
+                  Clear
+                </button>
+              </div>
+
               <button
                 type="button"
                 className="btn-secondary md:hidden ml-auto"
@@ -1001,7 +1076,7 @@ function DatasetView({
             </div>
 
             <div className={`${showAdvancedControls ? 'block' : 'hidden'} md:block space-y-[0.55rem]`}>
-              <div className="toolbar-lane">
+              <div className="toolbar-lane md:hidden">
                 <div className="toolbar-cluster">
                   <label className="control-check flex items-center gap-2 text-sm cursor-pointer rounded px-1">
                     <input
@@ -1079,7 +1154,7 @@ function DatasetView({
               </div>
 
               <div className="toolbar-lane">
-                <div className="toolbar-cluster">
+                <div className="toolbar-cluster md:flex-1">
                   <label className="toolbar-field text-sm">
                     <span className="toolbar-label">Engines</span>
                     <select
