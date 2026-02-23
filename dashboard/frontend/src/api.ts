@@ -14,8 +14,10 @@ export interface PrecursorSummary {
   charge: number;
   rt_seconds: number;
   mobility: number;
+  ccs: number | null;
   n_engines: number;
   confidence_weight: number | null;
+  sage_cosine: number | null;
   // FragPipe (10 columns)
   fragpipe_peptide: string | null;
   fragpipe_modified: string | null;
@@ -51,12 +53,11 @@ export interface PrecursorSummary {
   diann_rt: number | null;
   diann_mz: number | null;
   diann_mobility: number | null;
-  diann_ccs: number | null;
   diann_match_tier: string | null;
   diann_match_score: number | null;
   // Raw
+  collision_energy: number | null;
   raw_intensity_meta: number | null;
-  frame_id: number | null;
   isolation_mz: number | null;
   // Quality metrics
   ms1_rt_sigma: number | null;
@@ -87,6 +88,7 @@ export interface PrecursorDetail extends PrecursorSummary {
   fragment_mobility: number[];
   fragment_scan: number[];
   sage_matched_fragments: SageMatchedFragment[] | null;
+  sage_cosine: number | null;
   xic_rt: number[];
   xic_intensity: number[];
   mobilogram_im: number[];

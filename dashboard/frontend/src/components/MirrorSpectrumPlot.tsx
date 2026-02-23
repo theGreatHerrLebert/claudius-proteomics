@@ -6,6 +6,7 @@ interface MirrorSpectrumPlotProps {
   intensity: number[];
   sageFragments: SageMatchedFragment[];
   peptide: string | null;
+  cosine?: number | null;
 }
 
 function formatAxisValue(val: number): string {
@@ -19,6 +20,7 @@ export default function MirrorSpectrumPlot({
   intensity,
   sageFragments,
   peptide,
+  cosine,
 }: MirrorSpectrumPlotProps) {
   // Process data for plotting
   const plotData = useMemo(() => {
@@ -101,6 +103,11 @@ export default function MirrorSpectrumPlot({
           <span className="inline-block w-3 h-0.5" style={{ backgroundColor: yIonColor }}></span>
           <span>y ({nYIons})</span>
         </span>
+        {cosine != null && (
+          <span className={`font-medium ${cosine >= 0.9 ? 'text-green-400' : cosine >= 0.7 ? 'text-yellow-400' : 'text-red-400'}`}>
+            cos={cosine.toFixed(3)}
+          </span>
+        )}
       </div>
       {peptide && (
         <div className="absolute top-1 right-2 text-xs text-green-400 z-10 font-mono">

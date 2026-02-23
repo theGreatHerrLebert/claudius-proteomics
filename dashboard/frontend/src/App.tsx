@@ -401,7 +401,11 @@ function Dashboard() {
     if (viewMode === 'collection') {
       return (
         <div className="h-screen flex flex-col bg-gray-900 text-gray-100">
-          <CollectionBrowser onDatasetLoaded={handleDatasetLoaded} />
+          <CollectionBrowser
+            onDatasetLoaded={handleDatasetLoaded}
+            activeDataset={activeDataset}
+            onReturnToDataset={activeDataset ? () => setViewMode('dataset') : undefined}
+          />
         </div>
       );
     }

@@ -97,6 +97,14 @@ export default function PrecursorTable({
         cell: (info) => info.getValue().toFixed(3),
         size: 60,
       }),
+      columnHelper.accessor('ccs', {
+        header: 'CCS',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toFixed(1) : '-';
+        },
+        size: 55,
+      }),
       columnHelper.accessor('n_engines', {
         header: '#',
         cell: (info) => {
@@ -162,9 +170,15 @@ export default function PrecursorTable({
         cell: (info) => {
           const modified = info.getValue();
           const plain = info.row.original.sage_peptide;
+          const tier = info.row.original.sage_match_tier;
+          const isCoord = tier?.includes('COORDINATE');
+          const seq = modified || plain || '-';
           return (
-            <span className="font-mono text-xs truncate max-w-32 block" title={modified || plain || ''}>
-              {modified || plain || '-'}
+            <span
+              className={`font-mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-400/60 line-through decoration-orange-500/40' : ''}`}
+              title={isCoord ? `${seq} (coordinate match - unreliable)` : seq}
+            >
+              {seq}
             </span>
           );
         },
@@ -208,7 +222,7 @@ export default function PrecursorTable({
           const tier = info.getValue();
           if (!tier) return '-';
           const short = tier.replace('SEQUENCE_', 'SEQ_').replace('COORDINATE_', 'COORD_');
-          const color = tier.includes('SEQUENCE') ? 'text-green-400' : 'text-yellow-400';
+          const color = tier.includes('SEQUENCE') ? 'text-green-400' : tier.includes('COORDINATE') ? 'text-orange-400' : 'text-yellow-400';
           return <span className={`text-xs ${color}`} title={tier}>{short}</span>;
         },
         size: 80,
@@ -219,9 +233,15 @@ export default function PrecursorTable({
         cell: (info) => {
           const modified = info.getValue();
           const plain = info.row.original.diann_peptide;
+          const tier = info.row.original.diann_match_tier;
+          const isCoord = tier?.includes('COORDINATE');
+          const seq = modified || plain || '-';
           return (
-            <span className="font-mono text-xs truncate max-w-32 block" title={modified || plain || ''}>
-              {modified || plain || '-'}
+            <span
+              className={`font-mono text-xs truncate max-w-32 block ${isCoord ? 'text-orange-400/60 line-through decoration-orange-500/40' : ''}`}
+              title={isCoord ? `${seq} (coordinate match - unreliable)` : seq}
+            >
+              {seq}
             </span>
           );
         },
@@ -257,18 +277,10 @@ export default function PrecursorTable({
           const tier = info.getValue();
           if (!tier) return '-';
           const short = tier.replace('SEQUENCE_', 'SEQ_').replace('COORDINATE_', 'COORD_');
-          const color = tier.includes('SEQUENCE') ? 'text-green-400' : 'text-yellow-400';
+          const color = tier.includes('SEQUENCE') ? 'text-green-400' : tier.includes('COORDINATE') ? 'text-orange-400' : 'text-yellow-400';
           return <span className={`text-xs ${color}`} title={tier}>{short}</span>;
         },
         size: 80,
-      }),
-      columnHelper.accessor('diann_ccs', {
-        header: 'CCS',
-        cell: (info) => {
-          const val = info.getValue();
-          return val !== null ? val.toFixed(1) : '-';
-        },
-        size: 55,
       }),
       // Raw data columns
       columnHelper.accessor('raw_intensity_meta', {
@@ -279,10 +291,13 @@ export default function PrecursorTable({
         },
         size: 70,
       }),
-      columnHelper.accessor('frame_id', {
-        header: 'Frame',
-        cell: (info) => info.getValue() ?? '-',
-        size: 60,
+      columnHelper.accessor('collision_energy', {
+        header: 'CE',
+        cell: (info) => {
+          const val = info.getValue();
+          return val !== null ? val.toFixed(1) : '-';
+        },
+        size: 50,
       }),
       // Quality metrics
       columnHelper.accessor('ms1_rt_r2', {

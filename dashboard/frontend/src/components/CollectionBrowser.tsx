@@ -11,6 +11,8 @@ import {
 
 interface CollectionBrowserProps {
   onDatasetLoaded: (accession: string) => void;
+  activeDataset?: string | null;
+  onReturnToDataset?: () => void;
 }
 
 function formatNumber(n: number): string {
@@ -112,7 +114,7 @@ function DatasetRow({
   );
 }
 
-export default function CollectionBrowser({ onDatasetLoaded }: CollectionBrowserProps) {
+export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onReturnToDataset }: CollectionBrowserProps) {
   const [collectionInfo, setCollectionInfo] = useState<CollectionInfo | null>(null);
   const [studies, setStudies] = useState<StudySummary[]>([]);
   const [selectedStudy, setSelectedStudy] = useState<StudySummary | null>(null);
@@ -192,6 +194,21 @@ export default function CollectionBrowser({ onDatasetLoaded }: CollectionBrowser
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      {/* Active dataset banner */}
+      {activeDataset && onReturnToDataset && (
+        <button
+          onClick={onReturnToDataset}
+          className="mb-4 w-full bg-blue-900/40 border border-blue-700 rounded-lg px-4 py-3 flex items-center justify-between hover:bg-blue-900/60 transition-colors"
+        >
+          <span className="text-sm text-gray-300">
+            Currently viewing: <span className="font-mono text-blue-400 font-medium">{activeDataset}</span>
+          </span>
+          <span className="text-sm text-blue-400 flex items-center gap-1">
+            Return to dataset <span>&rarr;</span>
+          </span>
+        </button>
+      )}
+
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-2">

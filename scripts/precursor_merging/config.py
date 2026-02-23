@@ -29,7 +29,7 @@ class MatchConfig:
 
     Default values are calibrated for timsTOF data:
     - 20 ppm m/z tolerance: Standard for high-resolution MS
-    - 30s RT tolerance: Accounts for RT drift between runs
+    - 5s RT tolerance: Tight window within same run
     - 0.05 1/K0 IM tolerance: Typical for timsTOF precision
     """
     # m/z tolerance in ppm
@@ -37,7 +37,7 @@ class MatchConfig:
 
     # RT tolerance in seconds
     # Note: DIA-NN RT is now converted to seconds at parse time
-    rt_tol_sec: float = 30.0
+    rt_tol_sec: float = 5.0
 
     # Ion mobility tolerance (1/K0)
     im_tol: float = 0.05
