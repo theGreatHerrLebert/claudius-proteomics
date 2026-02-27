@@ -330,3 +330,135 @@ body {
 .reveal-up {
   animation: revealUp 320ms ease-out;
 }
+
+/* ─── Site navigation ─── */
+
+.site-nav-link {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.site-nav-link:hover {
+  color: var(--text-1);
+  background: #ffffff0a;
+}
+
+.site-nav-link--active {
+  color: var(--accent-2);
+}
+
+/* ─── Landing page hero ─── */
+
+.hero-section {
+  background:
+    radial-gradient(ellipse at 50% 20%, #1f667d3a 0%, transparent 60%),
+    transparent;
+}
+
+/* ─── Pipeline steps ─── */
+
+.pipeline-step {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.pipeline-step:hover {
+  border-color: var(--accent-1);
+  transform: translateY(-2px);
+}
+
+.pipeline-connector {
+  border-top: 2px solid var(--border-1);
+  flex: 0 0 1.5rem;
+  align-self: center;
+}
+
+/* ─── Stat cards ─── */
+
+.stat-card-large {
+  text-align: center;
+  padding: 1.5rem 1rem;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-2);
+  line-height: 1.2;
+}
+
+/* ─── Technology badges ─── */
+
+.tech-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: #0f2138c9;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+/* ─── Timeline / roadmap ─── */
+
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  padding-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 0.45rem;
+  top: 0.75rem;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-1);
+}
+
+.timeline-item:last-child::before {
+  display: none;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0.1rem;
+  top: 0.35rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid var(--border-1);
+  background: var(--bg-1);
+}
+
+.timeline-dot.completed {
+  background: var(--success-1);
+  border-color: var(--success-1);
+}
+
+.timeline-dot.current {
+  background: var(--accent-1);
+  border-color: var(--accent-1);
+  box-shadow: 0 0 6px var(--accent-1);
+}
+
+.timeline-dot.future {
+  background: var(--bg-1);
+  border-color: var(--border-1);
+}

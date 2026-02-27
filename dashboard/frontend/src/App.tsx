@@ -4,6 +4,8 @@ import PrecursorTable from './components/PrecursorTable';
 import PrecursorViz from './components/PrecursorViz';
 import CollectionBrowser from './components/CollectionBrowser';
 import DatasetSummaryPage from './components/DatasetSummary';
+import LandingPage from './components/LandingPage';
+import VisitSummaryPage from './components/VisitSummaryPage';
 import {
   listPrecursors,
   getPrecursor,
@@ -18,7 +20,11 @@ import type { StudySummary } from './api';
 
 const queryClient = new QueryClient();
 
-type ViewMode = 'collection' | 'dataset';
+type ViewMode = 'landing' | 'visit' | 'collection' | 'dataset';
+
+// External URL for the data explorer (hosted on a separate machine).
+// Set to '' to fall back to in-app collection browser navigation.
+const EXPLORER_URL = '';
 type SubView = 'summary' | 'browse';
 type LinkCopyState = 'idle' | 'copied' | 'failed';
 type OverlapFocusMode = 'all' | 'shared' | 'unique_a';
@@ -1528,7 +1534,7 @@ function DatasetView({
 }
 
 function Dashboard() {
-  const [viewMode, setViewMode] = useState<ViewMode>('dataset');
+  const [viewMode, setViewMode] = useState<ViewMode>('landing');
   const [activeDataset, setActiveDataset] = useState<string | null>(null);
   const [isCollectionMode, setIsCollectionMode] = useState(false);
   const queryClientHook = useQueryClient();
@@ -1540,19 +1546,48 @@ function Dashboard() {
     retry: false,
   });
 
-  // Update state when app status loads
+  // Update state when app status loads — check URL for direct page navigation
   useEffect(() => {
     if (appStatus) {
       setIsCollectionMode(appStatus.mode === 'collection');
       setActiveDataset(appStatus.active_dataset);
-      // If collection mode but no dataset loaded, show collection browser
-      if (appStatus.mode === 'collection' && !appStatus.store_loaded) {
-        setViewMode('collection');
-      } else {
+
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get('page');
+
+      if (pageParam === 'visit') {
+        setViewMode('visit');
+      } else if (pageParam === 'collection') {
+        if (appStatus.mode === 'collection' && !appStatus.store_loaded) {
+          setViewMode('collection');
+        } else {
+          setViewMode('dataset');
+        }
+      } else if (pageParam === 'dataset') {
         setViewMode('dataset');
+      } else {
+        // Default: show landing page
+        setViewMode('landing');
       }
     }
   }, [appStatus]);
+
+  // Sync viewMode to URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (viewMode === 'landing') {
+      params.delete('page');
+    } else if (viewMode === 'visit') {
+      params.set('page', 'visit');
+    } else if (viewMode === 'collection') {
+      params.set('page', 'collection');
+    } else {
+      params.set('page', 'dataset');
+    }
+    const nextQuery = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
+    window.history.replaceState(null, '', nextUrl);
+  }, [viewMode]);
 
   const handleDatasetLoaded = (accession: string) => {
     setActiveDataset(accession);
@@ -1568,11 +1603,41 @@ function Dashboard() {
     setViewMode('collection');
   };
 
+  const handleNavigateToLanding = () => setViewMode('landing');
+  const handleNavigateToVisit = () => setViewMode('visit');
+
+  const handleExploreFromPublic = () => {
+    if (isCollectionMode) setViewMode('collection');
+    else setViewMode('dataset');
+  };
+
   if (isLoadingStatus) {
     return (
       <div className="app-shell h-screen flex items-center justify-center">
         <div className="metric-pill">Loading dashboard status...</div>
       </div>
+    );
+  }
+
+  // Landing page
+  if (viewMode === 'landing') {
+    return (
+      <LandingPage
+        onViewSummary={handleNavigateToVisit}
+        explorerUrl={EXPLORER_URL || undefined}
+        onExploreData={!EXPLORER_URL ? handleExploreFromPublic : undefined}
+      />
+    );
+  }
+
+  // Visit summary page
+  if (viewMode === 'visit') {
+    return (
+      <VisitSummaryPage
+        onBack={handleNavigateToLanding}
+        explorerUrl={EXPLORER_URL || undefined}
+        onExploreData={!EXPLORER_URL ? handleExploreFromPublic : undefined}
+      />
     );
   }
 
