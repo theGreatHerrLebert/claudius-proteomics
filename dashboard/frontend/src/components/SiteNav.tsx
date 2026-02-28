@@ -28,7 +28,7 @@ export default function SiteNav({
         className="text-lg font-bold tracking-tight"
         style={{ color: 'var(--accent-1)', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        San Jose
+        San José
       </button>
 
       <div className="flex items-center gap-4">

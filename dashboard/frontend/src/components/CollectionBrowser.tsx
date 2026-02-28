@@ -224,7 +224,7 @@ export default function CollectionBrowser({ onDatasetLoaded, activeDataset, onRe
             </button>
           )}
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-100 tracking-tight">
-            {selectedStudy ? selectedStudy.title : 'San Jose Collection'}
+            {selectedStudy ? selectedStudy.title : 'San José Collection'}
           </h1>
         </div>
         {!selectedStudy && collectionInfo && (
