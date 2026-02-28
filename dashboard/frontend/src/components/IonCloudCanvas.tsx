@@ -31,9 +31,7 @@ const MAX_STAGGER = 8_000;
 
 // Post-settle
 const SETTLED_OPACITY = 0.28;
-const FADE_DURATION = 6_000;   // smooth fade from full → settled opacity
-const BREATHE_AMPLITUDE = 0.04;
-const BREATHE_PERIOD = 6_000;
+const FADE_DURATION = 6_000;
 
 // Marginals
 const N_BINS = 120;
@@ -470,26 +468,35 @@ export default function IonCloudCanvas({ className = '' }: { className?: string 
         }
       }
 
+      /** Paint the final settled state (scatter + marginals + axes) */
+      function paintSettled() {
+        ctx!.clearRect(0, 0, w, h);
+        ctx!.globalAlpha = 1;
+        ctx!.drawImage(staticCanvas!, 0, 0, w, h);
+        ctx!.globalAlpha = SETTLED_OPACITY;
+        drawMarginals(finalXHist, finalYHist);
+        drawAxes(ctx!, w, h, projResult);
+      }
+
       if (prefersReduced) {
-        if (staticCanvas) {
-          ctx!.globalAlpha = SETTLED_OPACITY;
-          ctx!.drawImage(staticCanvas, 0, 0, w, h);
-          ctx!.globalAlpha = 1;
-          drawMarginals(finalXHist, finalYHist);
-          drawAxes(ctx!, w, h, projResult);
-        }
+        paintSettled();
         return;
       }
 
       let resizeTimer = 0;
+      let animDone = false;
       const ro = new ResizeObserver(() => {
         clearTimeout(resizeTimer);
-        resizeTimer = window.setTimeout(resize, 120);
+        resizeTimer = window.setTimeout(() => {
+          resize();
+          if (animDone) paintSettled();
+        }, 120);
       });
       ro.observe(canvas!);
 
       const t0 = performance.now();
-      let settled = false;
+      const ENTRANCE_END = ANIM_DURATION + PARTICLE_DURATION;
+      const FADE_END = ENTRANCE_END + FADE_DURATION;
 
       function frame(now: number) {
         if (cancelled) return;
@@ -501,34 +508,19 @@ export default function IonCloudCanvas({ className = '' }: { className?: string 
         const elapsed = now - t0;
         ctx!.clearRect(0, 0, w, h);
 
-        const animEnd = ANIM_DURATION + PARTICLE_DURATION;
-        const allDone = elapsed >= animEnd;
-        const fading = allDone && elapsed < animEnd + FADE_DURATION;
-        const fullySettled = elapsed >= animEnd + FADE_DURATION;
-
-        // Fade progress: 0 = animation just ended, 1 = fully settled
-        const fadeFrac = fading
-          ? (elapsed - animEnd) / FADE_DURATION
-          : fullySettled ? 1 : 0;
-
-        // Per-dot alpha at Phase 1 end = SETTLED_OPACITY (0.28)
-        // Final settled per-dot alpha = FINAL_DOT_ALPHA (0.154)
-        // Marginals at Phase 1 end = full opacity (1.0)
-
         const xOff = PAD * w;
         const yOff = PAD * h;
         const xScale = w * (1 - 2 * PAD);
         const yScale = h * (1 - 2 * PAD);
 
-        if (!allDone) {
-          // ── Phase 1: Entrance ──
+        if (elapsed < ENTRANCE_END) {
+          // ── Entrance: particles fly in, dimming to SETTLED_OPACITY as they settle ──
           ctx!.globalAlpha = 1;
 
           for (let i = 0; i < n; i++) {
             const localT = (elapsed - delays[i]) / PARTICLE_DURATION;
             if (localT < 0) continue;
 
-            // Track arrival for marginals (count once when > 80% settled)
             if (!arrived[i] && localT >= 0.8) {
               arrived[i] = 1;
               const c = data.charge[i];
@@ -541,19 +533,18 @@ export default function IonCloudCanvas({ className = '' }: { className?: string 
             const nx = startXNorm[i] + (endXNorm[i] - startXNorm[i]) * progress;
             const ny = startYNorm[i] + (endYNorm[i] - startYNorm[i]) * progress;
 
-            const x = xOff + nx * xScale;
-            const y = yOff + ny * yScale;
-
             const fadeIn = Math.min(localT * 3, 1);
-            const settledAlpha = SETTLED_OPACITY;
             const flyAlpha = DOT_ALPHA * fadeIn;
-            const alpha = settledAlpha + (flyAlpha - settledAlpha) * (1 - progress);
+            const alpha = SETTLED_OPACITY + (flyAlpha - SETTLED_OPACITY) * (1 - progress);
             const [r, g, b] = CHARGE_COLORS[data.charge[i]] ?? CHARGE_COLORS[2];
             ctx!.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-            ctx!.fillRect(x, y, DOT_SIZE, DOT_SIZE);
+            ctx!.fillRect(
+              xOff + nx * xScale,
+              yOff + ny * yScale,
+              DOT_SIZE, DOT_SIZE,
+            );
           }
 
-          // Draw live marginals (normalize by same global max)
           const liveNormX: Record<number, Float32Array> = {};
           const liveNormY: Record<number, Float32Array> = {};
           for (const c of CHARGES) {
@@ -567,40 +558,32 @@ export default function IonCloudCanvas({ className = '' }: { className?: string 
           drawMarginals(liveNormX, liveNormY);
           drawAxes(ctx!, w, h, projResult);
 
-        } else if (fading) {
-          // ── Phase 2a: Fade – draw individual particles (same method as Phase 1) ──
-          const easedFade = easeOutCubic(fadeFrac);
-          ctx!.globalAlpha = 1;
+        } else if (elapsed < FADE_END) {
+          // ── Fade: individual particles dim from SETTLED_OPACITY → FINAL_DOT_ALPHA ──
+          const fadeFrac = easeOutCubic((elapsed - ENTRANCE_END) / FADE_DURATION);
+          const dotAlpha = SETTLED_OPACITY + (FINAL_DOT_ALPHA - SETTLED_OPACITY) * fadeFrac;
+          const overlayAlpha = 1 + (SETTLED_OPACITY - 1) * fadeFrac;
 
-          // Per-dot alpha lerps from SETTLED_OPACITY → FINAL_DOT_ALPHA
+          ctx!.globalAlpha = 1;
           for (let i = 0; i < n; i++) {
-            const alpha = SETTLED_OPACITY + (FINAL_DOT_ALPHA - SETTLED_OPACITY) * easedFade;
             const [r, g, b] = CHARGE_COLORS[data.charge[i]] ?? CHARGE_COLORS[2];
-            ctx!.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+            ctx!.fillStyle = `rgba(${r},${g},${b},${dotAlpha})`;
             ctx!.fillRect(
               xOff + endXNorm[i] * xScale,
               yOff + endYNorm[i] * yScale,
-              DOT_SIZE,
-              DOT_SIZE,
+              DOT_SIZE, DOT_SIZE,
             );
           }
 
-          // Marginals fade from 1.0 → SETTLED_OPACITY
-          const overlayMul = 1 - (1 - SETTLED_OPACITY) * easedFade;
-          ctx!.globalAlpha = overlayMul;
+          ctx!.globalAlpha = overlayAlpha;
           drawMarginals(finalXHist, finalYHist);
           drawAxes(ctx!, w, h, projResult);
 
         } else {
-          // ── Phase 2b: Fully settled – use pre-rendered static canvas ──
-          const breathe =
-            Math.sin(((now % BREATHE_PERIOD) / BREATHE_PERIOD) * Math.PI * 2) * BREATHE_AMPLITUDE;
-          ctx!.globalAlpha = 1 + breathe;
-          ctx!.drawImage(staticCanvas!, 0, 0, w, h);
-
-          ctx!.globalAlpha = SETTLED_OPACITY + breathe;
-          drawMarginals(finalXHist, finalYHist);
-          drawAxes(ctx!, w, h, projResult);
+          // ── Done: paint settled and stop the loop ──
+          animDone = true;
+          paintSettled();
+          return;
         }
 
         rafRef.current = requestAnimationFrame(frame);
