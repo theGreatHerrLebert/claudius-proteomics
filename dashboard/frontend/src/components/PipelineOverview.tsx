@@ -15,7 +15,7 @@ export default function PipelineOverview({ compact }: PipelineOverviewProps) {
   return (
     <div className={`flex flex-col ${compact ? 'gap-3' : 'gap-4'}`}>
       {/* Desktop: horizontal */}
-      <div className="hidden md:flex items-stretch gap-0">
+      <div className="hidden md:flex items-stretch gap-0 pipeline-flow">
         {steps.map((step, i) => (
           <div key={step.number} className="flex items-stretch flex-1 min-w-0">
             <div className={`pipeline-step flex-1 ${compact ? 'p-3' : 'p-4'} flex flex-col items-center text-center`}>
