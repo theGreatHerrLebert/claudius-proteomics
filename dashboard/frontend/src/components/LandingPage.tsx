@@ -8,6 +8,7 @@ import IonCloudCanvas from './IonCloudCanvas';
 
 interface LandingPageProps {
   onViewSummary: () => void;
+  onNavigateBlueprint?: () => void;
   explorerUrl?: string;
   onExploreData?: () => void;
 }
@@ -114,6 +115,7 @@ function formatNumber(n: number): string {
 
 export default function LandingPage({
   onViewSummary,
+  onNavigateBlueprint,
   explorerUrl,
   onExploreData,
 }: LandingPageProps) {
@@ -161,6 +163,7 @@ export default function LandingPage({
         currentPage="landing"
         onNavigateLanding={() => {}}
         onNavigateVisit={onViewSummary}
+        onNavigateBlueprint={onNavigateBlueprint}
         explorerUrl={explorerUrl}
         onExploreData={onExploreData}
       />
