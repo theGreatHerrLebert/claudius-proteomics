@@ -7,6 +7,7 @@ import DatasetSummaryPage from './components/DatasetSummary';
 import LandingPage from './components/LandingPage';
 import VisitSummaryPage from './components/VisitSummaryPage';
 import BlueprintPage from './components/BlueprintPage';
+import SiteNav from './components/SiteNav';
 import {
   listPrecursors,
   getPrecursor,
@@ -1666,6 +1667,12 @@ function Dashboard() {
     if (viewMode === 'collection') {
       return (
         <div className="app-shell h-screen flex flex-col surface-grid">
+          <SiteNav
+            currentPage="collection"
+            onNavigateLanding={handleNavigateToLanding}
+            onNavigateVisit={handleNavigateToVisit}
+            onNavigateBlueprint={handleNavigateToBlueprint}
+          />
           <CollectionBrowser
             onDatasetLoaded={handleDatasetLoaded}
             activeDataset={activeDataset}

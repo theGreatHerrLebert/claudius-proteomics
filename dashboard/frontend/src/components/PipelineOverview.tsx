@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 const steps = [
   {
@@ -82,13 +82,23 @@ interface PipelineOverviewProps {
 function FlipCard({
   step,
   compact,
+  index = 0,
 }: {
   step: (typeof steps)[number];
   compact?: boolean;
+  index?: number;
 }) {
   const [face, setFace] = useState<'front' | 'back'>('front');
   const [animating, setAnimating] = useState(false);
+  const [entranceFlip, setEntranceFlip] = useState(false);
   const nextFace = useRef<'front' | 'back'>('back');
+
+  // Staggered entrance flip on mount
+  useEffect(() => {
+    const delay = 300 + index * 150; // stagger each card by 150ms
+    const timer = setTimeout(() => setEntranceFlip(true), delay);
+    return () => clearTimeout(timer);
+  }, [index]);
 
   function handleClick() {
     if (animating) return;
@@ -106,10 +116,15 @@ function FlipCard({
   }
 
   const isFront = face === 'front';
+  const classes = [
+    'pipeline-flip-card',
+    animating ? 'pipeline-flip-card--animating' : '',
+    entranceFlip ? 'pipeline-flip-card--entered' : 'pipeline-flip-card--hidden',
+  ].filter(Boolean).join(' ');
 
   return (
     <div
-      className={`pipeline-flip-card ${animating ? 'pipeline-flip-card--animating' : ''}`}
+      className={classes}
       onClick={handleClick}
       onAnimationIteration={handleHalf}
       onAnimationEnd={handleDone}
@@ -180,7 +195,7 @@ export default function PipelineOverview({ compact }: PipelineOverviewProps) {
       <div className="hidden md:flex items-stretch gap-0 pipeline-flow">
         {steps.map((step, i) => (
           <div key={step.number} className="flex items-stretch flex-1 min-w-0">
-            <FlipCard step={step} compact={compact} />
+            <FlipCard step={step} compact={compact} index={i} />
             {i < steps.length - 1 && <div className="pipeline-connector" />}
           </div>
         ))}
@@ -190,7 +205,7 @@ export default function PipelineOverview({ compact }: PipelineOverviewProps) {
       <div className="flex md:hidden flex-col gap-2">
         {steps.map((step, i) => (
           <div key={step.number} className="flex flex-col items-stretch">
-            <FlipCard step={step} compact={compact} />
+            <FlipCard step={step} compact={compact} index={i} />
             {i < steps.length - 1 && (
               <div
                 className="w-px h-3 mx-auto"
