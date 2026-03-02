@@ -1,7 +1,8 @@
 interface SiteNavProps {
-  currentPage: 'landing' | 'visit';
+  currentPage: 'landing' | 'visit' | 'blueprint';
   onNavigateLanding: () => void;
   onNavigateVisit: () => void;
+  onNavigateBlueprint?: () => void;
   explorerUrl?: string;
   onExploreData?: () => void;
 }
@@ -10,6 +11,7 @@ export default function SiteNav({
   currentPage,
   onNavigateLanding,
   onNavigateVisit,
+  onNavigateBlueprint,
   explorerUrl,
   onExploreData,
 }: SiteNavProps) {
@@ -28,7 +30,7 @@ export default function SiteNav({
         className="text-lg font-bold tracking-tight"
         style={{ color: 'var(--accent-1)', background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        San José
+        San Jos&eacute;
       </button>
 
       <div className="flex items-center gap-4">
@@ -44,6 +46,14 @@ export default function SiteNav({
         >
           Project Summary
         </button>
+        {onNavigateBlueprint && (
+          <button
+            onClick={onNavigateBlueprint}
+            className={`site-nav-link ${currentPage === 'blueprint' ? 'site-nav-link--active' : ''}`}
+          >
+            Blueprint
+          </button>
+        )}
         {(explorerUrl || onExploreData) && (
           <button onClick={handleExplore} className="btn-primary">
             Explore Data

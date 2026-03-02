@@ -6,6 +6,7 @@ import CollectionBrowser from './components/CollectionBrowser';
 import DatasetSummaryPage from './components/DatasetSummary';
 import LandingPage from './components/LandingPage';
 import VisitSummaryPage from './components/VisitSummaryPage';
+import BlueprintPage from './components/BlueprintPage';
 import {
   listPrecursors,
   getPrecursor,
@@ -20,7 +21,7 @@ import type { StudySummary } from './api';
 
 const queryClient = new QueryClient();
 
-type ViewMode = 'landing' | 'visit' | 'collection' | 'dataset';
+type ViewMode = 'landing' | 'visit' | 'blueprint' | 'collection' | 'dataset';
 
 // External URL for the data explorer (hosted on a separate machine).
 // Set to '' to fall back to in-app collection browser navigation.
@@ -1557,6 +1558,8 @@ function Dashboard() {
 
       if (pageParam === 'visit') {
         setViewMode('visit');
+      } else if (pageParam === 'blueprint') {
+        setViewMode('blueprint');
       } else if (pageParam === 'collection') {
         if (appStatus.mode === 'collection' && !appStatus.store_loaded) {
           setViewMode('collection');
@@ -1579,6 +1582,8 @@ function Dashboard() {
       params.delete('page');
     } else if (viewMode === 'visit') {
       params.set('page', 'visit');
+    } else if (viewMode === 'blueprint') {
+      params.set('page', 'blueprint');
     } else if (viewMode === 'collection') {
       params.set('page', 'collection');
     } else {
@@ -1605,6 +1610,7 @@ function Dashboard() {
 
   const handleNavigateToLanding = () => setViewMode('landing');
   const handleNavigateToVisit = () => setViewMode('visit');
+  const handleNavigateToBlueprint = () => setViewMode('blueprint');
 
   const handleExploreFromPublic = () => {
     if (isCollectionMode) setViewMode('collection');
@@ -1624,6 +1630,7 @@ function Dashboard() {
     return (
       <LandingPage
         onViewSummary={handleNavigateToVisit}
+        onNavigateBlueprint={handleNavigateToBlueprint}
         explorerUrl={EXPLORER_URL || undefined}
         onExploreData={!EXPLORER_URL ? handleExploreFromPublic : undefined}
       />
@@ -1635,6 +1642,19 @@ function Dashboard() {
     return (
       <VisitSummaryPage
         onBack={handleNavigateToLanding}
+        onNavigateBlueprint={handleNavigateToBlueprint}
+        explorerUrl={EXPLORER_URL || undefined}
+        onExploreData={!EXPLORER_URL ? handleExploreFromPublic : undefined}
+      />
+    );
+  }
+
+  // Blueprint documentation page
+  if (viewMode === 'blueprint') {
+    return (
+      <BlueprintPage
+        onBack={handleNavigateToLanding}
+        onNavigateVisit={handleNavigateToVisit}
         explorerUrl={EXPLORER_URL || undefined}
         onExploreData={!EXPLORER_URL ? handleExploreFromPublic : undefined}
       />

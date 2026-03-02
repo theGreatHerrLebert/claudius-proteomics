@@ -7,6 +7,11 @@
     "module": "ESNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@docs/*": ["../../docs/*"],
+      "@root/*": ["../../*"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

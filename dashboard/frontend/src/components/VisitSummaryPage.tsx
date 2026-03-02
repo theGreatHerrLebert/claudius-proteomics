@@ -6,6 +6,7 @@ import PipelineOverview from './PipelineOverview';
 
 interface VisitSummaryPageProps {
   onBack: () => void;
+  onNavigateBlueprint?: () => void;
   explorerUrl?: string;
   onExploreData?: () => void;
 }
@@ -17,7 +18,7 @@ const techStack = [
   { name: 'DIA-NN', role: 'Peptide-centric search', url: 'https://github.com/vdemichev/DiaNN' },
   { name: 'Sage', role: 'Fast Rust search engine', url: 'https://github.com/lazear/sage' },
   { name: 'DuckDB / Parquet', role: 'Columnar storage', url: 'https://github.com/duckdb/duckdb' },
-  { name: 'TensorFlow', role: 'Model training', url: 'https://github.com/tensorflow/tensorflow' },
+  { name: 'PyTorch', role: 'Model training', url: 'https://github.com/pytorch/pytorch' },
   { name: 'Singularity / Docker', role: 'Containers', url: 'https://github.com/apptainer/apptainer' },
 ];
 
@@ -49,6 +50,7 @@ function roadmapTextColor(status: 'completed' | 'current' | 'future'): string {
 
 export default function VisitSummaryPage({
   onBack,
+  onNavigateBlueprint,
   explorerUrl,
   onExploreData,
 }: VisitSummaryPageProps) {
@@ -100,6 +102,7 @@ export default function VisitSummaryPage({
         currentPage="visit"
         onNavigateLanding={onBack}
         onNavigateVisit={() => {}}
+        onNavigateBlueprint={onNavigateBlueprint}
         explorerUrl={explorerUrl}
         onExploreData={onExploreData}
       />
