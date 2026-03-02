@@ -1,5 +1,5 @@
 interface SiteNavProps {
-  currentPage: 'landing' | 'visit' | 'blueprint';
+  currentPage: 'landing' | 'visit' | 'blueprint' | 'collection';
   onNavigateLanding: () => void;
   onNavigateVisit: () => void;
   onNavigateBlueprint?: () => void;

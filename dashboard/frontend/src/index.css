@@ -428,6 +428,17 @@ body {
   background: color-mix(in srgb, #11263f 88%, transparent);
 }
 
+.landing-subtle-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-1-40, rgba(93, 191, 216, 0.35));
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s;
+}
+.landing-subtle-link:hover {
+  text-decoration-color: var(--accent-1, #5dbfd8);
+}
+
 .landing-hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -934,6 +945,22 @@ body {
 
 .pipeline-flip-card--animating {
   animation: flipSqueeze 180ms ease-in 2 alternate;
+}
+
+/* Entrance: start squeezed, flip open */
+.pipeline-flip-card--hidden {
+  transform: scaleX(0.02);
+  opacity: 0;
+}
+
+@keyframes flipEntrance {
+  0%   { transform: scaleX(0.02); opacity: 0.3; }
+  60%  { transform: scaleX(1.04);  opacity: 1; }
+  100% { transform: scaleX(1);     opacity: 1; }
+}
+
+.pipeline-flip-card--entered {
+  animation: flipEntrance 350ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 /* Back-face card styling */

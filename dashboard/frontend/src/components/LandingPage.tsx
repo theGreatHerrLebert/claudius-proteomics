@@ -5,6 +5,10 @@ import { useScrollReveal } from '../hooks/useScrollReveal';
 import SiteNav from './SiteNav';
 import PipelineOverview from './PipelineOverview';
 import IonCloudCanvas from './IonCloudCanvas';
+import PasefDdaCanvas from './PasefDdaCanvas';
+import EngineCloudCanvas from './EngineCloudCanvas';
+import ConsensusHeatmapCanvas from './ConsensusHeatmapCanvas';
+import MirrorSpectrumCanvas from './MirrorSpectrumCanvas';
 
 interface LandingPageProps {
   onViewSummary: () => void;
@@ -121,6 +125,16 @@ export default function LandingPage({
 }: LandingPageProps) {
   const [expandedCard, setExpandedCard] = useState<number | null>(null);
 
+  // Randomly pick one of 5 hero background visualizations on mount
+  const [heroViz] = useState(() => Math.floor(Math.random() * 5));
+  const HeroCanvas = [
+    IonCloudCanvas,
+    PasefDdaCanvas,
+    EngineCloudCanvas,
+    ConsensusHeatmapCanvas,
+    MirrorSpectrumCanvas,
+  ][heroViz];
+
   const uniqueSection = useScrollReveal();
   const pipelineSection = useScrollReveal();
   const whyNowSection = useScrollReveal();
@@ -170,7 +184,7 @@ export default function LandingPage({
 
       <main className="flex-1 overflow-y-auto">
         <section className="landing-hero px-6 pt-14 pb-12 md:pt-20 md:pb-16">
-          <IonCloudCanvas className="ion-cloud-canvas" />
+          <HeroCanvas className="ion-cloud-canvas" />
           <div className="max-w-6xl mx-auto landing-hero-grid reveal-up">
             <div className="landing-hero-content">
               <p className="subtle-label mb-3">Reference Layer For PRIDE timsTOF</p>
@@ -178,7 +192,10 @@ export default function LandingPage({
                 <span className="landing-hero-title-main">San José</span>
               </h1>
               <p className="text-lg md:text-xl mb-4" style={{ color: 'var(--text-2)' }}>
-                A reproducible, bias-aware reference layer for timsTOF data on PRIDE.
+                A reproducible, bias-aware reference layer for{' '}
+                <a href="https://www.bruker.com/en/products-and-solutions/mass-spectrometry/timstof.html" target="_blank" rel="noopener noreferrer" className="landing-subtle-link">timsTOF</a>
+                {' '}data on{' '}
+                <a href="https://www.ebi.ac.uk/pride/" target="_blank" rel="noopener noreferrer" className="landing-subtle-link">PRIDE</a>.
               </p>
               <p className="text-sm md:text-base italic mb-7 landing-quote">
                 "We are not collecting peptides. We are collecting peptide observations in experimental context."
@@ -298,6 +315,30 @@ export default function LandingPage({
                 ))}
               </ul>
             </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-10 max-w-6xl mx-auto">
+          <div className="flex flex-col items-center text-center mb-4">
+            <h2 className="subtle-label mb-2">Live Acquisition Preview</h2>
+            <p className="text-sm max-w-2xl mb-4" style={{ color: 'var(--text-3)' }}>
+              2,000 consecutive frames from a real timsTOF PASEF-DDA run (PXD046675), rendered with imspy.
+              Boxes show isolation windows targeting precursors for fragmentation.
+            </p>
+          </div>
+          <div className="chrome-panel p-3 md:p-4">
+            <video
+              src="/data/pasef_dda_preview.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                width: '100%',
+                borderRadius: 6,
+                display: 'block',
+              }}
+            />
           </div>
         </section>
 
