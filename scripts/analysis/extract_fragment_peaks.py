@@ -692,7 +692,7 @@ def main():
                         help="Path to precursor_store.parquet")
     parser.add_argument("--blob-dir", required=True,
                         help="Directory containing extracted/{raw_file}.d/blobs.bin")
-    parser.add_argument("--output", default="analysis/fragment_collection/",
+    parser.add_argument("--output", default="notebook/analysis/fragment_collection/",
                         help="Output directory")
     parser.add_argument("--min-engines", type=int, default=2,
                         help="Minimum engine consensus for PSM selection (default: 2)")
