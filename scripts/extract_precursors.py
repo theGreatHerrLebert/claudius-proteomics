@@ -168,7 +168,7 @@ def compute_sage_fragment_cosine(
     matched_sage = []
 
     for frag in sage_frags:
-        sage_mz = frag['mz_experimental']
+        sage_mz = frag.get('mz_observed', frag['mz_experimental'])
         sage_int = frag['intensity']
         tol = sage_mz * ppm_tol / 1e6
 

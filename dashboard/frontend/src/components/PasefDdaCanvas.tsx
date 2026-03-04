@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import {
-  easeOutCubic, hash, drawAxes,
+  easeOutCubic, drawAxes,
   PAD,
   type ProjectionResult,
 } from './heroCanvasUtils';
