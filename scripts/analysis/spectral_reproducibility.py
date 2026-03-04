@@ -93,17 +93,15 @@ def spectral_angle(spec_a: dict, spec_b: dict) -> float:
 # Predicted spectrum comparison (optional, requires imspy-predictors)
 # ---------------------------------------------------------------------------
 
-_SUPPORTED_MODS = {"4", "35"}
-
-
 def _clean_seq_for_predictor(seq: str) -> str | None:
-    """Clean sequence for the local intensity predictor."""
+    """Clean sequence for the local intensity predictor.
+
+    The local model (ProformaTokenizer) supports all UNIMOD modifications.
+    Only constraint is sequence length 7-30 AA.
+    """
     if not seq:
         return None
     cleaned = seq.replace("-", "").replace("[]", "")
-    mods = re.findall(r"\[UNIMOD:(\d+)\]", cleaned)
-    if any(m not in _SUPPORTED_MODS for m in mods):
-        return None
     stripped = re.sub(r"\[UNIMOD:\d+\]", "", cleaned)
     if len(stripped) < 7 or len(stripped) > 30:
         return None

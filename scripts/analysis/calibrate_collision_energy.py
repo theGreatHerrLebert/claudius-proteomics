@@ -107,17 +107,11 @@ def predict_spectra_local(
 # Sequence cleaning for the local model
 # ---------------------------------------------------------------------------
 
-_SUPPORTED_MODS = {"4", "35"}  # C[UNIMOD:4] (CAM), M[UNIMOD:35] (Ox)
-
-
 def clean_sequence_for_predictor(seq: str) -> str | None:
     """Clean and validate a sequence for the local intensity predictor.
 
-    The model supports:
-      - Standard amino acids
-      - C[UNIMOD:4] (carbamidomethylation)
-      - M[UNIMOD:35] (oxidation)
-      - Sequence length 7-30 AA
+    The local model (ProformaTokenizer) supports all UNIMOD modifications.
+    Only constraint is sequence length 7-30 AA.
 
     Returns cleaned sequence or None if unsupported.
     """
@@ -128,11 +122,6 @@ def clean_sequence_for_predictor(seq: str) -> str | None:
     # []-PEPTIDEK-[] → PEPTIDEK
     # [UNIMOD:1]-PEPTIDEK-[] → [UNIMOD:1]PEPTIDEK
     cleaned = seq.replace("-", "").replace("[]", "")
-
-    # Check for unsupported modifications
-    mods = re.findall(r"\[UNIMOD:(\d+)\]", cleaned)
-    if any(m not in _SUPPORTED_MODS for m in mods):
-        return None
 
     # Check sequence length (strip mods to count AAs)
     stripped = re.sub(r"\[UNIMOD:\d+\]", "", cleaned)
