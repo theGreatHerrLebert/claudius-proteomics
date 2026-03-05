@@ -7,6 +7,8 @@ datasets:
   - PXD046675  # Pig muscle 4D-LFQ (Wannanhua, timsTOF Pro)
   - PXD069059  # Ovine macrophage differentiation (timsTOF Pro, DDA)
   - PXD019746  # Ogata et al. 2021 - phospho CCS on timsTOF (jPOST)
+  - PXD067756  # Guinea pig retina/choroid/sclera myopia study (timsTOF Pro)
+  - PXD068782  # Chlamydomonas phospho-proteome, CDKL5 kinase (timsTOF Pro 2)
 
 # Dataset metadata: bias-aware fields (manually verified from publication)
 # Organism mapping is now handled automatically by sample_group_resolver.py
@@ -32,6 +34,18 @@ dataset_metadata:
     description: "Ogata et al. 2021 - phosphopeptide CCS in TIMS (Kyoto University)"
     organism: "human"
     instrument: "timsTOF"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+    mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
+  PXD068782:
+    description: "Chlamydomonas CDKL5 phospho-proteome, cilia/flagella kinase signaling (Pazour lab)"
+    organism: "chlamydomonas"
+    instrument: "timsTOF Pro 2"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+    mod_profile: "phospho"  # Phospho(STY) variable mod
+  PXD067756:
+    description: "Guinea pig retina/choroid/sclera proteomics & phosphoproteomics (myopia study)"
+    organism: "guinea_pig"
+    instrument: "timsTOF Pro"
     acquisition_mode: "PASEF"  # DDA-PASEF
     mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
 
@@ -84,6 +98,14 @@ organisms:
   sheep:
     taxon_id: 9940
     proteome_id: "UP000664991"
+    local_fasta: null
+  chlamydomonas:
+    taxon_id: 3055
+    proteome_id: "UP000006906"
+    local_fasta: null
+  guinea_pig:
+    taxon_id: 10141
+    proteome_id: "UP000005447"
     local_fasta: null
 
 # Contaminants database (appended to all FASTA files)
