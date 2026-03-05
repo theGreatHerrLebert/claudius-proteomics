@@ -11,7 +11,8 @@ from the Spectrum column, enabling exact joins to raw timsTOF data.
 """
 
 from pathlib import Path
-from typing import Optional, Dict, Set
+from typing import Optional, Dict, Set, List
+import numpy as np
 import pandas as pd
 
 from .config import MatchConfig, MatchTier
@@ -206,6 +207,7 @@ class FragPipeAnchoredMerger:
 
         result = merged_df.copy()
         engine_stats = {"sequence": 0, "coordinate": 0}
+        coord_rt_diffs: List[float] = []  # Track RT diffs for diagnostics
 
         # Add raw_file column to engine_df if not present
         if "raw_file" not in engine_df.columns:
@@ -339,6 +341,8 @@ class FragPipeAnchoredMerger:
                         file_matches.append((idx, engine_idx, match_result.tier.name))
                         matched_engine_indices.add(engine_idx)
                         engine_stats["coordinate"] += 1
+                        if match_result.rt_diff_sec is not None:
+                            coord_rt_diffs.append(match_result.rt_diff_sec)
 
             all_matches.extend(file_matches)
 
@@ -357,6 +361,15 @@ class FragPipeAnchoredMerger:
         print(f"    Sequence matches: {engine_stats['sequence']}")
         print(f"    Coordinate matches: {engine_stats['coordinate']}")
         print(f"    Total: {total_matched}")
+
+        # RT diagnostics for coordinate matches
+        if coord_rt_diffs:
+            rt_arr = np.array(coord_rt_diffs)
+            print(f"    RT diff (coordinate matches): "
+                  f"median={np.median(rt_arr):.4f}s, "
+                  f"mean={np.mean(rt_arr):.4f}s, "
+                  f"p90={np.percentile(rt_arr, 90):.4f}s, "
+                  f"max={np.max(rt_arr):.4f}s")
 
         return result
 
