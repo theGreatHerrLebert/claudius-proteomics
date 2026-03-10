@@ -36,11 +36,11 @@ class MatchConfig:
     mz_tol_ppm: float = 20.0
 
     # RT tolerance in seconds
-    # Tightened from 5.0s to 0.5s (2026-03-02): DIA-NN reports exact frame RT
-    # for DDA data (confirmed by Vadim Demichev). timsTOF frame rate is ~100ms,
-    # so 0.5s provides generous margin while preventing cross-frame false matches.
-    # Previous 5s window caused 78%+ of DIA-NN results to be stranded as unmatched.
-    rt_tol_sec: float = 0.5
+    # Tightened to 0.01s (2026-03-10): Vadim Demichev confirmed DIA-NN DDA RT
+    # is frame-exact for timsTOF ("can even go to 0.01s"). 10ms is sub-frame
+    # precision (~100ms frame rate), effectively an exact match.
+    # History: 5.0s (caused 78%+ stranded) → 0.5s (worked) → 0.01s (frame-exact).
+    rt_tol_sec: float = 0.01
 
     # Ion mobility tolerance (1/K0)
     im_tol: float = 0.05
