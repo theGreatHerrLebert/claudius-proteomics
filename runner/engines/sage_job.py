@@ -6,6 +6,7 @@ Can be executed standalone: python -m runner.engines.sage_job --help
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -25,6 +26,12 @@ class SageJob(EngineJob):
 
     def _get_parser(self):
         return SageParser()
+
+    def _get_env(self) -> Optional[Dict[str, str]]:
+        """Set RUST_MIN_STACK=32MB to prevent stack overflows with large search spaces."""
+        env = os.environ.copy()
+        env["RUST_MIN_STACK"] = "33554432"
+        return env
 
     def _build_command(
         self,

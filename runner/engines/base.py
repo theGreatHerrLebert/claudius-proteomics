@@ -90,6 +90,10 @@ class EngineJob(ABC):
         """Return an instance of the engine's parser (from scripts.engine_parsers)."""
         pass
 
+    def _get_env(self) -> Optional[Dict[str, str]]:
+        """Return environment dict for subprocess. None inherits parent env."""
+        return None
+
     def _post_subprocess(
         self,
         accession: str,
@@ -178,6 +182,7 @@ class EngineJob(ABC):
 
             proc = subprocess.run(
                 cmd, capture_output=True, text=True, timeout=timeout_sec,
+                env=self._get_env(),
             )
 
             if proc.returncode != 0:
