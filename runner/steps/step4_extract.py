@@ -36,6 +36,24 @@ from lib.quality_metrics import (
 from runner.summary import StepSummary, write_step_summary
 
 
+PROTON_MASS = 1.007276
+
+
+def _sage_to_observed_mz(mz_sage: float, charge_sage: int, mz_max: float = 1750.0):
+    """Convert Sage deconvolved m/z to actual observed m/z.
+
+    Returns (observed_mz, inferred_charge).
+    """
+    if mz_sage <= mz_max:
+        return mz_sage, charge_sage
+    neutral_mass = mz_sage - PROTON_MASS
+    for z in range(2, 5):
+        obs = (neutral_mass + z * PROTON_MASS) / z
+        if obs <= mz_max:
+            return obs, z
+    return mz_sage, charge_sage
+
+
 def _load_sage_fragments(processed_dir: Path, raw_file_name: str) -> dict:
     """Load Sage matched fragments for a specific raw file.
 
@@ -69,6 +87,7 @@ def _load_sage_fragments(processed_dir: Path, raw_file_name: str) -> dict:
         df = df.sort_values('psm_id')
         psm_ids = df['psm_id'].values
         mz_exp = df['fragment_mz_experimental'].values.astype(float)
+        charges = df['fragment_charge'].values.astype(int) if 'fragment_charge' in df.columns else np.ones(len(df), dtype=int)
         intensities = df['fragment_intensity'].values.astype(float)
 
         # Find group boundaries
@@ -80,10 +99,15 @@ def _load_sage_fragments(processed_dir: Path, raw_file_name: str) -> dict:
         result = {}
         for i in range(len(unique_ids)):
             s, e = starts[i], ends[i]
-            result[int(unique_ids[i])] = [
-                {'mz_experimental': float(mz_exp[j]), 'intensity': float(intensities[j])}
-                for j in range(s, e)
-            ]
+            frags = []
+            for j in range(s, e):
+                obs_mz, obs_charge = _sage_to_observed_mz(mz_exp[j], charges[j])
+                frags.append({
+                    'mz_experimental': float(mz_exp[j]),
+                    'intensity': float(intensities[j]),
+                    'mz_observed': float(obs_mz),
+                })
+            result[int(unique_ids[i])] = frags
 
         return result
 

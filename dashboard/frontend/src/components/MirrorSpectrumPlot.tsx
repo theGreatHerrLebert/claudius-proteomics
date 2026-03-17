@@ -31,7 +31,7 @@ export default function MirrorSpectrumPlot({
     // Calculate m/z range from experimental spectrum and matched fragments
     const allMz = [
       ...mz,
-      ...sageFragments.map(f => f.mz_experimental),
+      ...sageFragments.map(f => f.mz_observed),
     ];
     const minMz = Math.min(...allMz);
     const maxMz = Math.max(...allMz);
@@ -80,10 +80,11 @@ export default function MirrorSpectrumPlot({
   const yScaleExp = (i: number) => centerY - (i / plotData.maxExpInt) * halfPlotH * 0.9;
   const yScaleFrag = (i: number) => centerY + (i / plotData.maxFragInt) * halfPlotH * 0.9;
 
-  // Build ion label
+  // Build ion label (show charge_observed when > 1)
+  const superscriptDigit = (n: number) => ['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'][n] ?? `${n}`;
   const getIonLabel = (frag: SageMatchedFragment) => {
     const base = `${frag.fragment_type}${frag.ion_number}`;
-    return frag.charge > 1 ? `${base}+${frag.charge}` : base;
+    return frag.charge_observed > 1 ? `${base}${superscriptDigit(frag.charge_observed)}⁺` : base;
   };
 
   // Count b and y ions
@@ -205,7 +206,7 @@ export default function MirrorSpectrumPlot({
 
         {/* Matched b/y ions (bottom panel, pointing down, with labels) */}
         {sageFragments.map((frag, i) => {
-          const x = xScale(frag.mz_experimental);
+          const x = xScale(frag.mz_observed);
           const y1 = centerY;
           const y2 = yScaleFrag(frag.intensity);
           const color = frag.fragment_type === 'b' ? bIonColor : yIonColor;

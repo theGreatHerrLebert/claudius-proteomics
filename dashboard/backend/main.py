@@ -36,6 +36,28 @@ except ImportError:
     HAS_ZSTD = False
 
 
+PROTON_MASS = 1.007276
+
+
+def sage_to_observed_mz(mz_sage: float, charge_sage: int, mz_max: float = 1750.0):
+    """Convert Sage deconvolved m/z to actual observed m/z.
+
+    Sage internally deconvolves all MS2 peaks to neutral mass and reports
+    fragment_mz_experimental = neutral_mass + PROTON (i.e., [M+H]+ at z=1)
+    regardless of original charge. This converts back to the true observed m/z.
+
+    Returns (observed_mz, inferred_charge).
+    """
+    if mz_sage <= mz_max:
+        return mz_sage, charge_sage
+    neutral_mass = mz_sage - PROTON_MASS
+    for z in range(2, 5):
+        obs = (neutral_mass + z * PROTON_MASS) / z
+        if obs <= mz_max:
+            return obs, z
+    return mz_sage, charge_sage
+
+
 # Mass delta to UNIMOD mapping (for standardizing modification display)
 MASS_TO_UNIMOD = {
     57: "[UNIMOD:4]",   # Carbamidomethyl (C)
@@ -176,17 +198,21 @@ def load_sage_fragments(sage_dir: Path) -> bool:
         sage_fragments_by_psm = {}
         for i in range(len(unique_psm_ids)):
             s, e = starts[i], ends[i]
-            sage_fragments_by_psm[unique_psm_ids[i]] = [
-                {
+            frags = []
+            for j in range(s, e):
+                obs_mz, obs_charge = sage_to_observed_mz(mz_exp[j], charges[j])
+                obs_mz_calc, _ = sage_to_observed_mz(mz_calc[j], charges[j])
+                frags.append({
                     'fragment_type': types[j],
                     'ion_number': ordinals[j],
                     'charge': charges[j],
                     'mz_experimental': mz_exp[j],
                     'mz_calculated': mz_calc[j],
                     'intensity': intensities[j],
-                }
-                for j in range(s, e)
-            ]
+                    'mz_observed': obs_mz,
+                    'charge_observed': obs_charge,
+                })
+            sage_fragments_by_psm[unique_psm_ids[i]] = frags
         del fragments_df  # Free memory
         print(f"    Loaded fragments for {len(sage_fragments_by_psm)} PSMs")
 
@@ -202,10 +228,12 @@ class SageMatchedFragment(BaseModel):
     """A matched b/y ion from Sage search results."""
     fragment_type: str      # "b" or "y"
     ion_number: int         # fragment_ordinals (1, 2, 3...)
-    charge: int             # fragment_charge
-    mz_experimental: float
+    charge: int             # fragment_charge (as reported by Sage, often 1 for deconvolved)
+    mz_experimental: float  # Sage's deconvolved m/z (provenance)
     mz_calculated: float
     intensity: float
+    mz_observed: float      # actual observed m/z (corrected for charge)
+    charge_observed: int     # inferred detection charge
 
 
 def compute_spectrum_cosine(
@@ -233,7 +261,7 @@ def compute_spectrum_cosine(
     matched_sage = []
 
     for frag in sage_fragments:
-        sage_mz = frag['mz_experimental']
+        sage_mz = frag['mz_observed']
         sage_int = frag['intensity']
         tol = sage_mz * ppm_tol / 1e6
 
