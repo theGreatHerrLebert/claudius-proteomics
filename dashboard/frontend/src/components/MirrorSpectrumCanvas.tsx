@@ -14,6 +14,8 @@ interface MatchedFragment {
   mz_calculated: number;
   mz_experimental: number;
   intensity: number;
+  mz_observed: number;
+  charge_observed: number;
 }
 
 interface MirrorSpectrumData {
@@ -79,14 +81,14 @@ export default function MirrorSpectrumCanvas({ className = '' }: { className?: s
       const matched = data.matched_fragments;
 
       // Sort matched by m/z for left-to-right reveal
-      const sortedMatched = [...matched].sort((a, b) => a.mz_experimental - b.mz_experimental);
+      const sortedMatched = [...matched].sort((a, b) => a.mz_observed - b.mz_observed);
 
       // Normalize intensities to [0, 1]
       const maxExpInt = Math.max(...expInt, 1);
       const maxMatchInt = Math.max(...matched.map(m => m.intensity), 1);
 
       // m/z range
-      const allMz = [...expMz, ...matched.map(m => m.mz_experimental)];
+      const allMz = [...expMz, ...matched.map(m => m.mz_observed)];
       const [mzLo, mzHi] = bounds(allMz);
       const mzRange = mzHi - mzLo || 1;
 
@@ -156,7 +158,7 @@ export default function MirrorSpectrumCanvas({ className = '' }: { className?: s
           if (peakFrac <= 0) continue;
           const grow = Math.min(easeOutCubic(peakFrac), 1);
 
-          const x = mzToX(m.mz_experimental);
+          const x = mzToX(m.mz_observed);
           const intNorm = m.intensity / maxMatchInt;
           const peakLen = intNorm * peakH * 0.85 * grow;
 

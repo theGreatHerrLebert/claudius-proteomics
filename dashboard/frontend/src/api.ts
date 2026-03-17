@@ -75,10 +75,12 @@ export interface RawFileInfo {
 export interface SageMatchedFragment {
   fragment_type: string;  // "b" or "y"
   ion_number: number;     // fragment_ordinals (1, 2, 3...)
-  charge: number;         // fragment_charge
-  mz_experimental: number;
+  charge: number;         // fragment_charge (Sage's reported charge)
+  mz_experimental: number; // Sage's deconvolved m/z (provenance)
   mz_calculated: number;
   intensity: number;
+  mz_observed: number;     // actual observed m/z (corrected for charge)
+  charge_observed: number; // inferred detection charge
 }
 
 export interface PrecursorDetail extends PrecursorSummary {

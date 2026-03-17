@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import {
   bounds, easeOutCubic, hash, drawAxes, drawMarginalCurve,
-  PAD, MARGINAL_ALPHA,
+  PAD,
   type ProjectionResult,
 } from './heroCanvasUtils';
 
