@@ -3,12 +3,21 @@
 Sequence Standardization Utilities
 
 Converts modified peptide sequences from different search engines to a unified
-UNIMOD format: PEPTIDE[UNIMOD:X]SEQUENCE
+UNIMOD terminal format:
 
-Supported formats:
+    [N-term]-SEQUENCE[UNIMOD:X]-[C-term]
+
+Examples:
+    []-PEPTIDEK-[]                          # Unmodified
+    []-AAC[UNIMOD:4]PEPTIDEK-[]             # Carbamidomethyl (C)
+    []-M[UNIMOD:35]PEPTIDEK-[]              # Oxidation (M)
+    [UNIMOD:1]-PEPTIDEK-[]                  # N-term Acetyl
+    [UNIMOD:1]-M[UNIMOD:35]C[UNIMOD:4]K-[] # N-term + internal mods
+
+Supported input formats:
 - FragPipe: M[147.0354] (absolute mass) or 4C(57.0215) (position + delta)
 - DIA-NN: (UniMod:35)
-- Sage: [+15.9949] (mass delta)
+- Sage: [+15.9949] (mass delta), [+42.010567]-SEQ (N-term with hyphen)
 - MaxQuant: _(ac)PEPTIDE_ with (ox), (ph), etc.
 """
 
@@ -90,6 +99,34 @@ def mass_to_unimod(mass: float) -> Optional[str]:
     return None
 
 
+def wrap_terminal_format(sequence: str) -> str:
+    """Wrap a standardized sequence in [nterm]-SEQ-[cterm] format.
+
+    Detects N-terminal modifications (mod before the first amino acid letter)
+    and separates them with a hyphen. C-terminal bracket is always [].
+
+    Examples:
+        PEPTIDEK                    -> []-PEPTIDEK-[]
+        [UNIMOD:1]MPEPTIDEK         -> [UNIMOD:1]-MPEPTIDEK-[]
+        [UNIMOD:1]-MPEPTIDEK        -> [UNIMOD:1]-MPEPTIDEK-[]  (Sage already has hyphen)
+        MC[UNIMOD:4]PEPTIDEK        -> []-MC[UNIMOD:4]PEPTIDEK-[]
+    """
+    if not sequence or not isinstance(sequence, str):
+        return ""
+
+    nterm = "[]"
+    seq = sequence
+
+    # Detect leading modification before first amino acid letter.
+    # Matches [UNIMOD:X] or [+/-X.XXX] or [X.XXX] at start, optionally followed by -
+    nterm_match = re.match(r'^(\[(?:UNIMOD:\d+|[+-]?\d+\.?\d*)\])-?', seq)
+    if nterm_match:
+        nterm = nterm_match.group(1)
+        seq = seq[nterm_match.end():]
+
+    return f"{nterm}-{seq}-[]"
+
+
 def standardize_diann_sequence(modified_sequence: str) -> str:
     """Convert DIA-NN modified sequence to standard UNIMOD format.
 
@@ -115,7 +152,7 @@ def standardize_diann_sequence(modified_sequence: str) -> str:
     # Add carbamidomethyl to bare cysteines (fixed mod not shown by DIA-NN)
     result = add_carbamidomethyl_to_cysteine(result)
 
-    return result
+    return wrap_terminal_format(result)
 
 
 def standardize_sage_sequence(modified_sequence: str) -> str:
@@ -160,7 +197,7 @@ def standardize_sage_sequence(modified_sequence: str) -> str:
     # Add carbamidomethyl to any bare cysteines (edge case - Sage usually includes it)
     result = add_carbamidomethyl_to_cysteine(result)
 
-    return result
+    return wrap_terminal_format(result)
 
 
 def standardize_fragpipe_sequence(peptide: str, modifications: str) -> str:
@@ -183,7 +220,8 @@ def standardize_fragpipe_sequence(peptide: str, modifications: str) -> str:
         return ""
 
     if not modifications or not isinstance(modifications, str) or modifications == "":
-        return peptide
+        seq = add_carbamidomethyl_to_cysteine(peptide)
+        return f"[]-{seq}-[]"
 
     # Parse modifications into position -> UNIMOD mapping
     mods_by_position = {}
@@ -218,15 +256,12 @@ def standardize_fragpipe_sequence(peptide: str, modifications: str) -> str:
                     if unimod:
                         mods_by_position[pos] = (aa, unimod)
     except Exception:
-        # If parsing fails, return plain sequence
-        return peptide
+        # If parsing fails, return wrapped plain sequence
+        seq = add_carbamidomethyl_to_cysteine(peptide)
+        return f"[]-{seq}-[]"
 
-    # Build modified sequence
+    # Build modified sequence (without N-term, that goes in the terminal wrapper)
     result = []
-
-    # Add N-terminal modification
-    if n_term_mod:
-        result.append(n_term_mod)
 
     for i, aa in enumerate(peptide):
         result.append(aa)
@@ -234,7 +269,12 @@ def standardize_fragpipe_sequence(peptide: str, modifications: str) -> str:
             _, unimod = mods_by_position[i]
             result.append(unimod)
 
-    return "".join(result)
+    seq = "".join(result)
+    seq = add_carbamidomethyl_to_cysteine(seq)
+
+    # Wrap with terminal format: N-term mod goes in the bracket
+    nterm = n_term_mod if n_term_mod else "[]"
+    return f"{nterm}-{seq}-[]"
 
 
 def standardize_fragpipe_modified_peptide(modified_peptide: str) -> str:
@@ -288,7 +328,7 @@ def standardize_fragpipe_modified_peptide(modified_peptide: str) -> str:
     # Add carbamidomethyl to bare cysteines (fixed mod not shown by FragPipe)
     result = add_carbamidomethyl_to_cysteine(result)
 
-    return result
+    return wrap_terminal_format(result)
 
 
 def add_carbamidomethyl_to_cysteine(sequence: str) -> str:
@@ -317,13 +357,14 @@ def remove_modifications(sequence: str) -> str:
     """Remove all modification annotations from sequence.
 
     Handles:
+    - Terminal format: [nterm]-SEQ-[cterm]
     - [UNIMOD:X]
     - [+X.XXX]
     - (UniMod:X)
     - [XXX.XXX] (absolute mass)
 
     Args:
-        sequence: Modified sequence
+        sequence: Modified sequence (with or without terminal format)
 
     Returns:
         Plain sequence without modifications
@@ -331,8 +372,15 @@ def remove_modifications(sequence: str) -> str:
     if not sequence or not isinstance(sequence, str):
         return ""
 
+    result = sequence
+
+    # Strip terminal format: [nterm]-SEQ-[cterm]
+    terminal_match = re.match(r'^\[([^\]]*)\]-(.*)-\[([^\]]*)\]$', result)
+    if terminal_match:
+        result = terminal_match.group(2)  # Extract just the sequence part
+
     # Remove [UNIMOD:X]
-    result = re.sub(r'\[UNIMOD:\d+\]', '', sequence)
+    result = re.sub(r'\[UNIMOD:\d+\]', '', result)
     # Remove [+/-X.XXX]
     result = re.sub(r'\[[+-]?\d+\.?\d*\]', '', result)
     # Remove (UniMod:X)
@@ -404,38 +452,75 @@ if __name__ == "__main__":
     print("Testing sequence standardization:\n")
 
     # DIA-NN
-    diann_seq = "PEPTIDE(UniMod:35)K"
-    print(f"DIA-NN: {diann_seq}")
-    print(f"  -> {standardize_diann_sequence(diann_seq)}")
+    diann_tests = [
+        "PEPTIDE(UniMod:35)K",
+        "(UniMod:1)MPEPTIDEK",
+        "AC(UniMod:4)PEPTIDEK",
+        "PEPTIDEK",
+    ]
+    print("DIA-NN:")
+    for seq in diann_tests:
+        print(f"  {seq:40s} -> {standardize_diann_sequence(seq)}")
 
     # Sage
-    sage_seq = "PEPTIDE[+15.9949]K"
-    print(f"\nSage: {sage_seq}")
-    print(f"  -> {standardize_sage_sequence(sage_seq)}")
-
-    sage_seq2 = "C[+57.021465]PEPTIDEK"
-    print(f"Sage: {sage_seq2}")
-    print(f"  -> {standardize_sage_sequence(sage_seq2)}")
+    sage_tests = [
+        "PEPTIDE[+15.9949]K",
+        "C[+57.021465]PEPTIDEK",
+        "[+42.010567]-MDSPWDELALAFSR",
+        "[+42.010567]-M[+15.994915]DLAAAAEPGAGSQHLEVR",
+        "PEPTIDEK",
+    ]
+    print("\nSage:")
+    for seq in sage_tests:
+        print(f"  {seq:50s} -> {standardize_sage_sequence(seq)}")
 
     # FragPipe with modifications string
-    fp_pep = "CPEPTIDEK"
-    fp_mods = "1C(57.0215)"
-    print(f"\nFragPipe: {fp_pep} + '{fp_mods}'")
-    print(f"  -> {standardize_fragpipe_sequence(fp_pep, fp_mods)}")
+    fp_tests = [
+        ("CPEPTIDEK", "1C(57.0215)"),
+        ("MPEPTIDEK", "N-term(42.0106)"),
+        ("MPEPTIDEK", "N-term(42.0106), 1M(15.9949)"),
+        ("PEPTIDEK", ""),
+    ]
+    print("\nFragPipe (Assigned Modifications):")
+    for pep, mods in fp_tests:
+        print(f"  {pep} + '{mods}' -> {standardize_fragpipe_sequence(pep, mods)}")
 
     # FragPipe Modified Peptide column
-    fp_mod = "M[147.0354]PEPTIDEK"
-    print(f"\nFragPipe Modified: {fp_mod}")
-    print(f"  -> {standardize_fragpipe_modified_peptide(fp_mod)}")
+    fp_mod_tests = [
+        "M[147.0354]PEPTIDEK",
+        "n[42.0106]PEPTIDEK",
+        "PEPTIDEK",
+    ]
+    print("\nFragPipe (Modified Peptide column):")
+    for seq in fp_mod_tests:
+        print(f"  {seq:30s} -> {standardize_fragpipe_modified_peptide(seq)}")
 
-    # N-term acetyl
-    fp_nterm = "n[42.0106]PEPTIDEK"
-    print(f"FragPipe N-term: {fp_nterm}")
-    print(f"  -> {standardize_fragpipe_modified_peptide(fp_nterm)}")
+    # Cross-engine consistency
+    print("\nCross-engine consistency (same peptide, different formats):")
+    fp = standardize_fragpipe_sequence("CPEPTIDEK", "1C(57.0215)")
+    dn = standardize_diann_sequence("C(UniMod:4)PEPTIDEK")
+    sg = standardize_sage_sequence("C[+57.021465]PEPTIDEK")
+    print(f"  FragPipe: {fp}")
+    print(f"  DIA-NN:   {dn}")
+    print(f"  Sage:     {sg}")
+    print(f"  All match: {fp == dn == sg}")
 
-    # Sequence matching
-    seq1 = "PEPTIDE[UNIMOD:35]K"
-    seq2 = "PEPTIDE(UniMod:35)K"
-    print(f"\nMatching: '{seq1}' vs '{seq2}'")
-    print(f"  Plain: {remove_modifications(seq1)} vs {remove_modifications(seq2)}")
-    print(f"  Match: {sequences_match(seq1, seq2)}")
+    # N-term consistency
+    print("\nN-term acetyl consistency:")
+    fp_nt = standardize_fragpipe_sequence("MPEPTIDEK", "N-term(42.0106)")
+    dn_nt = standardize_diann_sequence("(UniMod:1)MPEPTIDEK")
+    sg_nt = standardize_sage_sequence("[+42.010567]-MPEPTIDEK")
+    print(f"  FragPipe: {fp_nt}")
+    print(f"  DIA-NN:   {dn_nt}")
+    print(f"  Sage:     {sg_nt}")
+    print(f"  All match: {fp_nt == dn_nt == sg_nt}")
+
+    # remove_modifications with terminal format
+    print("\nremove_modifications:")
+    for seq in ["[]-PEPTIDEK-[]", "[UNIMOD:1]-M[UNIMOD:35]PEPTIDEK-[]", "PEPTIDE[UNIMOD:4]K"]:
+        print(f"  {seq:45s} -> '{remove_modifications(seq)}'")
+
+    # normalize_sequence_il with terminal format
+    print("\nnormalize_sequence_il:")
+    for seq in ["[]-PEPTIDEK-[]", "[UNIMOD:1]-MIPEPTIDEK-[]"]:
+        print(f"  {seq:40s} -> '{normalize_sequence_il(seq)}'")
