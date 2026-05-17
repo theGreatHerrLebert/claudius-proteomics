@@ -668,120 +668,139 @@ def download_with_wget(
     return fail_count == 0
 
 
-def extract_archives(output_dir: Path) -> None:
-    """
-    Extract downloaded .zip and .tar archives.
+def _flatten_d_wrappers(output_dir: Path) -> None:
+    """Hoist Bruker .d folders nested one level inside a wrapper directory.
 
-    Args:
-        output_dir: Directory containing downloaded archives
+    Some PRIDE archives extract to a wrapper dir (e.g. ``MS_run_files.d/``) that
+    itself contains the real ``.d`` acquisition folders. The runner globs
+    ``output_dir/*.d`` flat, so nested .d folders are moved up. A genuine .d
+    folder contains ``analysis.tdf`` directly; a wrapper does not.
     """
+    import shutil
+
+    def is_real_d(p: Path) -> bool:
+        return p.is_dir() and (
+            (p / "analysis.tdf").exists() or (p / "analysis.tdf_bin").exists()
+        )
+
+    for sub in list(output_dir.iterdir()):
+        if not sub.is_dir() or is_real_d(sub):
+            continue
+        inner = [c for c in sub.iterdir() if c.name.endswith(".d") and is_real_d(c)]
+        for d in inner:
+            dest = output_dir / d.name
+            if not dest.exists():
+                shutil.move(str(d), str(dest))
+                print(f"  flattened {sub.name}/{d.name} -> {d.name}")
+        if inner and not any(c.is_dir() and c.name.endswith(".d") for c in sub.iterdir()):
+            shutil.rmtree(sub, ignore_errors=True)
+
+
+def extract_archives(output_dir: Path, cleanup: bool = True) -> None:
+    """Extract downloaded Bruker .d archives (.zip / .tar* / .rar / .7z),
+    flatten any nested .d wrappers, and delete archives after a clean extraction.
+    """
+    import shutil
+    import zipfile
+    import tarfile
+
     output_dir = Path(output_dir)
+    extracted: List[Path] = []  # archives removed after a successful extraction
 
-    # Extract .zip files
+    # --- .zip ---
     for zip_file in output_dir.glob("*.zip"):
         print(f"Extracting {zip_file.name}...")
         try:
-            import zipfile
-
-            # For .d.zip archives, extract into a .d directory
-            # (Bruker .d folders are often zipped without a parent directory)
-            if zip_file.name.endswith(".d.zip"):
-                d_name = zip_file.name[:-4]  # Remove .zip → keep .d
-                d_dir = output_dir / d_name
-                with zipfile.ZipFile(zip_file, "r") as zf:
-                    # Check if contents already have the .d parent
-                    names = zf.namelist()
-                    has_parent = all(n.startswith(d_name + "/") or n.startswith(d_name + "\\") for n in names if n)
+            with zipfile.ZipFile(zip_file, "r") as zf:
+                names = [n for n in zf.namelist() if n]
+                if zip_file.name.lower().endswith(".d.zip"):
+                    d_name = zip_file.name[:-4]  # strip .zip, keep .d
+                    has_parent = all(
+                        n.replace("\\", "/").split("/")[0] == d_name for n in names
+                    )
                     if has_parent:
                         zf.extractall(output_dir)
                     else:
-                        d_dir.mkdir(parents=True, exist_ok=True)
-                        zf.extractall(d_dir)
-                print(f"  → {d_name}")
-            else:
-                with zipfile.ZipFile(zip_file, "r") as zf:
+                        (output_dir / d_name).mkdir(parents=True, exist_ok=True)
+                        zf.extractall(output_dir / d_name)
+                else:
                     zf.extractall(output_dir)
+            extracted.append(zip_file)
         except Exception as e:
-            print(f"Failed to extract {zip_file.name}: {e}")
+            print(f"  failed: {e}")
 
-    # Extract .tar files
-    for tar_file in output_dir.glob("*.tar"):
+    # --- .tar / .tar.gz / .tar.bz2 / .tar.xz ---
+    for tar_file in list(output_dir.glob("*.tar")) + list(output_dir.glob("*.tar.*")):
         print(f"Extracting {tar_file.name}...")
         try:
-            import tarfile
-            with tarfile.open(tar_file, "r") as tf:
+            with tarfile.open(tar_file, "r:*") as tf:
                 tf.extractall(output_dir)
+            extracted.append(tar_file)
         except Exception as e:
-            print(f"Failed to extract {tar_file.name}: {e}")
+            print(f"  failed: {e}")
 
-    # Extract .tar.gz files
-    for tar_gz in output_dir.glob("*.tar.gz"):
-        print(f"Extracting {tar_gz.name}...")
-        try:
-            import tarfile
-            with tarfile.open(tar_gz, "r:gz") as tf:
-                tf.extractall(output_dir)
-        except Exception as e:
-            print(f"Failed to extract {tar_gz.name}: {e}")
-
-    # Extract .rar files (common for PRIDE timsTOF data)
+    # --- .rar ---
     rar_files = list(output_dir.glob("*.rar"))
     if rar_files:
-        # Find unrar binary
-        import shutil
         unrar_bin = shutil.which("unrar")
         if not unrar_bin:
-            # Check common local install paths
-            for candidate in [
-                Path.home() / "unrar" / "unrar",
-                Path.home() / ".local" / "bin" / "unrar",
-            ]:
-                if candidate.exists():
-                    unrar_bin = str(candidate)
+            for cand in (Path.home() / "unrar" / "unrar",
+                         Path.home() / ".local" / "bin" / "unrar"):
+                if cand.exists():
+                    unrar_bin = str(cand)
                     break
-        if not unrar_bin:
-            print("Warning: unrar not found. Install unrar or place binary in ~/unrar/")
-            print(f"Skipping {len(rar_files)} .rar files")
-            return
-
-        for rar_file in rar_files:
-            print(f"Extracting {rar_file.name}...")
-            try:
-                # For .d.rar archives, extract into a .d directory
-                if rar_file.name.endswith(".d.rar"):
-                    d_name = rar_file.name[:-4]  # Remove .rar → keep .d
-                    d_dir = output_dir / d_name
-
-                    # Check if archive has .d parent directory
-                    list_result = subprocess.run(
-                        [unrar_bin, "lb", str(rar_file)],
-                        capture_output=True, text=True, timeout=60,
-                    )
-                    names = list_result.stdout.strip().split("\n")
-                    has_parent = all(
-                        n == d_name or n.startswith(d_name + "/") or n.startswith(d_name + "\\")
-                        for n in names if n
-                    )
-                    extract_to = output_dir if has_parent else d_dir
-                    extract_to.mkdir(parents=True, exist_ok=True)
-
-                    result = subprocess.run(
-                        [unrar_bin, "x", "-o+", str(rar_file), str(extract_to) + "/"],
-                        capture_output=True, text=True, timeout=3600,
-                    )
-                    if result.returncode == 0:
-                        print(f"  → {d_name}")
-                    else:
-                        print(f"  unrar failed: {result.stderr[:200]}")
-                else:
-                    result = subprocess.run(
+        if unrar_bin:
+            for rar_file in rar_files:
+                print(f"Extracting {rar_file.name}...")
+                try:
+                    r = subprocess.run(
                         [unrar_bin, "x", "-o+", str(rar_file), str(output_dir) + "/"],
-                        capture_output=True, text=True, timeout=3600,
+                        capture_output=True, text=True, timeout=7200,
                     )
-                    if result.returncode != 0:
-                        print(f"  unrar failed: {result.stderr[:200]}")
+                    if r.returncode == 0:
+                        extracted.append(rar_file)
+                    else:
+                        print(f"  unrar failed: {r.stderr[:200]}")
+                except Exception as e:
+                    print(f"  failed: {e}")
+        else:
+            print(f"Warning: unrar not found — skipping {len(rar_files)} .rar files")
+
+    # --- .7z ---
+    sz_files = list(output_dir.glob("*.7z"))
+    if sz_files:
+        sevenzip = next((shutil.which(n) for n in ("7z", "7za", "7zr")
+                         if shutil.which(n)), None)
+        for sz_file in sz_files:
+            print(f"Extracting {sz_file.name}...")
+            try:
+                if sevenzip:
+                    r = subprocess.run(
+                        [sevenzip, "x", "-y", f"-o{output_dir}", str(sz_file)],
+                        capture_output=True, text=True, timeout=7200,
+                    )
+                    if r.returncode == 0:
+                        extracted.append(sz_file)
+                    else:
+                        print(f"  7z failed: {r.stderr[:200]}")
+                else:
+                    import py7zr
+                    with py7zr.SevenZipFile(sz_file, "r") as z:
+                        z.extractall(output_dir)
+                    extracted.append(sz_file)
+            except ImportError:
+                print(f"  no 7z tool and no py7zr — skipping {sz_file.name}")
             except Exception as e:
-                print(f"Failed to extract {rar_file.name}: {e}")
+                print(f"  failed: {e}")
+
+    # --- normalise layout, then clean up archives that extracted cleanly ---
+    _flatten_d_wrappers(output_dir)
+    if cleanup:
+        for arc in extracted:
+            try:
+                arc.unlink()
+            except Exception:
+                pass
 
 
 def download_pride(
