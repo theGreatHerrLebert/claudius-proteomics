@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# FragPipe wrapper for Mogon NHR.
+#
+# Runs FragPipe inside the fragpipe-base Apptainer container (ubuntu:22.04 +
+# JDK 17). Deployed to: engines/fragpipe-run/bin/fragpipe . config fragpipe.path
+# points at the engines/fragpipe-run directory (which also has a workflows/
+# symlink), so run_fragpipe.py finds both bin/fragpipe and workflows/ there.
+set -euo pipefail
+ENGINES=/lustre/project/ki-proanagi/dateschn/engines
+exec apptainer exec --bind /lustre,/fshpc \
+    "$ENGINES/fragpipe-base.sif" \
+    "$ENGINES/fragpipe/fragpipe-24.0/bin/fragpipe" "$@"

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# DIA-NN wrapper for Mogon NHR.
+#
+# The DIA-NN 2.3.2 binary needs glibc >= 2.32, but the cluster runs AlmaLinux 8
+# (glibc 2.28). This wrapper runs it inside the DIA-NN Apptainer container
+# (debian:12 base). Deployed to: engines/bin/diann-linux ; config diann.path
+# points here, so the runner calls it transparently as if it were the binary.
+set -euo pipefail
+ENGINES=/lustre/project/ki-proanagi/dateschn/engines
+exec apptainer exec --bind /lustre,/fshpc \
+    "$ENGINES/diann.sif" \
+    "$ENGINES/diann/diann-2.3.2/diann-linux" "$@"

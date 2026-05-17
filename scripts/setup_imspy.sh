@@ -21,7 +21,7 @@ set -euo pipefail
 
 # Configuration
 RUSTIMS_REPO="https://github.com/theGreatHerrLebert/rustims.git"
-RUSTIMS_BRANCH="feature/koina-online"
+RUSTIMS_BRANCH="${RUSTIMS_BRANCH:-main}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/claudius-proteomics/rustims}"
 
 # Colors for output
@@ -99,16 +99,18 @@ log_info "Building and installing rustims packages..."
 # Build imspy_connector (Rust -> Python bindings)
 log_info "Building imspy_connector..."
 cd "$INSTALL_DIR/imspy_connector"
-maturin build --release
+# rustims is a Cargo workspace, so the build target dir lives at the workspace
+# root. Use --out to write the wheel to a deterministic location.
+maturin build --release --out "$INSTALL_DIR/wheels"
 
 # Install the wheel
-WHEEL=$(ls target/wheels/*.whl | head -1)
+WHEEL=$(ls "$INSTALL_DIR"/wheels/*.whl | head -1)
 log_info "Installing $WHEEL..."
 pip install --force-reinstall "$WHEEL"
 
-# Install imspy
-log_info "Installing imspy..."
-cd "$INSTALL_DIR/imspy"
+# Install imspy-core (provides the imspy_core module: timsTOF I/O, used by the runner)
+log_info "Installing imspy-core..."
+cd "$INSTALL_DIR/packages/imspy-core"
 if $DEV_MODE; then
     pip install -e .
 else
@@ -127,17 +129,15 @@ fi
 # Verify installation
 log_info "Verifying installation..."
 python3 -c "
-import imspy
-print(f'imspy version: {imspy.__version__}')
+import imspy_connector
+print('imspy_connector imported successfully')
 
-from imspy.timstof import TimsDatasetDDA
-print('TimsDatasetDDA imported successfully')
+import imspy_core
+from imspy_core.timstof import TimsDatasetDDA
+print('imspy_core / TimsDatasetDDA imported successfully')
 
 import imspy_predictors
 print('imspy_predictors imported successfully')
-
-from imspy_predictors.utilities.tokenizer import PeptideTokenizer
-print('PeptideTokenizer imported successfully')
 "
 
 log_info "============================================"
@@ -148,7 +148,7 @@ log_info "============================================"
 # Print usage example
 echo ""
 echo "Example usage:"
-echo "  from imspy.timstof import TimsDatasetDDA"
+echo "  from imspy_core.timstof import TimsDatasetDDA"
 echo "  dataset = TimsDatasetDDA('/path/to/data.d')"
 echo ""
 echo "  from imspy_predictors.ccs import load_deep_ccs_predictor"
