@@ -29,6 +29,8 @@ import os
 import sys
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).parent))
 from pride_metadata import DatasetMetadata          # noqa: E402
 from paper_metadata import run_paper_extraction      # noqa: E402
@@ -78,6 +80,18 @@ def main() -> int:
         print(f"\n[{i}/{len(accessions)}] {acc}")
         meta_dir = args.metadata_root / acc
         meta_dir.mkdir(parents=True, exist_ok=True)
+
+        # Re-process datasets whose prior extraction was unsuccessful
+        # (no_pdf / no_text / no_api_key / llm_failed): only a 'success' result
+        # is final. Lets a manual-PDF backfill or a later LLM run re-run cleanly.
+        prev = meta_dir / "paper_extraction.yaml"
+        if prev.exists():
+            try:
+                prev_status = (yaml.safe_load(prev.read_text()) or {}).get("status")
+            except Exception:
+                prev_status = None
+            if prev_status and prev_status != "success":
+                prev.unlink()
 
         # run_paper_extraction needs the DOI from pride_metadata.yaml — fetch if absent.
         pride_yaml = meta_dir / "pride_metadata.yaml"
