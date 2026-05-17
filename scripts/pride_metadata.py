@@ -124,6 +124,18 @@ class DatasetMetadata:
         )
     )
 
+    # Sample matrix (drift-model covariate — see docs/LAB_DRIFT_LATENT_MODEL.md)
+    tissue: MetadataField = field(
+        default_factory=lambda: MetadataField.missing(
+            hint="PRIDE organismsPart / sampleAttributes, or publication methods"
+        )
+    )
+    matrix_tier: MetadataField = field(
+        default_factory=lambda: MetadataField.missing(
+            hint="Derived from tissue: cell_line / primary_cells / solid_tissue / body_fluid"
+        )
+    )
+
     # File information
     num_files: MetadataField = field(default_factory=lambda: MetadataField.missing())
     file_types: MetadataField = field(default_factory=lambda: MetadataField.missing())
@@ -162,6 +174,7 @@ class DatasetMetadata:
             "acquisition_mode": self.acquisition_mode,
             "lc_system": self.lc_system,
             "sample_prep": self.sample_prep,
+            "tissue": self.tissue,
         }
 
         auto_count = sum(1 for f in all_fields.values() if f.status == "auto")
@@ -204,6 +217,8 @@ class DatasetMetadata:
                 "acquisition_mode": self.acquisition_mode.to_dict(),
                 "lc_system": self.lc_system.to_dict(),
                 "sample_prep": self.sample_prep.to_dict(),
+                "tissue": self.tissue.to_dict() if self.tissue.value else None,
+                "matrix_tier": self.matrix_tier.to_dict() if self.matrix_tier.value else None,
             },
             "files": {
                 "num_files": self.num_files.to_dict() if self.num_files.value else None,
@@ -367,6 +382,30 @@ class DatasetMetadata:
                 metadata.organism = MetadataField.auto(
                     org_name, "pride_api.organisms[0].name"
                 )
+
+        # Tissue / sample type, and derived matrix-complexity tier
+        # (drift-model covariate — see docs/LAB_DRIFT_LATENT_MODEL.md)
+        # Project endpoint uses 'organismParts'; search endpoint 'organismsPart'.
+        parts = project.get("organismParts") or project.get("organismsPart") or []
+        part_names = [
+            (p.get("name", "") if isinstance(p, dict) else str(p)) for p in parts
+        ]
+        part_names = [p for p in part_names if p]
+        if part_names:
+            metadata.tissue = MetadataField.auto(part_names, "pride_api.organismParts")
+            blob = " ".join(part_names).lower()
+            if any(k in blob for k in ("plasma", "serum", "blood", "cerebrospinal",
+                                       "csf", "urine", "saliva", "milk", "lymph")):
+                tier = "body_fluid"
+            elif "cell line" in blob or "cell culture" in blob or "cultured" in blob:
+                tier = "cell_line"
+            elif "primary" in blob and "cell" in blob:
+                tier = "primary_cells"
+            else:
+                tier = "solid_tissue"
+            metadata.matrix_tier = MetadataField.inferred(
+                tier, "derived:organismParts", confidence=0.6
+            )
 
         # Instrument from instruments list
         instruments = project.get("instruments", [])
