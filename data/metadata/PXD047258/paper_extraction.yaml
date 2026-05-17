@@ -1,0 +1,104 @@
+accession: PXD047258
+extracted_at: "2026-05-17T19:30:53Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_FMOLB.2024.1423594.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.4
+    evidence: "the bound peptides were subjected to MS/MS analysis, protein database searching"
+  ce_strategy:
+    value: "Not described in the paper; LC-MS/MS performed by PTM-BioLab Company as an outsourced service"
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.3
+    evidence: "Crotonylomics reasearch was done by PTM-BioLab Company (Hangzhou, Zhejiang, China)."
+  cell_lines_tissues:
+    value: "Human colorectal cancer cell line HCT116 (p53+/+ and isogenic p53-/- knockout)"
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.95
+    evidence: "The human CRC cell line HCT116 (p53+/+) was obtained from the American Type Culture Collection (CCL-247, ATCC, Manassas, Virginia, USA). The p53 knockout HCT116 cell line (p53-/-) was kindly provided by Dr. Bert Vogelstein"
+  sample_prep:
+    value: "Crotonylated protein lysis samples of HCT116 p53+/+ and HCT116 p53-/- cells; processed by PTM-BioLab via trypsin digestion, TMT labeling, HPLC fractionation, and affinity enrichment of crotonylated peptides using anti-pan-Kcr beads"
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.8
+    evidence: "A series of methods, such as trypsin digestion, TMT labeling, HPLC fractionation, affinity enrichment and LC-MS/MS, were used to investigate Kcr substrates in HCT116 p53+/+ and HCT116 p53-/- cells"
+  digestion_details:
+    value:
+      enzyme: trypsin
+      ratio: null
+      time: null
+      temp: null
+      alkylation: null
+      reduction: null
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.6
+    evidence: "A series of methods, such as trypsin digestion, TMT labeling, HPLC fractionation, affinity enrichment and LC-MS/MS, were used"
+  fractionation:
+    value:
+      method: "HPLC fractionation"
+      n_fractions: null
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.7
+    evidence: "A series of methods, such as trypsin digestion, TMT labeling, HPLC fractionation, affinity enrichment and LC-MS/MS, were used"
+  quantification_method:
+    value: TMT
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.6
+    evidence: "A schematic diagram illustrating the workflow for TMT-labeled LC-MS/MS analysis of Kcr proteins in both HCT116 p53+/+ and HCT116 p53-/- cells (note: the abstract instead refers to a SILAC-based quantitative crotonylome)"
+  search_database:
+    value:
+      source: "SwissProt / UniProt-GOA"
+      species: "Homo sapiens"
+      version: null
+      entries: null
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.4
+    evidence: "protein-protein interaction analyses by using SwissProt, UniProt-GOA, Encyclopedia of Genes and Genomes (KEGG), InterPro, Wolfpsort and STRING databases"
+  lab_id:
+    value: "Yixiang Wang and Chong Ding, Central Laboratory, Peking University School and Hospital of Stomatology, Beijing, China"
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.95
+    evidence: "*CORRESPONDENCE Yixiang Wang, kqwangyx@bjmu.edu.cn Chong Ding, dingchong@bjmu.edu.cn ... 1Central Laboratory, Peking University School and Hospital of Stomatology, ... Beijing, China"
+  study_type:
+    value: "drug_treatment; lysine crotonylation PTM profiling (crotonylome) of cisplatin resistance"
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.85
+    evidence: "In this study, we used a SILAC-based quantitative crotonylome to identify 3,520 Kcr in 1924 crotonylated proteins in response to p53 knockout"
+  number_of_replicates:
+    value:
+      biological: "Two comparison conditions (HCT116 p53+/+ vs HCT116 p53-/-); replicate count for the MS crotonylome not stated"
+      technical: null
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.4
+    evidence: "the crontonylated protein lysis samples of HCT116 p53+/+ and HCT116 p53-/- cells were enriched by anti-pan-Kcr beads"
+  reported_ids:
+    value:
+      proteins: 1924
+      kcr_sites: 3520
+      peptides: null
+      psms: null
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.85
+    evidence: "we used a SILAC-based quantitative crotonylome to identify 3,520 Kcr in 1924 crotonylated proteins in response to p53 knockout"
+  key_findings:
+    value: "A quantitative crotonylome of HCT116 cells identified 3,520 lysine crotonylation sites on 1,924 proteins regulated by p53 knockout. Increased crotonylation of RRM2 at K283, driven by SIRT7 downregulation upon p53 deficiency, promotes HCT116 cell resistance to cisplatin by inhibiting apoptosis."
+    status: inferred
+    source: "paper:10.3389_FMOLB.2024.1423594.pdf"
+    confidence: 0.9
+    evidence: "we used a SILAC-based quantitative crotonylome to identify 3,520 Kcr in 1924 crotonylated proteins in response to p53 knockout. We found that increased crotonylation of RRM2 at K283 (RRM2K283Cr) in the presence of p53 deficiency promoted HCT116 cell resistance to cisplatin"
+status: success

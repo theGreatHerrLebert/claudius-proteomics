@@ -1,0 +1,143 @@
+accession: PXD058626
+extracted_at: "2026-05-17T19:33:49Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1172_JCI.INSIGHT.189636.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 90
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.98
+    evidence: "Peptides were separated on a 75 μm i.d. × 25 cm separation column packed with 1.6 μm C18 beads (IonOpticks) over a 90-minute elution gradient."
+  column_type:
+    value: "75 μm i.d. × 25 cm, packed with 1.6 μm C18 beads (IonOpticks)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.98
+    evidence: "Peptides were separated on a 75 μm i.d. × 25 cm separation column packed with 1.6 μm C18 beads (IonOpticks)"
+  lc_system:
+    value: "Bruker NanoElute"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.97
+    evidence: "analyzed directly using a NanoElute liquid chromatography system coupled with a timsTOF SCP mass spectrometer"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid in water"
+      B: "0.1% formic acid in acetonitrile"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.98
+    evidence: "Buffer A was 0.1% FA in water and buffer B was 0.1% FA in acetonitrile."
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.97
+    evidence: "the timsTOF SCP operating in parallel accumulation–serial fragmentation (PASEF) mode"
+  ce_strategy:
+    value: "Collision-induced dissociation energy reported as 10 eV (PASEF mode)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.85
+    evidence: "and collision-induced dissociation energy 10 eV."
+  cell_lines_tissues:
+    value: "Human FFPE lung tissue (IPF and nonfibrotic control), laser-capture microdissected airway and alveolar epithelium"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.95
+    evidence: "we investigated the proteomic profiles of airway and alveolar epithelium in nonfibrotic controls (n = 12) and IPF specimens (n = 12)"
+  sample_prep:
+    value: "Laser capture microdissection (LCM) of FFPE human lung tissue (5 μm sections on membrane slides, H&E stained); sample shearing by Covaris S220 sonication (peak power 200, duty factor 20.0, 200 cycle bursts, 50 s on / 10 s cool-down at 4°C, 10 cycles for 10 min total); processed as previously described"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.92
+    evidence: "To achieve sample shearing, we utilized Covaris S220 and Sonolab 7.2 software at a setting of peak power of 200, duty factor of 20.0, cycle bursts of 200, with a duration of 50 seconds followed by a 10-second cool-down period (water temperature set to 4°C). This cycle was repeated 10 times for a total of 10 minutes."
+  digestion_details:
+    value:
+      enzyme: "Trypsin (200 ng per sample in 25 μL digestion buffer)"
+      time: "2 hours"
+      temperature: "47°C"
+      fixed_modification: "Carbamidomethyl (C)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.9
+    evidence: "For sample digestion, we utilized 200 ng of trypsin in 25 μL of digestion buffer and incubated at 47°C for 2 hours."
+  quantification_method:
+    value: "Label-free quantification (LFQ)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.95
+    evidence: "The data were then uploaded and processed with FragPipe-Analyst using LFQ settings, no normalization"
+  processing_software:
+    value:
+      - name: "FragPipe"
+        version: "20.0"
+        purpose: "Database search via MSFragger"
+      - name: "FragPipe-Analyst"
+        purpose: "LFQ quantification and statistical processing"
+      - name: "Compass Hystar"
+        version: "6.0"
+        purpose: "Instrument control and data acquisition"
+      - name: "Ingenuity Pathway Analysis (IPA)"
+        purpose: "Pathway analysis"
+      - name: "lmerSeq (R package)"
+        purpose: "Linear mixed model differential abundance testing"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.95
+    evidence: "Data was searched using MSFragger via FragPipe v20.0 ... Instrument control and data acquisition were performed using Compass Hystar (version 6.0) ... processed with FragPipe-Analyst using LFQ settings"
+  search_database:
+    value: "SwissProt restricted to Homo sapiens with added common contaminants (20,410 total sequences)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.97
+    evidence: "Data were searched against SwissProt restricted to Homo sapiens with added common contaminants (20,410 total sequences)."
+  search_settings:
+    value:
+      precursor_tolerance: "±15 ppm"
+      fragment_tolerance: "±0.08 Da"
+      enzyme: "Semispecific trypsin"
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Oxidation (M); oxidation (P) (hydroxyproline); Gln->pyro-Glu (N-term Q); acetyl (Peptide N-term)"
+      fdr: "1% FDR at peptide and protein level"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.96
+    evidence: "Precursor tolerance was set to ±15 ppm and fragment tolerance was set to ±0.08 Da. ... Enzyme cleavage was set to semispecific trypsin for all samples. Fixed modifications were set as carbamidomethyl (C). Variable modifications were set as oxidation (M), oxidation (P) (hydroxyproline), Gln->pyro-Glu (N-term Q), and acetyl (Peptide N-term). Results were filtered to 1% FDR at the peptide and protein level."
+  lab_id:
+    value: "David A. Schwartz / Jeremy A. Herrera, Division of Pulmonary Sciences and Critical Care Medicine, University of Colorado Anschutz Medical Campus, Aurora, Colorado, USA"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.85
+    evidence: "Jeremy A. Herrera ... and David A. Schwartz ... Division of Pulmonary Sciences and Critical Care Medicine ... University of Colorado Anschutz Medical Campus, Aurora, Colorado, USA."
+  study_type:
+    value: clinical
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.85
+    evidence: "we investigated the proteomic profiles of airway and alveolar epithelium in nonfibrotic controls (n = 12) and IPF specimens (n = 12), stratified by the MUC5B promoter variant"
+  number_of_replicates:
+    value:
+      biological: "n = 12 nonfibrotic controls and n = 12 IPF specimens (12 per group)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.9
+    evidence: "we investigated the proteomic profiles of airway and alveolar epithelium in nonfibrotic controls (n = 12) and IPF specimens (n = 12)"
+  reported_ids:
+    value:
+      airway_proteins: "2,719 airway proteins detected (qualitative, IPF honeycomb cyst + IPF small airways + nonfibrotic control small airways)"
+      alveolar_proteins: "1,996 proteins detected (qualitative, epithelia overlying FF + IPF and nonfibrotic control alveoli)"
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.8
+    evidence: "we detected a total of 2,719 airway proteins ... detected a total of 1,996 proteins"
+  key_findings:
+    value: "The MUC5B promoter variant predominantly affects the proteomic profiles of nonfibrotic lung tissue (109 protein changes in nonfibrotic control alveoli, IL-3 signaling increased), priming the epithelium via ER stress/UPR pathways; epithelia overlying IPF fibroblastic foci express cellular stress pathway proteins."
+    status: inferred
+    source: "paper:10.1172_JCI.INSIGHT.189636.pdf"
+    confidence: 0.9
+    evidence: "we found that the MUC5B promoter variant, the strongest risk factor for IPF development, predominantly impacts the proteomic profiles of nonfibrotic lung tissue ... the epithelium overlying the IPF FF exhibited cellular stress pathways."
+status: success

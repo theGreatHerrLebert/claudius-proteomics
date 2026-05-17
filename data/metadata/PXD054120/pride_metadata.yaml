@@ -1,0 +1,92 @@
+accession: PXD054120
+version: '1.0'
+generated_at: '2026-05-17T21:14:08.897802'
+title:
+  value: Investigating Synthetic Lethality and PARP Inhibitor Resistance in Pancreatic
+    Cancer Through Enantiomer Differential Activity
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41420-025-02382-3
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD054120
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: M. Masi et al. (Cell Death Discovery 2025, 11:106); corresponding author
+      and institution not stated in extracted methods text
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.4
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.95
+  column_type:
+    value: 'Aurora UHPLC column, 25 cm x 75 um ID, C18, 1.6 um particle size (Ionopticks);
+      trap: Acclaim PepMap C18 trap cartridge, 0.3 mm inside diameter, 5 mm length
+      (Thermo Fisher Scientific)'
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.95
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.95
+  lc_system:
+    value: Bruker nanoElute nano-LC chromatography system (Bruker Daltonics)
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.95
+  sample_prep:
+    value: BxPC-3 whole-cell lysates prepared in whole-cell lysis buffer (25 mM Tris-HCl
+      pH 7.6, 150 mM NaCl, 1% NP-40, 1% sodium deoxycholate, 0.1% SDS, 0.5 mM DTT)
+      with protease inhibitor cocktail; sonicated and cleared by centrifugation; 50
+      ug protein per sample homogenised and denatured in 4 M urea; automated KingFisher
+      DuoPrime bead-based cleanup (hydrophobic and hydrophilic magnetic beads); C18
+      Tip desalting after digestion
+    status: inferred
+    source: paper:10.1038_s41420-025-02382-3.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Pancreas
+    - Pancreatic ductal cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

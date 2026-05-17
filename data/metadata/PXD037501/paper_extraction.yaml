@@ -1,0 +1,50 @@
+accession: PXD037501
+extracted_at: "2026-05-17T19:23:14Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-023-37633-3.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.4
+    evidence: "SILAC-based quantitative phosphoproteome analysis (Fig. 5b and Supplementary Data 1) and proteomic analysis (Fig. 5c and Supplementary Data 2) in SAOS-2 cells treated with either DMSO or ponatinib for 24 h."
+  ce_strategy:
+    value: "Not specified in main-text Methods; LC-MS/MS instrument-level parameters are described only in the Supplementary Information file, which is not part of this PDF."
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.5
+    evidence: "List of reagents (primers, gRNA, plasmids and antibodies) can be found in Supplementary Data 5 and additional methods are described in the Supplementary Information file."
+  cell_lines_tissues:
+    value: "SAOS-2 and T1000 (ALT-positive osteosarcoma cell lines)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.85
+    evidence: "specific phosphopeptides of EPHA2 and JUN were found to be less abundant in ponatinib-treated cells (Fig. 5b) ... SILAC-based quantitative phosphoproteome analysis (Fig. 5b and Supplementary Data 1) and proteomic analysis (Fig. 5c and Supplementary Data 2) in SAOS-2 cells treated with either DMSO or ponatinib for 24 h."
+  quantification_method:
+    value: "SILAC (quantitative phosphoproteome and proteome analysis) and label-free quantification / LFQ (JUN interactome)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.8
+    evidence: "SILAC-based quantitative phosphoproteome analysis (Fig. 5b and Supplementary Data 1) and proteomic analysis (Fig. 5c and Supplementary Data 2) ... we used label-free quantitative (LFQ) proteomics and identified proteins that interact with JUN in SAOS-2 cells (Fig. 7a and Supplementary Data 4)."
+  lab_id:
+    value: "Maya Jeitany, School of Biological Sciences, Nanyang Technological University, Singapore"
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.95
+    evidence: "Correspondence and requests for materials should be addressed to Maya Jeitany. 1School of Biological Sciences, Nanyang Technological University, Singapore, Singapore."
+  study_type:
+    value: phosphoproteomics
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.75
+    evidence: "Using RNA-sequencing and quantitative phosphoproteomic analyses, combined with C-circle level assessment, we find an ABL1-JNK-JUN signalling circuit to be inhibited by ponatinib."
+  key_findings:
+    value: "The receptor tyrosine kinase inhibitor ponatinib disrupts alternative lengthening of telomeres (ALT) by inducing telomeric C-circles, telomere dysfunction and reduced telomere synthesis, acting through an ABL1-JNK-JUN signalling circuit. SILAC phosphoproteomics and proteomics of ponatinib-treated SAOS-2 cells identified reduced JUN and EPHA2 phosphorylation, supporting ponatinib as a repurposable, clinically approved drug for ALT cancers."
+    status: inferred
+    source: "paper:10.1038_s41467-023-37633-3.pdf"
+    confidence: 0.9
+    evidence: "we identify a receptor tyrosine kinase inhibitor ponatinib that deregulates ALT mechanisms, induces telomeric dysfunction, reduced ALT-associated telomere synthesis ... we describe here a signalling pathway impacting ALT which can be targeted by a clinically approved drug."
+status: success

@@ -1,0 +1,59 @@
+accession: PXD054248
+extracted_at: "2026-05-17T19:31:39Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_FIMMU.2024.1482715.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.5
+    evidence: "three of the four undetected warehouse peptides could be detected at least once using a highly sensitive, next-generation mass spectrometer (timsTOF)"
+  cell_lines_tissues:
+    value: "Patient peripheral blood mononuclear cells (PBMCs) / individual CLL cells from chronic lymphocytic leukemia (CLL) patients"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.95
+    evidence: "In 25 (96%) of the 26 patients a sufficient amount of PBMCs was isolated to perform HLA ligand isolation and LC-MS/MS-based immunopeptidome analysis of patient individual CLL cells"
+  sample_prep:
+    value: "Patient PBMCs isolated by density gradient centrifugation and stored at -80 C; HLA peptides isolated from CLL cells for immunopeptidome analysis (detailed isolation protocol deferred to Supplementary Information, not available)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.85
+    evidence: "Patient PBMCs were isolated by density gradient centrifugation and kept at -80 C as short-term storage for subsequent HLA peptide isolation and T cell assays. Details on HLA peptide Isolation and analysis of HLA ligands are provided in the Supplementary Information."
+  lab_id:
+    value: "Juliane S. Walz (juliane.walz@med.uni-tuebingen.de), Clinical Collaboration Unit Translational Immunology, Department of Internal Medicine, University Hospital Tuebingen, Tuebingen, Germany"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.95
+    evidence: "*CORRESPONDENCE Juliane S. Walz juliane.walz@med.uni-tuebingen.de"
+  study_type:
+    value: immunopeptidomics
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.95
+    evidence: "LC-MS/MS-based immunopeptidome analysis of patient individual CLL cells"
+  number_of_replicates:
+    value:
+      biological: "25 CLL patient immunopeptidomes analyzed (of 26 enrolled patients), each patient analyzed individually"
+      technical: "not specified in available text"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.7
+    evidence: "In 25 (96%) of the 26 patients a sufficient amount of PBMCs was isolated to perform HLA ligand isolation and LC-MS/MS-based immunopeptidome analysis of patient individual CLL cells"
+  reported_ids:
+    value:
+      peptides: "HLA class I-restricted: 1050-8979 per patient (median 3606); HLA class II-restricted: 1261-10411 per patient (median 4493)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.9
+    evidence: "yielding between 1050 and 8979 (median 3606) HLA class I restricted peptides and between 1261 and 10411 (median 4493) HLA class II-restricted peptides"
+  key_findings:
+    value: "Immunopeptidome-guided, warehouse-based personalized multi-peptide vaccine design and production was feasible for all 26 CLL patients in this Phase II trial; timsTOF MS substantially increased the detection rate of pre-defined warehouse peptides, supporting application of the warehouse concept to larger patient cohorts."
+    status: inferred
+    source: "paper:10.3389_FIMMU.2024.1482715.pdf"
+    confidence: 0.9
+    evidence: "allotype normalized frequency of warehouse peptide detection could be significantly increased, using timsTOF MS"
+status: success

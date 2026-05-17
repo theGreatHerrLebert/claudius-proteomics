@@ -1,0 +1,134 @@
+accession: PXD046777
+extracted_at: "2026-05-17T19:30:42Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-023-44501-7.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 44
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.6
+    evidence: "separated using the 30 samples per day (SPD) method on the respective performance column (15cm x 75um, 1.9um, Evosep)"
+  column_type:
+    value: "Evosep performance column, 15 cm x 75 um, 1.9 um particle size"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.97
+    evidence: "the respective performance column (15cm x 75um, 1.9um, Evosep)"
+  lc_system:
+    value: "Evosep One"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.98
+    evidence: "Peptides were analyzed on an Evosep One liquid chromatography system coupled online via the Captive Spray source to a timsTOF HT mass spectrometer (Bruker Daltonics)"
+  column_temp:
+    value: "40 C"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.97
+    evidence: "Column temperature was kept at 40 C using a column toaster (Bruker Daltonics)"
+  acquisition_mode:
+    value: "ddaPASEF"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.98
+    evidence: "The timsTOF HT was operated in ddaPASEF mode in the m/z range of 100-1700 and in the ion mobility (IM) range of 0.65-1.35 Vs cm-2"
+  ce_strategy:
+    value: "Collision energy ramped as a function of ion mobility (decreased with decreasing 1/K0)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "The collision energy was decreased as a function of the IM from 59 eV at 1/K0=1.6 Vs cm-1 to 20 eV at 1/K0=0.6 Vs cm-1"
+  cell_lines_tissues:
+    value: "293T cells (HEK 293T)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.85
+    evidence: "cells grown in light medium were transduced with VSV-G-pseudotyped NL43-Firefly virus also produced in light medium (MOI=0.5)"
+  sample_prep:
+    value: "SILAC metabolic labeling followed by anti-p24 immunoprecipitation; cells grown in light medium transduced with virus, switched to heavy medium at transduction, incubated 18h, washed and lysed in IP-MS cell lysis buffer with protease inhibitors, immunoprecipitated with anti-p24 antibody (183-H12-5C) on Pierce Protein A/G magnetic beads, eluted proteins analyzed by LC-MS"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.9
+    evidence: "Labeling and immunoprecipitation for mass spectrometry was performed using the SILAC Protein Quantitation-Trypsin kit and MS-compatible Magnetic IP kit from Pierce (Thermo) according to manufacturer's instructions ... Immunoprecipitation was performed with an anti-p24 antibody (183-H12-5C; NIH-ARP-3537) using Pierce Protein A/G magnetic beads. Eluted proteins were analyzed by LC-MS."
+  digestion_details:
+    value:
+      enzyme: "Trypsin"
+      reduction_alkylation: "Cysteine carbamidomethylation set as fixed modification (implies reduction/alkylation per SILAC Protein Quantitation-Trypsin kit)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.7
+    evidence: "performed using the SILAC Protein Quantitation-Trypsin kit ... strict trypsin specificity (Lysine: K, Arginine: R) ... Cysteine carbamidomethylation was set as a fixed modification"
+  quantification_method:
+    value: "SILAC (heavy/light, Lys+8 / Arg+10)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "metabolic labeling via stable isotope labeling with amino acids in cell culture followed by mass spectrometry (SILAC-MS) ... heavy labeling of lysine and arginine (K+8.014199 Da, R+10.008269 Da) as variable modifications"
+  processing_software:
+    value:
+      - name: "FragPipe"
+        version: "20.0"
+        purpose: "MS data analysis pipeline"
+      - name: "MSFragger"
+        version: ""
+        purpose: "Spectrum search engine"
+      - name: "Percolator"
+        version: ""
+        purpose: "Search result validation / FDR"
+      - name: "MSBooster"
+        version: ""
+        purpose: "Rescoring (enabled within validation)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "The LC-IMS-MS/MS data were analyzed using FragPipe (version 20.0). Spectra were searched using MSFragger ... Search results were validated using Percolator with MSBooster enabled rescoring"
+  search_database:
+    value:
+      species: "Homo sapiens (human) and HIV-1"
+      source: "UniProtKB human proteome UP000005640; HIV-1 NL4-3 e-r-Fluc [ARP-3418] with modified SIVp6 (aa 17-26)"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "searched using MSFragger against the protein sequences of the human proteome (UP000005640, UniProtKB) and of HIV-1 (NL4-3 e-r-Fluc [ARP-3418] with a modified SIV p6 between aa 17-26)"
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "20 ppm"
+      enzyme: "Trypsin, strict specificity (K, R)"
+      missed_cleavages: 2
+      fixed_modifications: "Cysteine carbamidomethylation"
+      variable_modifications: "Methionine oxidation; protein N-terminal acetylation; heavy labeling of lysine (K+8.014199 Da) and arginine (R+10.008269 Da)"
+      fdr: "1% on all levels"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "with a precursor and fragment mass tolerance of 20 ppm, strict trypsin specificity (Lysine: K, Arginine: R) and allowing up to two missed cleavage sites. Cysteine carbamidomethylation was set as a fixed modification and methionine oxidation, N-terminal acetylation of proteins as well as heavy labeling of lysine and arginine (K+8.014199 Da, R+10.008269 Da) as variable modifications ... converged to false discovery rates of 1% on all levels"
+  lab_id:
+    value: "Oya Cingoz, Robert Koch Institute, Department of Infectious Diseases, Unit of Sexually Transmitted Bacterial Pathogens and HIV (FG18), Berlin, Germany"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.95
+    evidence: "Correspondence and requests for materials should be addressed to Oya Cingoz. ... Robert Koch Institute, Department of Infectious Diseases, Unit of Sexually Transmitted Bacterial Pathogens and HIV (FG18), Berlin, Germany"
+  study_type:
+    value: "interactomics"
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.55
+    evidence: "we performed metabolic labeling via stable isotope labeling with amino acids in cell culture followed by mass spectrometry (SILAC-MS) ... to provide further evidence that authentic viral proteins are produced from the packaged viral genome"
+  number_of_replicates:
+    value:
+      biological: 3
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.9
+    evidence: "Samples were prepared and analyzed in biological triplicates."
+  key_findings:
+    value: "Using SILAC-MS the study demonstrates that incoming retroviral RNA genomes are directly translated shortly after cellular entry, producing viral proteins in the absence of reverse transcription, challenging the notion that retroviruses require reverse transcription to produce viral proteins."
+    status: inferred
+    source: "paper:10.1038_s41467-023-44501-7.pdf"
+    confidence: 0.9
+    evidence: "Here we show through multiple, complementary methods that retroviral genomes are translated after entry. Our findings challenge the notion that retroviruses require reverse transcription to produce viral proteins."
+status: success

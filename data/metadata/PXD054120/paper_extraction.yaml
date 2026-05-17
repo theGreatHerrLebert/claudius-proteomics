@@ -1,0 +1,133 @@
+accession: PXD054120
+extracted_at: "2026-05-17T19:31:27Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41420-025-02382-3.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "Peptides were then separated on an Aurora UHPLC column (25cm x 75um ID, C18, 1.6um) (Ionopticks) over 60min."
+  column_type:
+    value: "Aurora UHPLC column, 25 cm x 75 um ID, C18, 1.6 um particle size (Ionopticks); trap: Acclaim PepMap C18 trap cartridge, 0.3 mm inside diameter, 5 mm length (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "Each sample was loaded onto an Acclaim PepMap C18 trap cartridge (0.3mm inside diameter, 5mm length, Part 160434, Thermo Fisher Scientific) ... Peptides were then separated on an Aurora UHPLC column (25cm x 75um ID, C18, 1.6um) (Ionopticks)"
+  lc_system:
+    value: "Bruker nanoElute nano-LC chromatography system (Bruker Daltonics)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "Samples were run on a Bruker timsTOF Pro mass spectrometer (Bruker Daltonics) connected to a Bruker nanoElute nano-LC chromatography system (Bruker Daltonics)"
+  mobile_phases:
+    value:
+      A: "99.9% water, 0.1% formic acid (buffer A); peptides resuspended in LC-MS water with 0.1% (v/v) trifluoroacetic acid (TFA)"
+      B: "99.9% acetonitrile, 0.1% TFA (buffer B)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.85
+    evidence: "at an approximate flow rate of 10uL/min with buffer A (99.9% water, 0.1% formic acid) ... from 0 to 53min buffer B (99.9% acetonitrile, 0.1% TFA) increases from 2 to 32%"
+  flow_rate:
+    value: "250 nL/min (analytical separation); 10 uL/min (trap loading)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "from 0 to 53min buffer B ... increases from 2 to 32% at a flow rate of 250nL/min ... loaded onto an Acclaim PepMap C18 trap cartridge ... at an approximate flow rate of 10uL/min"
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "All data was acquired with the instrument operating in trapped ion mobility spectrometry (TIMS) mode. Trapped ions were selected for ms/ms using parallel accumulation serial fragmentation (PASEF)."
+  cell_lines_tissues:
+    value: "Human PDAC cell line BxPC-3 (BRCA2 wild-type) whole-cell lysates, treated with 20 uM RS-35d or DMSO (vehicle control) for 24 h"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.9
+    evidence: "BxPC-3 cells (5x10^6 cells/T75 flask) were cultured for 2 days, washed with PBS and treated with 20uM RS-35d or DMSO (as vehicle control) for 24h."
+  sample_prep:
+    value: "BxPC-3 whole-cell lysates prepared in whole-cell lysis buffer (25 mM Tris-HCl pH 7.6, 150 mM NaCl, 1% NP-40, 1% sodium deoxycholate, 0.1% SDS, 0.5 mM DTT) with protease inhibitor cocktail; sonicated and cleared by centrifugation; 50 ug protein per sample homogenised and denatured in 4 M urea; automated KingFisher DuoPrime bead-based cleanup (hydrophobic and hydrophilic magnetic beads); C18 Tip desalting after digestion"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.85
+    evidence: "BxPC-3 cells were lysed in whole-cell lysis buffer (25mM Tris.HCl pH7.6, 150mM NaCl, 1% NP-40, 1% sodium deoxycholate, 0.1% SDS, 0.5mM DTT) ... For each sample, 50ug of proteins were diluted in 20uL of buffer/MS grade water. Samples were homogenised and denatured in urea (final concentration, 4M) ... protocol was performed using automated KingFisher DuoPrime purification system"
+  digestion_details:
+    value:
+      enzyme: "Trypsin (Promega, V5111)"
+      ratio: "50:1 (w/w) protein to protease"
+      time: "4 h"
+      temp: "37 C"
+      reduction: "DTT, final concentration 1 mM, 15 min at room temperature"
+      alkylation: "iodoacetamide (IAA), 3 mM, in the dark for 15 min at room temperature"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.85
+    evidence: "reduced in DTT (final concentration, 1mM) for 15min at room temperature (RT) and alkylate in iodoacetamide (IAA) (3mM) in the dark for 15min at RT ... released into trypsin (Promega, V5111)-containing deep-wells at a 50:1 (w/w) protein to protease ratio and mixed at low speed for 4h of digestions into peptide fragments at 37C in the KingFisher"
+  quantification_method:
+    value: "Label-free quantification (LFQ) with PEAKS Q"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "Label-free quantification with PEAKS Q was used."
+  processing_software:
+    value:
+      - name: "PEAKS X+ (PEAKS Studio/Q/IMS)"
+        version: "X+"
+        purpose: "Database search, de novo sequencing, label-free quantification (PEAKS Q), match-between-runs"
+      - name: "OriginPro"
+        version: "2020"
+        purpose: "MS data visualisation (volcano plots)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.9
+    evidence: "The data analysis was done using PEAKS X+ (PEAKS Studio/Q/IMS, Bioinformatics Solutions Inc., Waterloo, Ontario, Canada) ... volcano plot was generated using Origin Software (OriginPro 2020)"
+  search_database:
+    value: "UniProtKB/SwissProt human protein sequence database UP000005640, reviewed proteins only"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.95
+    evidence: "PEAKS database searching was performed against the human proteome (UniprotKB/SwissProt human protein sequence database UP000005640, reviewed protein only)."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "0.5 Da"
+      enzyme: "Trypsin/P"
+      missed_cleavages: "maximum 3 (or nonspecific cleavages allowed)"
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Oxidation (M); Acetylation (N-terminal)"
+      fdr: "0.01 (estimated with target-decoy fusion)"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.9
+    evidence: "Database searches were performed using default parameters: a parent mass tolerance of 20ppm; a fragment tolerance of 0.5Da; Carbamidomethyl (C) was specified as fixed modifications, Oxidation (M) was specified as dynamic modification, and acetylation was specified as N-terminal modification. Trypsin/P digest enzyme (maximum 3 missed cleavages, or nonspecific cleavages allowed) ... FDR was estimated with target decoy fusion and set to 0.01."
+  lab_id:
+    value: "M. Masi et al. (Cell Death Discovery 2025, 11:106); corresponding author and institution not stated in extracted methods text"
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.4
+    evidence: "M.Masi et al. ... CellDeathDiscovery (2025) 11:106"
+  study_type:
+    value: drug_treatment
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.85
+    evidence: "BxPC-3 cells ... treated with 20uM RS-35d or DMSO (as vehicle control) for 24h ... Whole-cell lysate MS-based proteomic analyses"
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: 2
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.9
+    evidence: "Three biological samples were prepared for each condition, and each biological sample was further analysed once more in full-process technical replicate (x2)."
+  key_findings:
+    value: "Whole-cell lysate proteomic analysis of BxPC-3 pancreatic cancer cells treated with the compound RS-35d versus DMSO control supports a wide-spectrum synthetic lethality (wpSL) mechanism in which RS-35d acts as a multi-target small molecule inducing BRCAness by inhibiting synthetic lethal DNA-damage-response partners (ATM, ATR, DNA-PK)."
+    status: inferred
+    source: "paper:10.1038_s41420-025-02382-3.pdf"
+    confidence: 0.7
+    evidence: "induce BRCAness and to inhibit synthetic lethal partners (i.e. ATM, ATR, DNA-PK) ... RS-35d ability to be effective in BRCA2-mutated cancer cells after the emergence of PARPi resistances further suggests the wpSL paradigm as an interesting pharmacological strategy"
+status: success

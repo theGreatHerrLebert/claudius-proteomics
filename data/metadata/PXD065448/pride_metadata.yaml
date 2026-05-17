@@ -1,0 +1,84 @@
+accession: PXD065448
+version: '1.0'
+generated_at: '2026-05-17T21:09:34.636893'
+title:
+  value: U2AF2 controls alternative splicing in speckles proximal regions in an RS
+    domain-dependent manner
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1093/nar/gkag143
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD065448
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: "180 \xB5m x 20 \xB5m Trap column) before being loaded onto an Aurora analytical\
+      \ column"
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.9
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue:
+    value:
+    - Cell culture
+    - Hepatocyte
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 2
+  manual_fields: 0
+  missing_fields: 4
+  missing_field_names:
+  - lab_id
+  - gradient_length
+  - lc_system
+  - sample_prep
+  requires_review: true

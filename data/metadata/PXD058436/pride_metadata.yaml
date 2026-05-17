@@ -1,0 +1,106 @@
+accession: PXD058436
+version: '1.0'
+generated_at: '2026-05-17T21:09:20.977082'
+title:
+  value: MHCquant2 refines immunopeptidomics tumor antigen discovery
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1186/s13059-025-03763-8
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD058436
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Juliane Walz, Department of Peptide-based Immunotherapy, Institute of Immunology,
+      University and University Hospital Tubingen, Germany
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.95
+  column_type:
+    value: '75 um x 25 cm Aurora Series emitter column (IonOpticks); trap: Acclaim
+      PepMap (Thermo Fisher Scientific)'
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: DDA-PASEF
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.95
+  lc_system:
+    value: Bruker nanoElute
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.97
+  sample_prep:
+    value: HLA class I and HLA class II molecules isolated by immunoaffinity chromatography
+      using pan HLA class I-specific W6/32, pan HLA class II-specific Tu 39, and HLA-DR-specific
+      L243 monoclonal antibodies
+    status: inferred
+    source: paper:10.1186_s13059-025-03763-8.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Gastric antrum
+    - Spleen
+    - Gastric fundus
+    - Bone marrow
+    - Heart
+    - Aorta
+    - Cerebellum
+    - Skin
+    - Pancreas
+    - Liver
+    - Adrenal gland
+    - Lung
+    - Kidney
+    - Muscle
+    - Brain
+    - Small intestine
+    - Thyroid gland
+    - Testis
+    - Tongue
+    - Bladder
+    - Gall bladder
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

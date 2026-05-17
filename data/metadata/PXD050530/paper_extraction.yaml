@@ -1,0 +1,154 @@
+accession: PXD050530
+extracted_at: "2026-05-17T19:31:17Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-024-46825-4.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 200
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "Peptides were eluted at a flow rate of 250 nL/min, applying the following 200 min gradient: 2% to 3% B over 5 min, then from 3% to 20% B over 157 min, to 30% B over 30 min, to 60% B over 10 min, and finally to 90% over 1 min."
+  column_type:
+    value: "20 cm reverse-phase column, 75 um I.D. fused silica capillary, packed in-house with 1.9 um C18-reprosil beads (Dr. Maisch r119.aq.0003)"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "Peptides were separated at 45 C using a 20 cm reverse-phase column (Fused Silica Capillary I.D. 75 um, CM Scientific), packed in-house with 1.9 um C18-reprosil beads (r119.aq.0003, Dr. Maisch)."
+  lc_system:
+    value: "Thermo EASY-nLC 1200"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "The analysis was performed using an EASY-nLC 1200 System coupled to an Orbitrap Exploris 480 mass spectrometer (Thermo Fisher Scientific)."
+  mobile_phases:
+    value:
+      A: "3% ACN, 0.1% FA"
+      B: "90% ACN, 0.1% FA"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "Eluents A (3% ACN, 0.1% FA) and B (90% ACN, 0.1% FA) were used."
+  flow_rate:
+    value: "250 nL/min"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "Peptides were eluted at a flow rate of 250 nL/min, applying the following 200 min gradient"
+  column_temp:
+    value: "45 C"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "Peptides were separated at 45 C using a 20 cm reverse-phase column"
+  acquisition_mode:
+    value: "DDA"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "The data was acquired using a top20 method in positive data-dependent acquisition mode using a Nanospray Flex ion source ES072"
+  ce_strategy:
+    value: "Normalised collision energy (HCD) at a fixed value of 28"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "The MS/MS spectra were generated using a normalised collision energy at 28."
+  cell_lines_tissues:
+    value: "Human sputum samples: one healthy donor and one cystic fibrosis (CF) patient, both female, aged 28-33"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.95
+    evidence: "Two sputum samples were used in this study: one of a healthy donor and one of a cystic fibrosis patient... both female, and age at the time of collection, was between 28 and 33."
+  sample_prep:
+    value: "Sputum inactivated in SDS buffer (2% SDS, 50 mM Tris-HCl pH 8, 0.5 mM EDTA) at 95 C for 10 min; protein concentration by BCA assay; 100 ug protein reduced and alkylated; benzonase treatment; SP3 bead-based clean-up; PNGaseF deglycosylation; digestion; C18 desalting"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.95
+    evidence: "Sputum samples were inactivated in SDS buffer (2% SDS, 50 mM Tris-HCl pH 8, 0.5 mM EDTA) at 95 C for 10 min. After measuring the protein concentration using BCA assay, 100 ug protein were reduced and alkylated... proteins were extracted using an SP3 protocol described for proteomics... incubated with PNGaseF for 1 h at 37 C. Trypsin and LysC were added at 1:50 (enzyme:substrate) for overnight digestion. The supernatant was collected and desalted on C18 material."
+  digestion_details:
+    value:
+      enzyme: "Trypsin and LysC"
+      ratio: "1:50 (enzyme:substrate)"
+      time: "overnight"
+      reduction: "20 mM DTT in SDS buffer at 95 C for 10 min"
+      alkylation: "40 mM CAA in SDS buffer at 95 C for 10 min (with 75 mM NaCl)"
+      deglycosylation: "PNGaseF, 1 h at 37 C in 50 mM ABC buffer"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.95
+    evidence: "100 ug protein were reduced and alkylated in SDS buffer with 20 mM DTT, 40 mM CAA and 75 mM NaCl at 95 C for 10 min... beads were resuspended in 50 mM ABC buffer and incubated with PNGaseF for 1 h at 37 C. Trypsin and LysC were added at 1:50 (enzyme:substrate) for overnight digestion."
+  quantification_method:
+    value: "Label-free quantification (LFQ) with match-between-runs"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "For quantification, match between runs and label-free quantitation (LFQ) algorithms were used."
+  processing_software:
+    value:
+      - name: "MaxQuant"
+        version: "2.0.3.0"
+        purpose: "Protein identification and LFQ quantification"
+      - name: "Thermo EASY-nLC 1200"
+        version: "3.2.0 SP2 (4.1.4.1)"
+        purpose: "LC control / data acquisition"
+      - name: "Orbitrap Exploris 480 tune software"
+        version: "3.1.279.9"
+        purpose: "MS instrument control"
+      - name: "Xcalibur"
+        version: "4.6.67.17"
+        purpose: "Data acquisition"
+      - name: "R"
+        version: "4.0.4"
+        purpose: "Downstream statistical analysis"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 1.0
+    evidence: "The data was acquired using Thermo EASY-nLC 1200: 3.2.0 SP2 (version 4.1.4.1), Orbitrap Exploris 480 (tune software version 3.1.279.9) and Xcalibur (version 4.6.67.17). For protein identification, MaxQuant software (Version 2.0.3.0; Max Planck Institute of Biochemistry)... Downstream analysis was done in R (Version 4.0.4)."
+  search_database:
+    value:
+      source: "UniProt"
+      species: "Homo sapiens (human)"
+      version: "2022-01"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.95
+    evidence: "For protein identification, MaxQuant software (Version 2.0.3.0; Max Planck Institute of Biochemistry) and a decoy human UniProt database (2022-01) were used."
+  search_settings:
+    value:
+      enzyme: "Trypsin/LysC"
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Oxidation (M), N-terminal acetylation, Deamidation (N, Q)"
+      fdr: "1% at peptide and protein level"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.9
+    evidence: "The variable modifications oxidation (M), N-terminal acetylation, deamidation (N,Q) and the fixed modification carbamidomethyl cysteine were considered in the search. Peptides and proteins, which were identified with a false discovery rate of 1% were used for quantification."
+  lab_id:
+    value: "Kevin Pagel, Freie Universitaet Berlin / Fritz Haber Institute, Berlin, Germany (proteomics in collaboration with Philipp Mertins, Max Delbrueck Center for Molecular Medicine)"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.8
+    evidence: "Leila Bechtella, Marc Safferthal, Lukasz Polewski, Michael Goetze, Gael M. Vos, Kevin Pagel (affiliations 1,2); Philipp Mertins (affiliation 4,10) - corresponding/senior authors of the proteomics work."
+  study_type:
+    value: "method_development"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.85
+    evidence: "Here, we present a TIMS-based method to separate and comprehensively characterise glycan isomers from complex biological samples; the clinical sputum proteomics accompanies the O-glycomics method development."
+  number_of_replicates:
+    value:
+      biological: "1 healthy donor, 1 CF patient"
+      technical: "2 injections for healthy samples, 3 injections for CF samples"
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.85
+    evidence: "Peptides (2 uL at 1 ug/uL) were injected two and three times for healthy and CF samples, respectively."
+  key_findings:
+    value: "A TIMS-based ion mobility-tandem MS method enables rapid (minutes-scale) characterisation of mucin-type O-glycan isomers from complex clinical samples via diagnostic collision cross sections; accompanying label-free proteomics of healthy versus cystic fibrosis sputum profiles the mucus protein composition."
+    status: inferred
+    source: "paper:10.1038_s41467-024-46825-4.pdf"
+    confidence: 0.85
+    evidence: "Here, we present a TIMS-based method to separate and comprehensively characterise glycan isomers from complex biological samples. The complete analytical workflow takes only a few minutes... Additionally, the measured CCSs enable a database-driven high-throughput O-glycan analysis."
+status: success

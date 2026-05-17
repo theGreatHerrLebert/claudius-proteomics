@@ -1,0 +1,66 @@
+accession: PXD056978
+version: '1.0'
+generated_at: '2026-05-17T21:07:22.704142'
+title: null
+publication_doi: null
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: null
+    status: missing
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: null
+    status: missing
+  organisms_all: null
+  instrument:
+    value: null
+    status: missing
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: null
+    status: missing
+    hint: Check if DDA, DIA, PASEF, diaPASEF, PRM, etc.
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 0
+  inferred_fields: 0
+  manual_fields: 0
+  missing_fields: 12
+  missing_field_names:
+  - dataset_id
+  - lab_id
+  - organism
+  - instrument
+  - title
+  - publication_doi
+  - gradient_length
+  - column_type
+  - acquisition_mode
+  - lc_system
+  - sample_prep
+  - tissue
+  requires_review: true

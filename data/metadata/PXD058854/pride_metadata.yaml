@@ -1,0 +1,83 @@
+accession: PXD058854
+version: '1.0'
+generated_at: '2026-05-17T21:04:52.462272'
+title:
+  value: "Probing condensate microenvironments and functions with a micropeptide \u201C\
+    killswitch\u201D "
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41586-025-09141-5
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD058854
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Henri Niskanen and Denes Hnisz, Max Planck Institute for Molecular Genetics,
+      Berlin, Germany
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF SCP
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 31
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.6
+  column_type:
+    value: Aurora Elite column, 15 cm x 75 um inner diameter, C18 1.7 um beads (IonOpticks)
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.98
+  acquisition_mode:
+    value: DDA-PASEF (data-dependent acquisition with parallel accumulation serial
+      fragmentation)
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.97
+  lc_system:
+    value: Evosep One (Evosep), nanoflow reversed-phase liquid chromatography
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.98
+  sample_prep:
+    value: Nucleoli isolated by FACS-based NuFANCI method from msfGFP-NPM1-tagged
+      cells; ~400,000 events sorted per sample, pelleted, washed in PBS; lysed in
+      buffer 4 (Tris/NaCl/MgCl2) at 65 C then 95 C, sonicated, benzonase treated,
+      denatured/reduced/alkylated in 6 M GdmCl/20 mM TCEP/80 mM chloroacetamide, acetone
+      precipitated, resuspended in 100 mM ammonium bicarbonate; ~2 mg protein yielded
+      per nucleolus sample
+    status: inferred
+    source: paper:10.1038_s41586-025-09141-5.pdf
+    confidence: 0.9
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 5
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 1
+  missing_field_names:
+  - tissue
+  requires_review: true

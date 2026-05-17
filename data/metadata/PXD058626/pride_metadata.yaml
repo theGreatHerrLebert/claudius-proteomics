@@ -1,0 +1,90 @@
+accession: PXD058626
+version: '1.0'
+generated_at: '2026-05-17T21:01:23.190177'
+title:
+  value: The MUC5B promoter variant results in proteomic changes in the non-fibrotic
+    lung
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1172/JCI.INSIGHT.189636
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD058626
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: David A. Schwartz / Jeremy A. Herrera, Division of Pulmonary Sciences and
+      Critical Care Medicine, University of Colorado Anschutz Medical Campus, Aurora,
+      Colorado, USA
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.85
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF SCP
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 90
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.98
+  column_type:
+    value: "75 \u03BCm i.d. \xD7 25 cm, packed with 1.6 \u03BCm C18 beads (IonOpticks)"
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.98
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.97
+  lc_system:
+    value: Bruker NanoElute
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.97
+  sample_prep:
+    value: "Laser capture microdissection (LCM) of FFPE human lung tissue (5 \u03BC\
+      m sections on membrane slides, H&E stained); sample shearing by Covaris S220\
+      \ sonication (peak power 200, duty factor 20.0, 200 cycle bursts, 50 s on /\
+      \ 10 s cool-down at 4\xB0C, 10 cycles for 10 min total); processed as previously\
+      \ described"
+    status: inferred
+    source: paper:10.1172_JCI.INSIGHT.189636.pdf
+    confidence: 0.92
+  tissue:
+    value:
+    - Lung
+    - Lung epithelium
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

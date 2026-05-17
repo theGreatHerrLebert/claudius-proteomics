@@ -1,0 +1,177 @@
+accession: PXD064837
+extracted_at: "2026-05-17T19:34:49Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_FIMMU.2025.1645196.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 25
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.95
+    evidence: "The gradient elution ranged from 7% to 45% acetonitrile in 0.1% formic acid and 0.02% TFA over 25 minutes at a flow rate of 500 nL/min."
+  column_type:
+    value: "75 µm x 150 mm C18 reversed-phase column, 1.9 µm particle size, 120 Å pore size (Bruker Daltonics)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.95
+    evidence: "Peptides were separated on a 75 mm x 150 mm C18 reversed-phase column (1.9 mm, 120 A pore size; Bruker Daltonics) at 45°C."
+  lc_system:
+    value: "Bruker nanoElute liquid chromatography system"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.97
+    evidence: "Glycopeptide analyses were performed as described previously (24) using a nanoElute liquid chromatography system (Bruker Daltonics) connected online to a timsTOF Pro2 instrument (Bruker Daltonics)"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid"
+      B: "acetonitrile with 0.1% formic acid and 0.02% TFA (gradient 7-45% acetonitrile)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.7
+    evidence: "The gradient elution ranged from 7% to 45% acetonitrile in 0.1% formic acid and 0.02% TFA over 25 minutes at a flow rate of 500 nL/min."
+  flow_rate:
+    value: "500 nL/min"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.97
+    evidence: "over 25 minutes at a flow rate of 500 nL/min."
+  column_temp:
+    value: "45°C"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.97
+    evidence: "Peptides were separated on a 75 mm x 150 mm C18 reversed-phase column (1.9 mm, 120 A pore size; Bruker Daltonics) at 45°C."
+  acquisition_mode:
+    value: "dda-PASEF"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.97
+    evidence: "Measurements were performed as described previously in positive ionization mode using data dependent acquisition - Parallel Accumulation SErial Fragmentation (dda-PASEF) with parameters optimized for glycopeptides"
+  ce_strategy:
+    value: "Mobility-dependent collision energy ramp optimized for glycopeptides (collision energy varied as a function of ion mobility 1/K0)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.75
+    evidence: "30-90eV collision energy from 0.6-1.6 1/K0"
+  cell_lines_tissues:
+    value: "Human plasma/serum-derived complement factor H glycopeptides; sera from four SP-HUS patients (acute phase and remission) and pooled sera from 14 healthy controls (normal human serum)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.9
+    evidence: "we investigated the N-glycosylation patterns of FH across three N-glycosylation sites for four SP-HUS patients and compared it to healthy controls using LC-MS/MS-based glycopeptide profiling."
+  sample_prep:
+    value: "Human plasma proteins denatured in 8 M urea / 10 mM Tris-HCl pH 8, reduced and alkylated, trypsin digested overnight; glycopeptides enriched on Sepharose CL-4B beads in 96 multiwell filter plates, washed with 83% ACN and 83% ACN/0.1% TFA, eluted with water"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.92
+    evidence: "human plasma proteins were denatured in 8 M urea 10 mM Tris-HCl pH 8 and cysteine residues were reduced and alkylated using dithiothreitol and 2-chloroacetamide, respectively. After 3-fold dilution of the sample in 50 mM ammonium bicarbonate buffer, 1 µg trypsin per 50 µg plasma protein was added and samples were incubated overnight at 37°C. Glycopeptides were enriched using 100 µl Sepharose CL-4B beads (Merck)"
+  digestion_details:
+    value:
+      enzyme: trypsin
+      ratio: "1 µg trypsin per 50 µg plasma protein (1:50)"
+      time: overnight
+      temperature: "37°C"
+      reduction: "dithiothreitol (DTT)"
+      alkylation: 2-chloroacetamide
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.93
+    evidence: "cysteine residues were reduced and alkylated using dithiothreitol and 2-chloroacetamide, respectively. After 3-fold dilution of the sample in 50 mM ammonium bicarbonate buffer, 1 µg trypsin per 50 µg plasma protein was added and samples were incubated overnight at 37°C."
+  fractionation:
+    value:
+      method: "glycopeptide enrichment (Sepharose CL-4B beads)"
+      n_fractions: 1
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.6
+    evidence: "Glycopeptides were enriched using 100 µl Sepharose CL-4B beads (Merck) in 0.20 µm pore size 96 multiwell filter plates (AcroPrep Advance, VWR)."
+  quantification_method:
+    value: "Label-free quantification (LFQ); targeted label-free quantification via custom precursor target list"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.9
+    evidence: "Glycopeptide identification from FH were manually verified and subsequently used to create a precursor targetlist for targeted label-free quantitation (LFQ) using in-house developed DataAnalysis (Bruker Daltonics) scripts (28). Glycoforms are expressed as relative LFQ fractions (%)"
+  processing_software:
+    value:
+      - name: FragPipe
+        version: "15.0"
+        purpose: "Glycopeptide identification (workflow platform)"
+      - name: MSFragger Glyco / MSFragger
+        version: "3.4"
+        purpose: "Glycopeptide / N-glycopeptide database search"
+      - name: Philosopher
+        version: "4.1.1"
+        purpose: "PSM validation and FDR filtering"
+      - name: DataAnalysis (Bruker Daltonics)
+        version: ""
+        purpose: "In-house scripts for targeted label-free quantitation from precursor target list"
+      - name: GraphPad Prism
+        version: "10"
+        purpose: "Data visualization and statistical analysis"
+      - name: MetaboAnalyst
+        version: "6.0"
+        purpose: "Principal component analysis"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.95
+    evidence: "Glycopeptides were identified using MSFragger Glyco (FragPipe v15.0, MSFragger v3.4, Philosopher v4.1.1) (25)."
+  search_database:
+    value:
+      source: "UniProt human secreted proteins combined with GlyGen N-glycan mass database"
+      species: "Homo sapiens (human)"
+      version: "UniProt November 2021; GlyGen N-glycan masses April 2022"
+      entries: "4,029 human secreted proteins and 475 unique human N-glycan masses"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.93
+    evidence: "A database of 4,029 human secreted proteins (UniProt (26), November 2021) was used in combination with 475 unique human N-glycan masses from the GlyGen database (April 2022) (27)."
+  search_settings:
+    value:
+      enzyme_specificity: semitryptic
+      precursor_tolerance: "20 ppm"
+      missed_cleavages: "0-2"
+      isotope_errors: "0-2"
+      peptide_length: "5-50 amino acids"
+      mz_range: "600-20000 m/z"
+      fixed_modifications: carbamidomethylation
+      variable_modifications: "oxidation (Met), N-terminal ammonia loss"
+      fdr: "1% FDR for PSMs, glycans, and peptide sequences"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.92
+    evidence: "Searches were performed with semitryptic specificity and a precursor mass tolerance of 20 ppm, allowing isotope errors from 0-2, peptide length 5-50 amino acids, and 600-20000 m/z range. Modifications included fixed carbamidomethylation and variable methionine oxidation and N-terminal ammonia loss. ... Peptide-spectrum matches (PSMs), glycans, and peptide sequences were filtered to 1% FDR."
+  lab_id:
+    value: "Lambertus P. van den Heuvel, Radboud University Medical Centre, Nijmegen, Netherlands (corresponding author; bert.vandenheuvel@radboudumc.nl)"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.95
+    evidence: "*CORRESPONDENCE Lambertus P. van den Heuvel bert.vandenheuvel@radboudumc.nl"
+  study_type:
+    value: clinical
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.85
+    evidence: "we investigated the N-glycosylation patterns of FH across three N-glycosylation sites for four SP-HUS patients and compared it to healthy controls using LC-MS/MS-based glycopeptide profiling."
+  number_of_replicates:
+    value:
+      biological: "4 SP-HUS patients (acute phase and remission) and 3 healthy controls"
+      technical: "not specified for glycopeptide LC-MS analysis"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.7
+    evidence: "We evaluated the samples of four SP-HUS patients during the acute phase and remission, and compared the measurements to three healthy controls."
+  reported_ids:
+    value: "22 distinct N-glycan structures identified across three FH glycopeptides (N864, N893, N1011) in SP-HUS patients"
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.8
+    evidence: "We identified 22 distinct N-glycans on the three FH glycopeptides in SP-HUS patients."
+  key_findings:
+    value: "FH N-glycosylation is severely altered during the acute phase of SP-HUS, with increased N-glycans lacking sialic acids, galactose and GlcNAc, showing partial or complete normalization in remission. Despite these glycosylation changes, functional assays revealed no significant impairment in FH complement-regulatory activity."
+    status: inferred
+    source: "paper:10.3389_FIMMU.2025.1645196.pdf"
+    confidence: 0.9
+    evidence: "our findings show that FH's N-glycosylation is severely altered in the acute phase in SP-HUS patients ... despite these major glycosylation changes, functional assays revealed no significant impairment in the complement regulatory activity of FH"
+status: success

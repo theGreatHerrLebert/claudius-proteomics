@@ -1,0 +1,86 @@
+accession: PXD031993
+version: '1.0'
+generated_at: '2026-05-17T21:12:47.524225'
+title:
+  value: An anti-influenza A virus microbial metabolite acts by degrading viral endonuclease
+    PA
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41467-022-29690-x
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD031993
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Shan Cen, Institute of Medicinal Biotechnology, Chinese Academy of Medical
+      Sciences and Peking Union Medical College, Beijing, PR China
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.85
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 90
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.8
+  column_type:
+    value: home-made reversed-phase analytical column, 75 um i.d., 25 cm length
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.7
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.95
+  lc_system:
+    value: nanoElute UHPLC
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Protein profiles characterized in cells treated with DMSO or APL-16-5;
+      proteins digested with trypsin and analyzed by LC-MS/MS to assess selectivity
+      of APL-16-5-mediated protein degradation
+    status: inferred
+    source: paper:10.1038_s41467-022-29690-x.pdf
+    confidence: 0.5
+  tissue:
+    value:
+    - A549-cr cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

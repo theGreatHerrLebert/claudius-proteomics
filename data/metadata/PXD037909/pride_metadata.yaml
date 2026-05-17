@@ -1,0 +1,91 @@
+accession: PXD037909
+version: '1.0'
+generated_at: '2026-05-17T21:01:57.652830'
+title:
+  value: Energy metabolism in skeletal muscle cells from donors with different body
+    mass index
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.3389/fphys.2022.982842
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD037909
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Parmeshwar B. Katare (corresponding author), Section for Pharmacology and
+      Pharmaceutical Biosciences, Department of Pharmacy, University of Oslo, Blindern,
+      Norway
+    status: inferred
+    source: paper:10.3389_fphys.2022.982842.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF fleX
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 90
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: capillary C18 column, 25 cm length, 75 um inner diameter, 1.6 um particle
+      size, 120 A pore size (IonOpticks)
+    status: inferred
+    source: paper:10.3389_fphys.2022.982842.pdf
+    confidence: 0.97
+  acquisition_mode:
+    value: DIA
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.85
+  lc_system:
+    value: nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics)
+    status: inferred
+    source: paper:10.3389_fphys.2022.982842.pdf
+    confidence: 0.98
+  sample_prep:
+    value: Myotubes cultured and differentiated in 25 cm2 flasks; on day 7 of differentiation
+      cells were washed with DPBS (Mg2+/Ca2+), washed with DPBS, spun down (1000 rpm,
+      4C, 5 min), snap frozen in liquid nitrogen and stored at -80C; lysed in 150
+      uL RIPA buffer with protease inhibitor; followed by protein aggregation, reduction,
+      alkylation and tryptic digestion; resulting peptides desalted and concentrated
+      on a 3M Empore C18 resin disc by the STAGE-TIP method
+    status: inferred
+    source: paper:10.3389_fphys.2022.982842.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

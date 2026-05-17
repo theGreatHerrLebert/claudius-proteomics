@@ -1,0 +1,93 @@
+accession: PXD019086
+version: '1.0'
+generated_at: '2026-05-17T20:55:21.997761'
+title:
+  value: Deep learning the collisional cross sections of the peptide universe from
+    a million experimental values
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41467-021-21352-8
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: true
+fields:
+  dataset_id:
+    value: PXD019086
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Matthias Mann, Department Proteomics and Signal Transduction, Max Planck
+      Institute of Biochemistry, Martinsried, Germany
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.9
+  organism:
+    value: Drosophila melanogaster (fruit fly)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Drosophila melanogaster (fruit fly)
+    - name: Saccharomyces cerevisiae (baker's yeast)
+    - name: Escherichia coli
+    - name: Homo sapiens (human)
+    - name: Caenorhabditis elegans
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 95
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.85
+  column_type:
+    value: In-house 25 cm x 75 um reversed-phase column packed with 1.9 um C18 beads
+      (Dr. Maisch Reprosil-Pur AQ), one compartment heated to 60 degC
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.95
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.95
+  lc_system:
+    value: EASY-nLC 1200 (Thermo Fisher Scientific)
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Cells ground in liquid nitrogen; cell pellets suspended in lysis buffer
+      with chloroacetamide for simultaneous lysis, reduction and alkylation; boiled
+      at 95 degC for 10 min and sonicated; peptides de-salted/purified by SDB-RPS
+      in-StageTip; synthetic ProteomeTools peptides reconstituted; iRT standards spiked
+      in
+    status: inferred
+    source: paper:10.1038_s41467-021-21352-8.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

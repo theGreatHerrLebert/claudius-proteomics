@@ -1,0 +1,85 @@
+accession: PXD050530
+version: '1.0'
+generated_at: '2026-05-17T21:13:51.359076'
+title:
+  value: Ion Mobility-Tandem Mass Spectrometry of Mucin-type O-Glycans
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41467-024-46825-4
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: true
+fields:
+  dataset_id:
+    value: PXD050530
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Kevin Pagel, Freie Universitaet Berlin / Fritz Haber Institute, Berlin,
+      Germany (proteomics in collaboration with Philipp Mertins, Max Delbrueck Center
+      for Molecular Medicine)
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+    confidence: 0.8
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    - name: Sus scrofa domesticus (domestic pig)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: Orbitrap Exploris 480
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 200
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+  column_type:
+    value: 20 cm reverse-phase column, 75 um I.D. fused silica capillary, packed in-house
+      with 1.9 um C18-reprosil beads (Dr. Maisch r119.aq.0003)
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+  lc_system:
+    value: Thermo EASY-nLC 1200
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+  sample_prep:
+    value: Sputum inactivated in SDS buffer (2% SDS, 50 mM Tris-HCl pH 8, 0.5 mM EDTA)
+      at 95 C for 10 min; protein concentration by BCA assay; 100 ug protein reduced
+      and alkylated; benzonase treatment; SP3 bead-based clean-up; PNGaseF deglycosylation;
+      digestion; C18 desalting
+    status: inferred
+    source: paper:10.1038_s41467-024-46825-4.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Sputum
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

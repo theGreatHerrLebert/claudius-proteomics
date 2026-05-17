@@ -1,0 +1,82 @@
+accession: PXD038916
+version: '1.0'
+generated_at: '2026-05-17T21:11:38.867739'
+title:
+  value: Spry1 as a potential new hypoxia modulator in cutaneous melanoma
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1186/s13046-025-03289-8
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD038916
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Elisabetta Fratta, Immunopathology and Cancer Biomarkers Unit, Centro di
+      Riferimento Oncologico di Aviano (CRO), IRCCS, Aviano, Italy
+    status: inferred
+    source: paper:10.1186_s13046-025-03289-8.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF fleX
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: C18
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.9
+  lc_system:
+    value: nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics)
+    status: inferred
+    source: paper:10.1186_s13046-025-03289-8.pdf
+    confidence: 0.98
+  sample_prep:
+    value: Mel 593 parental cells grown in 15 cm dishes, collected and lysed in RIPA
+      buffer supplemented with protease inhibitor cocktail and PMSF, incubated on
+      ice 30 min, centrifuged 15 min at 4 C; anti-Spry1 or anti-IgG isotype control
+      co-immunoprecipitation using Dynabeads protein A, beads/antibodies incubated
+      with protein lysates overnight at 4 C, washed with IPP150 and Wash Buffer, resuspended
+      in 100 ul 100 mM ammonium bicarbonate before tryptic digestion; desalted peptides
+      via homemade C18 stage tips
+    status: inferred
+    source: paper:10.1186_s13046-025-03289-8.pdf
+    confidence: 0.95
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 5
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 1
+  missing_field_names:
+  - tissue
+  requires_review: true

@@ -1,0 +1,79 @@
+accession: PXD070363
+version: '1.0'
+generated_at: '2026-05-17T21:00:49.638017'
+title:
+  value: 'Trained to respond: Signal-level modifications of endosomal TLRs'
+  status: auto
+  source: pride_api.title
+publication_doi: null
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD070363
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Mus musculus (mouse)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Mus musculus (mouse)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF SCP
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: DIA
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.85
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue:
+    value:
+    - Macrophage
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 5
+  inferred_fields: 1
+  manual_fields: 0
+  missing_fields: 6
+  missing_field_names:
+  - lab_id
+  - publication_doi
+  - gradient_length
+  - column_type
+  - lc_system
+  - sample_prep
+  requires_review: true

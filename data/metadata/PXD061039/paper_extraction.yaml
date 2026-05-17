@@ -1,0 +1,71 @@
+accession: PXD061039
+extracted_at: "2026-05-17T19:34:48Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41392-025-02210-1.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: "DDA (data-dependent, label-free quantitative LC-MS/MS)"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.55
+    evidence: "we used high-resolution liquid chromatography-tandem mass spectrometry (LC-MS/MS) to perform large-scale quantitative lysine crotonylome analysis in MCF-7 cells with or without gamma-ray irradiation"
+  quantification_method:
+    value: "label-free quantitative crotonylome (PTM site quantification by ratio of irradiated vs non-irradiated)"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.55
+    evidence: "We set the analysis threshold value of the cutoff ratio as >1.5 or <0.67 to represent the Kcr changes between non-irradiated (NR) and irradiated cells were significantly."
+  cell_lines_tissues:
+    value: "MCF-7 human breast cancer cell line (irradiated with 8 Gy gamma-rays or non-irradiated)"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.9
+    evidence: "MCF-7 cells were irradiated with 8Gy gamma-rays (IR) or were nonirradiated (NR), and the cell lysates were harvested for crotonylome analysis after 4h of culture."
+  sample_prep:
+    value: "MCF-7 cells irradiated with 8 Gy gamma-rays or left non-irradiated; cell lysates harvested 4 h after culture for quantitative lysine crotonylome analysis (crotonylated peptide enrichment followed by LC-MS/MS)"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.6
+    evidence: "MCF-7 cells were irradiated with 8Gy gamma-rays (IR) or were nonirradiated (NR), and the cell lysates were harvested for crotonylome analysis after 4h of culture."
+  search_database:
+    value: "Human (Homo sapiens) protein sequence database"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.5
+    evidence: "The conservation of the amino acid sequences flanking the identified Kcr sites was evaluated against all human background sequences using IceLogo."
+  search_settings:
+    value:
+      variable_modifications: "lysine crotonylation (Kcr)"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.5
+    evidence: "to perform large-scale quantitative lysine crotonylome analysis in MCF-7 cells with or without gamma-ray irradiation"
+  lab_id:
+    value: "Hua Guan / Ping-Kun Zhou, Department of Radiation Biology, Beijing Key Laboratory for Radiobiology, Beijing Institute of Radiation Medicine, Beijing, China; co-corresponding Ruixue Huang, Central South University"
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.9
+    evidence: "Correspondence: Hua Guan (guanhua@bmi.ac.cn) or Ruixue Huang (huangruixue@csu.edu.cn) or Ping-Kun Zhou (zhoupk@bmi.ac.cn)"
+  study_type:
+    value: phosphoproteomics
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.65
+    evidence: "we used a quantitative proteomics approach to obtain a global view of crotonylome alterations in response to ionizing radiation (IR); large-scale quantitative lysine crotonylome (PTM) profiling"
+  reported_ids:
+    value:
+      crotonylation_sites: 20910
+      proteins: 3844
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.9
+    evidence: "A total of 20910 Kcr sites across 3844 proteins were identified, among which a single Kcr site was identified for 979 proteins (25.47%)"
+  key_findings:
+    value: "Quantitative lysine crotonylome analysis of MCF-7 cells identified 20,910 Kcr sites across 3,844 proteins and revealed that ionizing radiation decreases Ku80 K568 crotonylation. Decrotonylation of K568cr by HDAC8 enables CBX4-mediated SUMOylation at the same site, promoting DNA-PK complex assembly and non-homologous end joining repair."
+    status: inferred
+    source: "paper:10.1038_s41392-025-02210-1.pdf"
+    confidence: 0.85
+    evidence: "we reveal that Ku80 K568 is crotonylated by p300-CBP-associated factor (PCAF). Upon DNA damage, the K568cr is decrotonylated by HDAC8 ... The conversion of Ku80 from K568 crotonylation to SUMOylation facilitates the assembly of DNA-PK complex"
+status: success

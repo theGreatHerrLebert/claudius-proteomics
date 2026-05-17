@@ -1,0 +1,88 @@
+accession: PXD046535
+version: '1.0'
+generated_at: '2026-05-17T21:09:54.685968'
+title:
+  value: Thunder-DDA-PASEF boosted by MS2rescore enables high-coverage immunopeptidomics
+    and identifies HLA class-I presented SarsCoV-2 spike protein epitopes
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/S41467-024-46380-Y
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD046535
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Sample prep and CE-test LC-MS in Christine Carapito lab; corresponding
+      authors David Gomez-Zepeda (DKFZ Heidelberg) and Stefan Tenzer (University Medical
+      Center, Johannes Gutenberg University Mainz)
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.85
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 100
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.85
+  column_type:
+    value: Aurora 25 cm packed emitter column (Ionoptiks)
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.8
+  acquisition_mode:
+    value: DDA-PASEF
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.97
+  lc_system:
+    value: Bruker nanoElute
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.95
+  sample_prep:
+    value: HLA class I ligands enriched by immunoprecipitation. 600 x 10^6 HL60 cells
+      lysed; HLA-peptide complexes captured on CNBr-activated sepharose 4B beads linked
+      to W6/32 anti-panHLA Class I antibody, eluted with 25% ACN / 0.1% TFA, evaporated
+      and resuspended in water with 0.1% FA for LC-MS analysis.
+    status: inferred
+    source: paper:10.1038_S41467-024-46380-Y.pdf
+    confidence: 0.9
+  tissue:
+    value:
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

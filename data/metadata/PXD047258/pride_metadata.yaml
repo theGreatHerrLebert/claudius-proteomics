@@ -1,0 +1,85 @@
+accession: PXD047258
+version: '1.0'
+generated_at: '2026-05-17T21:07:55.479463'
+title:
+  value: Crotonylomics sequencing of human colon cancer cell lines
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.3389/FMOLB.2024.1423594
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD047258
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Yixiang Wang and Chong Ding, Central Laboratory, Peking University School
+      and Hospital of Stomatology, Beijing, China
+    status: inferred
+    source: paper:10.3389_FMOLB.2024.1423594.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: paper:10.3389_FMOLB.2024.1423594.pdf
+    confidence: 0.4
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: Crotonylated protein lysis samples of HCT116 p53+/+ and HCT116 p53-/- cells;
+      processed by PTM-BioLab via trypsin digestion, TMT labeling, HPLC fractionation,
+      and affinity enrichment of crotonylated peptides using anti-pan-Kcr beads
+    status: inferred
+    source: paper:10.3389_FMOLB.2024.1423594.pdf
+    confidence: 0.8
+  tissue:
+    value:
+    - Colon
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 3
+  manual_fields: 0
+  missing_fields: 3
+  missing_field_names:
+  - gradient_length
+  - column_type
+  - lc_system
+  requires_review: true

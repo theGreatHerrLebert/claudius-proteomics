@@ -1,0 +1,82 @@
+accession: PXD055840
+version: '1.0'
+generated_at: '2026-05-17T21:11:07.286005'
+title:
+  value: The use of three-dimensional primary human myospheres to explore skeletal
+    muscle effects of in vivo krill oil supplementation
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1007/s44164-025-00087-6
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD055840
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: G. Hege Thoresen, Section for Pharmacology and Pharmaceutical Biosciences,
+      Department of Pharmacy, University of Oslo, Oslo, Norway (corresponding author);
+      proteomics performed at the Department of Immunology, Institute of Clinical
+      Medicine, University of Oslo and Oslo University Hospital, Norway
+    status: inferred
+    source: paper:10.1007_s44164-025-00087-6.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF fleX
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: paper:10.1007_s44164-025-00087-6.pdf
+    confidence: 0.6
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: Myospheres formed by seeding ~3x10^4 myoblasts per well in ultra-low-attachment
+      U-bottom 96-well plates, aggregated by natural sedimentation; cultured and differentiated
+      for 10 days, washed in DPBS, spun down at 1000 rpm at 4 C for 5 min, snap frozen
+      in liquid nitrogen and stored at -80 C
+    status: inferred
+    source: paper:10.1007_s44164-025-00087-6.pdf
+    confidence: 0.85
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 5
+  inferred_fields: 3
+  manual_fields: 0
+  missing_fields: 4
+  missing_field_names:
+  - gradient_length
+  - column_type
+  - lc_system
+  - tissue
+  requires_review: true

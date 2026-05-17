@@ -1,0 +1,127 @@
+accession: PXD060977
+extracted_at: "2026-05-17T19:34:17Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1186_s13024-025-00883-4.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 90
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "200 ng of samples were separated over a 90-minute linear gradient of 3-35% solvent B"
+  column_type:
+    value: "Aurora Ultimate CSI 25 cm x 75 um C18 (Ionopticks) OR PepSep XTREME 25 cm x 150 um (Bruker)"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.9
+    evidence: "on either an Aurora Ultimate CSI 25 cm x 75 um C18 (Ionopticks) or a PepSep XTREME 25 cm x 150 um (Bruker) UHPLC column"
+  lc_system:
+    value: "nanoElute UHPLC system (Bruker)"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "UHPLC column using a nanoElute UHPLC system (Bruker)"
+  mobile_phases:
+    value:
+      A: "2% acetonitrile, 0.1% formic acid"
+      B: "acetonitrile, 0.1% formic acid"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "Solvent A: 2% acetonitrile, 0.1% formic acid, solvent B: acetonitrile, 0.1% formic acid"
+  acquisition_mode:
+    value: "DDA PASEF"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "Data-dependent acquisition was performed with parallel accumulation-serial fragmentation (PASEF) and trapped ion mobility spectrometry (TIMS) enabled with 10 PASEF scans per topN acquisition cycle"
+  cell_lines_tissues:
+    value: "iTF Microglia (iPSC-derived human microglia); cell-surface (surfaceome) proteomics of WGA-HRP biotin-labeled cells"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.85
+    evidence: "For cell surface proteomic studies, the iTF Microglia cell surface was labeled with cell-tethered WGA-HRP according to the protocol established in Kirkemo et al., 2022 [27]"
+  sample_prep:
+    value: "Cell-surface biotinylation via WGA-HRP / biotin tyramide; NeutrAvidin-coated agarose bead pull-down of biotinylated proteins; on-bead processing with PreOmics iST kit; desalting on PreOmics columns; peptides quantified with Pierce Quantitative Colorimetric Peptide Assay"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.9
+    evidence: "Biotinylated proteins were pulled down with NeutrAvidin-coated agarose beads ... From the PreOmics iST kit, 50 uL of the provided LYSE solution was added to the slurry ... Peptides were quantified using Pierce Quantitative Colorimetric Peptide Assay"
+  digestion_details:
+    value:
+      enzyme: "Trypsin and LysC (PreOmics iST kit enzyme mixture)"
+      time: "90 min"
+      temp: "37 C, mixed at 500 rpm"
+      lysis: "PreOmics iST LYSE solution, 55 C for 10 min with shaking"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.85
+    evidence: "The provided enzyme mixture (Trypsin and LysC) was resuspended in 210 uL of RESUSPEND buffer, mixed, and 50 uL was added to the slurry. Samples were allowed to mix at 500 rpm for 90 min at 37 C, before being quenched with 100 uL of STOP solution"
+  quantification_method:
+    value: "label-free quantification (LFQ, MaxQuant)"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.9
+    evidence: "Perseus was used to analyze label-free quantitation data generated in MaxQuant"
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "2.6.1"
+        purpose: "database search (Andromeda) and label-free quantitation"
+      - name: Perseus
+        purpose: "statistical analysis of LFQ data, log2 transformation, imputation"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "peptides were searched using MaxQuant's (Version 2.6.1) Andromeda search engine ... Perseus was used to analyze label-free quantitation data generated in MaxQuant"
+  search_database:
+    value:
+      source: "Swiss-Prot GOCC database (plasma membrane annotated human proteome)"
+      species: "human"
+      version: "June 3, 2020 release"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.9
+    evidence: "against the plasma membrane annotated human proteome (Swiss-prot GOCC database, June 3, 2020 release)"
+  search_settings:
+    value:
+      enzyme: "Trypsin + LysC"
+      missed_cleavages: 2
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "0.05 Da"
+      fixed_modifications: "Cysteine carbamidomethylation"
+      variable_modifications: "Acetylation (N-term), Methionine oxidation"
+      fdr: "1% protein FDR and 1% peptide FDR"
+      additional_filter: "proteins with fewer than 2 unique peptides removed"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.95
+    evidence: "Enzyme specificity was set to trypsin + LysC with up to two missed cleavages. Cysteine carbamidomethylation was set as the only fixed modification; acetylation (N-term) and methionine oxidation were set as variable modifications. The precursor mass error tolerance was set to 20 PPM and the fragment mass error tolerance was set to 0.05 Da. Data was filtered at 1% for both protein and peptide FDR and triaged by removing proteins with fewer than 2 unique peptides"
+  lab_id:
+    value: "James A. Wells, Department of Pharmaceutical Chemistry / Department of Cellular and Molecular Pharmacology, University of California, San Francisco (UCSF)"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.9
+    evidence: "*Correspondence: James A. Wells, jim.wells@ucsf.edu ... Department of Pharmaceutical Chemistry, University of California, San Francisco"
+  study_type:
+    value: "interactomics"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.7
+    evidence: "we profiled the microglia surfaceome following treatment with Abeta fibrils ... For cell surface proteomic studies, the iTF Microglia cell surface was labeled with cell-tethered WGA-HRP"
+  number_of_replicates:
+    value:
+      biological: "at least 3"
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.85
+    evidence: "All mass spectrometry database searching was based off of at least three biological replicates. Biological replicates underwent washing, labeling, and downstream LC-MS/MS preparation separately"
+  key_findings:
+    value: "Cell-surface proteomic profiling of iPSC-derived microglia revealed that Abeta-associated microglia upregulate the GPI-anchored heparan sulfate proteoglycan Glypican 4 (GPC4), which enhances microglial phagocytosis of tau aggregates and is shed to facilitate tau aggregate uptake and seeding in neurons, with effects amplified by APOE."
+    status: inferred
+    source: "paper:10.1186_s13024-025-00883-4.pdf"
+    confidence: 0.85
+    evidence: "Our findings reveal that Abeta-associated human microglia upregulate Glypican 4 (GPC4), a GPI-anchored heparan sulfate proteoglycan (HSPG) ... GPC4 enhances microglia phagocytosis of tau aggregates, and shed GPC4 can act in trans to facilitate tau aggregate uptake and seeding in neurons"
+status: success

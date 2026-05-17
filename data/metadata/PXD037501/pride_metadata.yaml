@@ -1,0 +1,84 @@
+accession: PXD037501
+version: '1.0'
+generated_at: '2026-05-17T21:10:49.525114'
+title:
+  value: Signalling Inhibition by Ponatinib Disrupts Productive Alternative Lengthening
+    of Telomeres (ALT)
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41467-023-37633-3
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD037501
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Maya Jeitany, School of Biological Sciences, Nanyang Technological University,
+      Singapore
+    status: inferred
+    source: paper:10.1038_s41467-023-37633-3.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF fleX
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 215
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: C18
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.9
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue:
+    value:
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 4
+  manual_fields: 0
+  missing_fields: 2
+  missing_field_names:
+  - lc_system
+  - sample_prep
+  requires_review: true

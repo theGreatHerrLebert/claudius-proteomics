@@ -1,0 +1,114 @@
+accession: PXD058854
+extracted_at: "2026-05-17T19:33:55Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41586-025-09141-5.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "Aurora Elite column, 15 cm x 75 um inner diameter, C18 1.7 um beads (IonOpticks)"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.98
+    evidence: "with the Aurora Elite column (15 cm x 75 um inner diameter, C18 1.7 um beads, IonOpticks)"
+  lc_system:
+    value: "Evosep One (Evosep), nanoflow reversed-phase liquid chromatography"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.98
+    evidence: "Peptide separation was carried out by nanoflow reversed-phase liquid chromatography (Evosep One, Evosep) with the Aurora Elite column"
+  gradient_length:
+    value: 31
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.6
+    evidence: "using the 20 samples a day method (Whisper Zoom 20 SPD)"
+  acquisition_mode:
+    value: "DDA-PASEF (data-dependent acquisition with parallel accumulation serial fragmentation)"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.97
+    evidence: "coupled online to a timsTOF SCP mass spectrometer (Bruker Daltonics) using the data-dependent acquisition with parallel accumulation serial fragmentation method"
+  cell_lines_tissues:
+    value: "Endogenously msfGFP-NPM1-tagged human cells; isolated nucleoli (NuFANCI) and whole-cell lysate input samples"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.85
+    evidence: "Endogenously msfGFP-NPM1-tagged cells were used for the NuFANCI experiment. Six million cells were plated in 10 cm dishes"
+  sample_prep:
+    value: "Nucleoli isolated by FACS-based NuFANCI method from msfGFP-NPM1-tagged cells; ~400,000 events sorted per sample, pelleted, washed in PBS; lysed in buffer 4 (Tris/NaCl/MgCl2) at 65 C then 95 C, sonicated, benzonase treated, denatured/reduced/alkylated in 6 M GdmCl/20 mM TCEP/80 mM chloroacetamide, acetone precipitated, resuspended in 100 mM ammonium bicarbonate; ~2 mg protein yielded per nucleolus sample"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.9
+    evidence: "the nucleolus samples were supplied to reach 1x buffer 4 ... incubated ... at 65 C for 1 h and then 10 min at 95 C. Each sample was then sonicated ... benzonase was added ... The samples were then supplied to reach 1x buffer 5 (2x buffer 5: 6 M GdmCl, 20 mM TCEP, 80 mM chloroacetamide) ... 1 ml of ice-cold 100% acetone was added and precipitated"
+  digestion_details:
+    value:
+      enzyme: "Trypsin and Lys-C"
+      amount: "5 ng trypsin and 5 ng Lys-C per 150 ng protein in 20 ul"
+      time: "Overnight"
+      temperature: "37 C, 800 rpm shaking"
+      buffer: "100 mM ammonium bicarbonate (NH4)HCO3"
+      reduction: "20 mM TCEP (in 2x buffer 5, during sample prep, 37 C 1 h)"
+      alkylation: "80 mM chloroacetamide (in 2x buffer 5, during sample prep, 37 C 1 h)"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.92
+    evidence: "150 ng of each sample was digested with 5 ng trypsin and 5 ng Lys-C filled to final volume of 20 ul with 100 mM (NH4)HCO3 overnight at 37 C with 800 rpm shaking"
+  quantification_method:
+    value: "Label-free quantification (LFQ) with match between runs"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.97
+    evidence: "Label-free quantification (LFQ) values were calculated separately for NuFANCI and input, with a match between runs applied separately for NuFANCI and input"
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: 2.6.6.0
+        purpose: "Raw peak file processing, database search, LFQ quantification"
+      - name: AlphaStats
+        version: 0.6.9
+        purpose: "Processing MaxQuant protein group output, differential expression analysis"
+      - name: SciPy
+        version: ""
+        purpose: "Correlation plot calculation in Python v.3.10"
+      - name: Seaborn
+        version: ""
+        purpose: "Plotting (correlation, heatmaps, volcano plots, expression plots)"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.95
+    evidence: "The MS data were processed using MaxQuant (v.2.6.6.0; Max Planck Institute for Biochemistry) ... Alphastats (v.0.6.9) was used to process the MaxQuant output"
+  search_database:
+    value: "Human UniProtKB proteome UP000005640, revision 2024-09-11"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.97
+    evidence: "searched against the human UniProtKB proteome (UP000005640; revision 2024 09 11)"
+  search_settings:
+    value:
+      enzyme: "Trypsin/Lys-C digestion"
+      modifications: "Additional modified sequences as outlined in Supplementary Table 1 used accordingly"
+      quantification: "Match between runs and label-free quantification enabled"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.5
+    evidence: "Additional modified sequences as outlined in Supplementary Table 1 were used accordingly. The match between run and label-free quantification features were used independently for the NuFANCI and input samples"
+  lab_id:
+    value: "Henri Niskanen and Denes Hnisz, Max Planck Institute for Molecular Genetics, Berlin, Germany"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.9
+    evidence: "Correspondence and requests for materials should be addressed to Henri Niskanen or Denes Hnisz. ... Work in the Hnisz lab"
+  study_type:
+    value: "interactomics"
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.75
+    evidence: "Mass spectrometry (MS) was performed on nucleoli isolated from ... results revealed selective changes in nucleolar composition ... NuFANCI proteome analysis of nucleoli targeted with killswitch"
+  key_findings:
+    value: "A non-natural micropeptide killswitch recruited via nanobodies immobilizes condensate-forming proteins in endogenous condensates; NuFANCI proteomics of nucleoli showed that immobilizing NPM1 selectively altered nucleolar composition, including depletion of the NPM1 interaction partner NEPRO."
+    status: inferred
+    source: "paper:10.1038_s41586-025-09141-5.pdf"
+    confidence: 0.85
+    evidence: "Targeting the killswitch to the nucleolar protein NPM1 altered nucleolar composition and reduced the mobility of a ribosomal protein in nucleoli ... Depletion of NEPRO, a known nucleolar interaction partner of NPM1"
+status: success

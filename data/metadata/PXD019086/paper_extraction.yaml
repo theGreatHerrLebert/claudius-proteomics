@@ -1,0 +1,236 @@
+accession: PXD019086
+extracted_at: "2026-05-17T19:19:33Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-021-21352-8.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 95
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.85
+    evidence: "For chromatographic separation of the fractionated peptides from whole-proteome digests, we used a gradient starting with a linear increase from 5% to 30% B over 95 min, followed by a steeper linear increase to 60% B in 5 min, and finally to 95% B in 5 min each, which was held constant for 5 min before returning to 5% in 5 min and re-equilibration for 5 min."
+  column_type:
+    value: "In-house 25 cm x 75 um reversed-phase column packed with 1.9 um C18 beads (Dr. Maisch Reprosil-Pur AQ), one compartment heated to 60 degC"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "Approximately 200 ng of peptides were separated on an in-house 25 cm x 75 um reversed-phase column at a flow rate of 300 nL min-1 in one compartment heated to 60 degC. The column was packed with 1.9 um C18 beads (Dr. Maisch Reprosil-Pur AQ, Germany)."
+  lc_system:
+    value: "EASY-nLC 1200 (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "LC-MS was performed on an EASY-nLC 1200 (Thermo Fisher Scientific) system coupled online to a hybrid TIMS-quadrupole TOF mass spectrometer10 (Bruker Daltonik timsTOF Pro, Germany)"
+  mobile_phases:
+    A:
+      value: "Water with 0.1% formic acid"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.9
+      evidence: "Mobile phases A and B were water and 80%/20% ACN/water (v/v), respectively, and both buffered with 0.1% formic acid"
+    B:
+      value: "80%/20% ACN/water (v/v) with 0.1% formic acid"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.9
+      evidence: "Mobile phases A and B were water and 80%/20% ACN/water (v/v), respectively, and both buffered with 0.1% formic acid"
+  flow_rate:
+    value: "300 nL/min"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "Approximately 200 ng of peptides were separated on an in-house 25 cm x 75 um reversed-phase column at a flow rate of 300 nL min-1 in one compartment heated to 60 degC."
+  column_temp:
+    value: "60 degC"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "separated on an in-house 25 cm x 75 um reversed-phase column at a flow rate of 300 nL min-1 in one compartment heated to 60 degC"
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "The mass spectrometer was operated in data-dependent PASEF13 mode with 1 survey TIMS-MS and 10 PASEF MS/MS scans per acquisition cycle."
+  ce_strategy:
+    value: "Collision energy lowered stepwise as a function of increasing ion mobility (paper-stated ramp endpoints, not raw .d settings)"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.85
+    evidence: "The collision energy was lowered stepwise as a function of increasing ion mobility, starting from 52 eV for 0-19% of the TIMS ramp time, 47 eV for 19-38%, 42 eV for 38-57%, 37 eV for 57-76%, and 32 eV until the end."
+  cell_lines_tissues:
+    value: "Whole-proteome digests of five organisms: human HeLa cell line (S3, ATCC), C. elegans (N2 wild-type), D. melanogaster (CantonS), E. coli (XL1 Blue), and S. cerevisiae (BY4741); plus synthetic ProteomeTools peptide library"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "The human HeLa cell line (S3, ATCC), C. elegans (N2 wild-type), D. melanogaster (CantonS), E. coli (XL1 Blue), and Saccharomyces cerevisiae (BY4741) were cultivated following standard protocols."
+  sample_prep:
+    value: "Cells ground in liquid nitrogen; cell pellets suspended in lysis buffer with chloroacetamide for simultaneous lysis, reduction and alkylation; boiled at 95 degC for 10 min and sonicated; peptides de-salted/purified by SDB-RPS in-StageTip; synthetic ProteomeTools peptides reconstituted; iRT standards spiked in"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.85
+    evidence: "Whole organisms were first grinded in liquid nitrogen and cell pellets were directly suspended in lysis buffer with chloroacetamide (PreOmics, Germany) to simultaneously lyse cells, reduce protein disulfide bonds, and alkylate cysteine side chains72. The samples were boiled at 95 degC for 10 min and subsequently sonicated at maximum power (Bioruptor, Diagenode, Belgium)."
+  digestion_details:
+    enzymes:
+      value: "Trypsin, LysC, or LysN (used separately)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "Proteolytic digestion was performed overnight at 37 degC by adding either (i) equal amounts of LysC and trypsin, (ii) LysC, or (iii) LysN in a 1:100 enzyme:protein ratio."
+    enzyme_to_substrate_ratio:
+      value: "1:100 enzyme:protein"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "Proteolytic digestion was performed overnight at 37 degC by adding either (i) equal amounts of LysC and trypsin, (ii) LysC, or (iii) LysN in a 1:100 enzyme:protein ratio."
+    digestion_time_temp:
+      value: "Overnight at 37 degC"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "Proteolytic digestion was performed overnight at 37 degC"
+    reduction_alkylation:
+      value: "Reduction and alkylation performed simultaneously in lysis buffer with chloroacetamide (PreOmics)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.85
+      evidence: "cell pellets were directly suspended in lysis buffer with chloroacetamide (PreOmics, Germany) to simultaneously lyse cells, reduce protein disulfide bonds, and alkylate cysteine side chains"
+  fractionation:
+    value: "High-pH reversed-phase fractionation into 24 fractions using an automated concatenation system (Spider fractionator, PreOmics) at 90 s intervals"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "Fractions were collected into 24 fractions by switching the rotor valve of an automated concatenation system73 (Spider fractionator, PreOmics) in 90 s intervals."
+  quantification_method:
+    value: "Label-free"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.7
+    evidence: "MS raw files were analyzed with MaxQuant version 1.6.5.0, which extracts 4D isotope patterns ('features') and associated MS/MS spectra."
+  processing_software:
+    - name: MaxQuant
+      version: "1.6.5.0"
+      purpose: "MS raw file analysis, peptide/protein identification, 4D feature detection"
+    - name: Andromeda
+      version: ""
+      purpose: "Database search engine (built into MaxQuant)"
+    - name: Spectronaut
+      version: "14.7.201007.47784"
+      purpose: "Targeted diaPASEF data analysis / spectral library re-analysis"
+    - name: Python
+      version: "3"
+      purpose: "Bioinformatic analysis and data visualization (NumPy, pandas, SciPy, Biopython, Matplotlib, Seaborn)"
+    - name: TensorFlow
+      version: ""
+      purpose: "Deep learning model implementation (autograd library)"
+  search_database:
+    source: "UniProt"
+    species: "Homo sapiens, E. coli, S. cerevisiae, C. elegans, D. melanogaster"
+    version: "2019/05 (H. sapiens, E. coli); 2019/01 (S. cerevisiae, C. elegans, D. melanogaster)"
+    entries: "H. sapiens 91,618; E. coli 4403; S. cerevisiae 6049; C. elegans 28,403; D. melanogaster 23,304"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.95
+    evidence: "Reference proteomes for each organism including isoforms were accessed from UniProt (Homo sapiens, 91,618 entries, 2019/05; E. coli, 4403 entries, 2019/01; C. elegans, 28,403 entries, 2019/01; S. cerevisiae, 6049 entries, 2019/01; D. melanogaster, 23,304 entries, 2019/01)."
+  search_settings:
+    precursor_tolerance:
+      value: "20 ppm"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.85
+      evidence: "The maximum mass tolerances were set to 20 and 40 ppm for precursor and fragment ions, respectively."
+    fragment_tolerance:
+      value: "40 ppm"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.85
+      evidence: "The maximum mass tolerances were set to 20 and 40 ppm for precursor and fragment ions, respectively."
+    enzyme:
+      value: "Trypsin, LysC, or LysN (proteolytic digestion rules applied accordingly)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.9
+      evidence: "to theoretical peptide fragment ion masses derived from in silico digests of a reference proteome and a list of 245 potential contaminants using the appropriate digestion rules for each proteolytic enzyme (trypsin, LysC or LysN)"
+    missed_cleavages:
+      value: 2
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "We allowed a maximum of two missed cleavages and required a minimum sequence length of 7 amino acids while limiting the maximum peptide mass to 4600 Da."
+    peptide_length:
+      value: "Minimum 7 amino acids; maximum peptide mass 4600 Da"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "We allowed a maximum of two missed cleavages and required a minimum sequence length of 7 amino acids while limiting the maximum peptide mass to 4600 Da."
+    fixed_modifications:
+      value: "Carbamidomethyl (Cys)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.9
+      evidence: "Carbamidomethylation of cysteine was defined as a fixed modification, and oxidation of methionine and acetylation of protein N-termini were included in the search as variable modifications."
+    variable_modifications:
+      value: "Oxidation (Met), Acetyl (protein N-term)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "oxidation of methionine and acetylation of protein N-termini were included in the search as variable modifications"
+    fdr:
+      value: "1% at peptide spectrum match and protein level (target-decoy approach)"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "False discovery rates were controlled at 1% on both the peptide spectrum match and protein level with a target-decoy approach."
+  lab_id:
+    value: "Matthias Mann, Department Proteomics and Signal Transduction, Max Planck Institute of Biochemistry, Martinsried, Germany"
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.9
+    evidence: "1Department Proteomics and Signal Transduction, Max Planck Institute of Biochemistry, Martinsried, Germany ... email: fabian.theis@helmholtz-muenchen.de; mmann@biochem.mpg.de"
+  study_type:
+    value: method_development
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.85
+    evidence: "The scale and precision (CV < 1%) of our data is sufficient to train a deep recurrent neural network that accurately predicts CCS values solely based on the peptide sequence."
+  number_of_replicates:
+    technical:
+      value: "168 LC-MS/MS runs had highest number of shared peptides across organisms; 347,885 peptide CCS values measured at least in duplicate; HeLa CCS reproducibility based on 1264 peptides per pairwise comparison; Drosophila/HeLa replicate analysis n=68"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.6
+      evidence: "Across the 347,885 peptide CCS values measured at least in duplicate, the median coefficient of variation (CV) was 0.4%, which highlights the excellent reproducibility of TIMS CCS measurements."
+    biological:
+      value: "Five biological species; 24 fractions per organism per enzyme"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.6
+      evidence: "we split peptide mixtures into 24 fractions per organism and analyzed each of them separately with PASEF on a TIMS-quadrupole TOF MS"
+  reported_ids:
+    peptide_spectrum_matches:
+      value: "About 2.5 million peptide spectrum matches"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.9
+      evidence: "This resulted in about 2.5 million peptide spectrum matches and 426,845 unique peptide sequences at globally controlled false discovery (FDR) rates of less than 1% at the peptide and protein levels for each organism and enzyme."
+    peptides:
+      value: "426,845 unique peptide sequences"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.95
+      evidence: "This resulted in about 2.5 million peptide spectrum matches and 426,845 unique peptide sequences at globally controlled false discovery (FDR) rates of less than 1%"
+    ccs_values:
+      value: "2,490,131 total CCS values; 571,541 unique CCS values; 559,979 unique CCS values used for model training"
+      status: inferred
+      source: "paper:10.1038_s41467-021-21352-8.pdf"
+      confidence: 0.85
+      evidence: "Overall, our dataset comprises over two million CCS values, which we collapsed to about 570,000 unique combinations of peptide sequence, charge state and, if applicable, side chain modifications."
+  key_findings:
+    value: "Over a million peptide CCS values were measured across five organisms by TIMS-PASEF with CV < 1%, and used to train a bidirectional LSTM deep learning model that predicts peptide CCS from sequence alone with 1.4% median relative error (R > 0.99)."
+    status: inferred
+    source: "paper:10.1038_s41467-021-21352-8.pdf"
+    confidence: 0.9
+    evidence: "The scale and precision (CV < 1%) of our data is sufficient to train a deep recurrent neural network that accurately predicts CCS values solely based on the peptide sequence. Cross section predictions for the synthetic ProteomeTools peptides validate the model within a 1.4% median relative error (R > 0.99)."
+status: success

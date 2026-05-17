@@ -1,0 +1,87 @@
+accession: PXD033732
+version: '1.0'
+generated_at: '2026-05-17T21:12:35.765227'
+title:
+  value: Anastellin impacts on the processing of extracellular matrix and stimulates
+    the release of cytokines from smooth muscle cells
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41598-022-26359-9
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD033732
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: "Per H\xE4gglund (pmh@sund.ku.dk) and Michael J. Davies, Department of\
+      \ Biomedical Sciences, University of Copenhagen, Denmark"
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: Bruker Daltonics timsTOF series
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 42
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.95
+  column_type:
+    value: "25 cm x 75 \xB5m Aurora column (Ion optics, IonOpticks)"
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: diaPASEF
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.95
+  lc_system:
+    value: Dionex Ultimate 3000RSnano chromatography system (Thermo Fisher Scientific)
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.95
+  sample_prep:
+    value: "Conditioned media (300 \xB5L) from HCASMC exposed to 30 \xB5M AN (wt or\
+      \ L37AY40A) for 24 h in basal media; samples loaded on 1 mL HiTrap HisTrap columns\
+      \ to remove AN, flow-through concentrated to 300 \xB5L and mixed with 8 M urea,\
+      \ then in-solution digested in a spin filter"
+    status: inferred
+    source: paper:10.1038_s41598-022-26359-9.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Smooth muscle cell of the coronary artery
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

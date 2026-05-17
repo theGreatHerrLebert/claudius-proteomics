@@ -1,0 +1,89 @@
+accession: PXD047857
+version: '1.0'
+generated_at: '2026-05-17T21:05:32.387865'
+title:
+  value: 'NEAT PLASMA PROTEOMICS: GETTING THE BEST OUT OF THE WORST'
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1186/s12014-024-09477-6
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD047857
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Ida Chiara Guerrera (chiara.guerrera@inserm.fr), Proteomics Platform Necker,
+      Universite Paris Cite-Structure Federative de Recherche Necker, INSERM US24/CNRS
+      UAR3633, 75015 Paris, France
+    status: inferred
+    source: paper:10.1186_s12014-024-09477-6.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 15
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: 'Multiple columns used: nanoElute - packed emitter column C18, 25 cm x
+      75 um, 1.6 um (Ion Opticks/IonOpticks); Evosep 100/60 SPD - 8 cm C18 Performance
+      column; Evosep 40 SPD whisper - packed emitter column C18, 15 cm x 75 um, 1.7
+      um (Ion Opticks)'
+    status: inferred
+    source: paper:10.1186_s12014-024-09477-6.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: diaPASEF (DIA mode with PASEF); some DDA files also acquired
+    status: inferred
+    source: paper:10.1186_s12014-024-09477-6.pdf
+    confidence: 0.95
+  lc_system:
+    value: nanoElute (Bruker Daltonics) HPLC and Evosep One system
+    status: inferred
+    source: paper:10.1186_s12014-024-09477-6.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Plasma digested using S-Trap micro spin column workflow; EVs resuspended
+      in 5% SDS in 50 mM TEAB; Evotip offline experiment with Evotips Pure for plasma
+      fractionation; peptides resuspended in 2% ACN, 0.1% formic acid before injection
+    status: inferred
+    source: paper:10.1186_s12014-024-09477-6.pdf
+    confidence: 0.9
+  tissue:
+    value:
+    - Blood plasma
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: body_fluid
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

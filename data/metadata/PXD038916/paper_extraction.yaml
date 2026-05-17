@@ -1,0 +1,122 @@
+accession: PXD038916
+extracted_at: "2026-05-17T19:24:36Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1186_s13046-025-03289-8.pdf
+    source: unpaywall
+fields:
+  lc_system:
+    value: "nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics)"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.98
+    evidence: "LC-MS/MS analysis was carried out using a nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics, Bremen, Germany) coupled to the timsTOF fleX mass spectrometer (Bruker Daltonics), using a CaptiveSpray nanoelectrospray ion source (Bruker Daltonics)."
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.5
+    evidence: "LC-MS/MS analysis was carried out using a nanoElute nanoflow ultrahigh pressure LC system ... coupled to the timsTOF fleX mass spectrometer (Bruker Daltonics), using a CaptiveSpray nanoelectrospray ion source"
+  ce_strategy:
+    value: "Not described in the paper; collision-energy details not reported in Materials and Methods"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.3
+    evidence: "Raw files from LC-MS/MS analyses were submitted to MaxQuant 2.0.1.0 software for protein identification and label-free quantification."
+  cell_lines_tissues:
+    value: "BRAF-mutant cutaneous melanoma cell lines Mel 272, Mel 593 and Mel 611 (patient-derived); MS performed on Mel 593 parental cells"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "Mel 593 parental cells were grown in 15 cm culture dishes. Cells were collected and lysed in RIPA buffer ... MS analyses was performed on IP samples derived from three biological triplicates for Spry1 and IgG control."
+  sample_prep:
+    value: "Mel 593 parental cells grown in 15 cm dishes, collected and lysed in RIPA buffer supplemented with protease inhibitor cocktail and PMSF, incubated on ice 30 min, centrifuged 15 min at 4 C; anti-Spry1 or anti-IgG isotype control co-immunoprecipitation using Dynabeads protein A, beads/antibodies incubated with protein lysates overnight at 4 C, washed with IPP150 and Wash Buffer, resuspended in 100 ul 100 mM ammonium bicarbonate before tryptic digestion; desalted peptides via homemade C18 stage tips"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "Mel 593 parental cells were grown in 15 cm culture dishes. Cells were collected and lysed in RIPA buffer supplemented with protease inhibitor cocktail and PMSF, following incubation on ice for 30 min. Samples were centrifuged at the highest speed for 15 min at 4 C and protein lysate was collected. For Spry1 co-immunoprecipitation, anti-Spry1 or anti-IgG Isotype control were conjugated overnight at 4 C with Dynabeads protein A (Thermofisher). ... samples were washed with IPP150 buffer ... and with Wash Buffer ... and resuspended in 100 ul of 100 mM ammonium bicarbonate before tryptic digestion. ... Digested peptides were transferred to new tube, acidified and the peptides were desalted by homemade C18 stage tips."
+  digestion_details:
+    value:
+      enzyme: "Trypsin (Promega), without proline restriction enzyme option"
+      amount: "0.5 ug trypsin per replicate"
+      method: "on-beads digestion"
+      time: overnight
+      temp: "37 C"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "Protein digestion was performed by on-beads digestion adding 0.5 ug trypsin (Promega) to each replicate followed by samples incubation at 37 C overnight. ... Trypsin without proline restriction enzyme option was used, with two allowed misclevages."
+  quantification_method:
+    value: label-free
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.97
+    evidence: "Raw files from LC-MS/MS analyses were submitted to MaxQuant 2.0.1.0 software for protein identification and label-free quantification."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: 2.0.1.0
+        purpose: "Protein identification and label-free quantification"
+      - name: "Seahorse XF Glycolysis Stress Test Report Generator"
+        purpose: "Glycolysis stress test data analysis (non-proteomic)"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "Raw files from LC-MS/MS analyses were submitted to MaxQuant 2.0.1.0 software for protein identification and label-free quantification."
+  search_database:
+    value:
+      source: UniProt
+      species: human
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.9
+    evidence: "The Uniprot human database was used. Generation of reversed sequences was selected to assign FDR rate."
+  search_settings:
+    value:
+      first_search_precursor_tolerance: "20 ppm"
+      main_search_error: "6 ppm"
+      enzyme: "Trypsin (without proline restriction)"
+      missed_cleavages: 2
+      min_unique_peptides: 1
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Protein N-terminal acetylation, methionine oxidation"
+      fdr: "0.01 (1%) for peptide and protein identification"
+      decoy: "Reversed sequences"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.97
+    evidence: "Parameters were set as follow: carbamidomethyl was set as a fixed modification and protein N-acetylation and methionine oxidation as variable modifications. First search error window of 20 ppm and mains search error of 6 ppm. Trypsin without proline restriction enzyme option was used, with two allowed misclevages. Minimal unique peptides were set to one, and FDR allowed was 0.01 (1%) for peptide and protein identification."
+  lab_id:
+    value: "Elisabetta Fratta, Immunopathology and Cancer Biomarkers Unit, Centro di Riferimento Oncologico di Aviano (CRO), IRCCS, Aviano, Italy"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "*Correspondence: Elisabetta Fratta efratta@cro.it ... 1 Immunopathology and Cancer Biomarkers Unit, Centro di Riferimento Oncologico di Aviano (CRO), IRCCS, Aviano, Italy."
+  study_type:
+    value: interactomics
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.9
+    evidence: "Immunoprecipitation coupled to mass spectrometry was employed to gain insight into Spry1 interactome. ... interaction proteomics was performed in a panel of BRAF-mutant CM cells"
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: "Not specified"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.95
+    evidence: "Three independent biological replicates for each experimental condition were analyzed, in parallel. ... MS analyses was performed on IP samples derived from three biological triplicates for Spry1 and IgG control."
+  reported_ids:
+    value:
+      proteins: "444, 430 and 337 Spry1 interacting partners in Mel 272, Mel 593 and Mel 611 respectively; 119 proteins commonly associated with Spry1 across all three cell lines"
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.9
+    evidence: "This resulted in the identification of 444, 430 and 337 Spry1 interacting partners within Mel 272, Mel 593 and Mel 611 cells, respectively (Fig. 1A, Table S1A-C). Notably, 119 proteins were found to be commonly associated with Spry1 in all three cell lines."
+  key_findings:
+    value: "Spry1 interactome analysis by co-IP-MS identified key mitochondrial homeostasis partners (including ACK1 and PGAM5), revealing that Spry1 localizes to mitochondria; Spry1 knockout impairs mitochondrial function, reduces nuclear HIF1alpha-dependent glycolysis and impairs angiogenesis in BRAF-mutant cutaneous melanoma."
+    status: inferred
+    source: "paper:10.1186_s13046-025-03289-8.pdf"
+    confidence: 0.9
+    evidence: "Altogether, these findings identify Spry1 as a potential regulator of mitochondrial homeostasis, and uncover a previously unrecognized role for Spry1 in regulating nuclear HIF1alpha expression and angiogenesis in BRAFV600-mutant CM."
+status: success

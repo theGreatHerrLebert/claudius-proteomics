@@ -1,0 +1,86 @@
+accession: PXD058328
+version: '1.0'
+generated_at: '2026-05-17T21:07:26.088017'
+title:
+  value: 'Ocular Inoculation of Toad Venom: Toxic Cataract and Proteomic Profiling'
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.3389/fmed.2024.1537770
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD058328
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Wen Xu (corresponding author), Eye Center of the 2nd Affiliated Hospital,
+      School of Medicine, Zhejiang University, Hangzhou, Zhejiang, China; Zhejiang
+      Provincial Key Lab of Ophthalmology, Hangzhou, Zhejiang, China.
+    status: inferred
+    source: paper:10.3389_fmed.2024.1537770.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: C18
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.9
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: Lens specimens (anterior capsule, nucleus, and cortex) collected intraoperatively
+      during micro-incision phacoemulsification and IOL implantation surgery; protein
+      extracts prepared from the distinct lens components for proteomic analysis.
+    status: inferred
+    source: paper:10.3389_fmed.2024.1537770.pdf
+    confidence: 0.7
+  tissue:
+    value:
+    - Lens
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 4
+  manual_fields: 0
+  missing_fields: 2
+  missing_field_names:
+  - gradient_length
+  - lc_system
+  requires_review: true

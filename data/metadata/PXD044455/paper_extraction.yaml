@@ -1,0 +1,123 @@
+accession: PXD044455
+extracted_at: "2026-05-17T19:24:36Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41467-024-51781-0.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "15 cm, 150 um ID column packed with C18 1.9 um beads"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.95
+    evidence: "Peptides were separated on 15 cm, 150 uM ID columns packed with C18 (1.9 um) on an Evosep ONE HPLC"
+  lc_system:
+    value: "Evosep ONE HPLC"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.95
+    evidence: "Tryptic peptide mixtures were acidified to 1% TFA and loaded on Evotips (Evosep). Peptides were separated on 15 cm, 150 uM ID columns packed with C18 (1.9 um) on an Evosep ONE HPLC applying the '30 samples per day' method"
+  gradient_length:
+    value: 44
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.7
+    evidence: "on an Evosep ONE HPLC applying the '30 samples per day' method"
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.95
+    evidence: "injected via a CaptiveSpray source and 10 um emitter into a timsTOF pro mass spectrometer (Bruker) operated in PASEF mode"
+  cell_lines_tissues:
+    value: "Cell line culture supernatants from PC-3M-luc-C6, MG63, SW480, and BEWO cancer cells; human colon cancer biopsy homogenates (H352 and H386)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.85
+    evidence: "50 ug coated beads were incubated for 60 min either with 500 uL mix containing equal volumes of cell supernatants (PC-3M-luc-C6, MG63, SW480, and BEWO), or with 50 ug of human colon biopsy homogenate (H352 or H386)"
+  sample_prep:
+    value: "CSPG pull-downs: Sera-Mag SpeedBeads streptavidin particles conjugated with SpyC2 and either biotinylated rVAR2 or biotinylated anti-CS scFv2 (control beads with SpyC2 alone); incubated with cancer cell supernatants or human colon biopsy homogenate; colon homogenate samples treated with chABC for 1 h at 37 C; beads washed in PBS without Ca/Mg then ultrapure water and stored at -80 C until mass spectrometry processing"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.85
+    evidence: "Sera-Mag SpeedBeads Blocked Streptavidin particles (Cytiva, #21152104010150) were washed twice... beads were conjugated with SpyC2 protein alone... 50 ug coated beads were incubated for 60 min... For colon homogenate, homogenates were incubated with 1 ug chABC for 1 h at 37 C before bead isolation. Finally, the beads were washed three times in Dulbecco's PBS without Calcium and Magnesium... prior to a final wash step in ultrapure water. All liquid was removed before storing the beads at -80 C until mass spectrometry processing."
+  digestion_details:
+    value: "On-bead digestion: incubated 30 min with elution buffer 1 (2 M Urea, 50 mM Tris-HCl pH 7.5, 2 mM DTT, 20 ug/ml trypsin), then 5 min with elution buffer 2 (2 M Urea, 50 mM Tris-HCl pH 7.5, 10 mM Chloroacetamide); combined eluates incubated overnight at room temperature. Enzyme: trypsin. Reduction: 2 mM DTT. Alkylation: 10 mM chloroacetamide."
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.9
+    evidence: "Washed beads were incubated for 30 min with elution buffer 1 (2 M Urea, 50 mM Tris-HCl pH 7.5, 2 mM DTT, 20 ug/ml trypsin) followed by a second elution for 5 min with elution buffer 2 (2 M Urea, 50 mM Tris-HCl pH 7.5, 10 mM Chloroacetamide). Both eluates were combined and further incubated at room temperature overnight."
+  quantification_method:
+    value: "label-free quantification (LFQ), MaxLFQ"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.95
+    evidence: "Relative protein amounts were determined by the MaxLFQ algorithm with a minimum ratio count of two. Processing and statistical analysis of label-free quantification (LFQ) protein expression data was performed using python3.9.0"
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "1.6.15.0"
+        purpose: "Raw mass spectrometry data analysis, peptide/protein identification, MaxLFQ quantification"
+      - name: Andromeda
+        version: ""
+        purpose: "Integrated peptide search engine within MaxQuant"
+      - name: Python
+        version: "3.9.0"
+        purpose: "Processing and statistical analysis of LFQ protein expression data"
+      - name: scipy
+        version: "1.11.2"
+        purpose: "Two-sided unpaired t-tests for differential expression"
+      - name: statsmodels
+        version: "0.14.0"
+        purpose: "Benjamini-Hochberg multiple hypothesis correction"
+      - name: matplotlib
+        version: "3.7.1"
+        purpose: "Heat map visualization of selected hits"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.9
+    evidence: "Raw mass spectrometry data were analyzed with MaxQuant (v1.6.15.0). Peak lists were searched against the human Uniprot FASTA database... by the integrated Andromeda search engine... Differentially expressed proteins were determined with python package scipy (v1.11.2), and correcting for multiple hypothesis testing with statsmodels (v0.14.0) Benjamin-Hochberg correction... visualization (matplotlib package v3.7.1) of selected hits"
+  search_database:
+    value: "Human UniProt FASTA database combined with the sequences of the human antibody fragments and 262 common contaminants"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.9
+    evidence: "Peak lists were searched against the human Uniprot FASTA database combined with the sequences of the human antibody fragments as well as 262 common contaminants by the integrated Andromeda search engine."
+  search_settings:
+    value:
+      enzyme: trypsin
+      minimum_peptide_length: 7
+      fixed_modifications: "Carbamidomethyl (C) (inferred from chloroacetamide alkylation)"
+      match_between_runs: "enabled; Match time window 0.7; Match in mobility window 0.05 min"
+      peptide_fdr: 0.01
+      protein_fdr: 0.01
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.8
+    evidence: "False discovery rate was set to 1% for both peptides (minimum length of 7 amino acids) and proteins. 'Match between runs' (MBR) was enabled with a Match time window of 0.7, and a Match in mobility window of 0.05 min."
+  lab_id:
+    value: "Ali Salanti, Centre for Translational Medicine and Parasitology, Department of Immunology and Microbiology, Faculty of Health and Medical Sciences, University of Copenhagen, Denmark (co-corresponding authors: Elena Ethel Vidal-Calvo, University of Copenhagen; Mads Daugaard, University of British Columbia)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.9
+    evidence: "Correspondence and requests for materials should be addressed to Elena Ethel Vidal-Calvo, Mads Daugaard or Ali Salanti. e-mail: elena@sund.ku.dk; mads.daugaard@ubc.ca; salanti@sund.ku.dk"
+  study_type:
+    value: interactomics
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.7
+    evidence: "we next identified the repertoire of CSPGs in tumor cells carrying ofCS chains. For that, we coated beads with C9, F4, and F3 scFv2, purified CSPGs from a pool of supernatant from four cancer cell line cultures... and analyzed them by mass spectrometry."
+  number_of_replicates:
+    value:
+      technical: 3
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.9
+    evidence: "All samples were prepared in triplicates (n = 3) to allow statistical analysis."
+  key_findings:
+    value: "Mass spectrometry analysis of antibody-fragment CSPG pull-downs from cancer cell supernatants and human colon cancer biopsies identified a broad repertoire of oncofetal chondroitin sulfate-modified proteoglycans (versican, biglycan, syndecan-4, CD44, collagens, laminins). The C9 and F8/F3 antibody fragments pulled down partly non-overlapping CSPG sets, confirming they target two distinct ofCS epitopes."
+    status: inferred
+    source: "paper:10.1038_S41467-024-51781-0.pdf"
+    confidence: 0.85
+    evidence: "the antibody fragments bound to a wide range of CS-modified proteins, both membrane-bound and secreted CSPGs... Similar experiments with patient-derived colon biopsy homogenates confirmed the ofCS signature on a broad selection of CSPGs... including biglycan, syndecan-4, CD44, and versican"
+status: success
