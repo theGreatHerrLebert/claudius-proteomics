@@ -310,3 +310,79 @@ Set paths in `config/config.yaml` before running.
 - `docs/PRECURSOR_BLOB_DESIGN.md` - 4D precursor + fragment blob structure (legacy)
 - `docs/DATASET_DEFINITION.md` - Dataset semantics and edge cases
 - `CLAUDIUS-PROTEOMICS.md` - Full project plan and technical details
+
+## Running on Mogon NHR (HPC)
+
+The pipeline runs on **Mogon NHR** (`mogonki` cluster, JGU Mainz). This section
+documents how to connect and operate there.
+
+### Connecting (SSH + 2FA)
+
+Mogon requires 2FA, and Claude Code's `!` prefix has no TTY, so 2FA cannot be
+entered from inside a Claude session. The pattern that works:
+
+1. A `~/.ssh/config` `mogon-nhr` host entry with connection multiplexing:
+   ```
+   Host mogon-nhr
+       HostName mogon-nhr-01.zdv.uni-mainz.de
+       User dateschn
+       ProxyJump hpcgate
+       ControlMaster auto
+       ControlPath ~/.ssh/cm/%r@%h:%p
+       ControlPersist 8h
+       ServerAliveInterval 60
+       ServerAliveCountMax 3
+   ```
+2. **The user** opens a real terminal (outside Claude Code) and runs
+   `ssh mogon-nhr`, completing password + 2FA once. This creates the shared
+   control socket under `~/.ssh/cm/`.
+3. Claude then reuses that authenticated socket — every `ssh mogon-nhr '<cmd>'`
+   goes through with no prompt for the 8h `ControlPersist` window.
+
+Each `ssh mogon-nhr '<cmd>'` is one-shot: no shell state persists between calls,
+so use absolute paths and chain with `&&`. Interactive tools (editors, `top`,
+live `salloc` shells) do not work — poll instead.
+
+### Cluster facts
+
+- **OS**: AlmaLinux 8.10, **glibc 2.28** (relevant for binary compatibility)
+- **Login node**: `mogon-nhr-01` — keep it light; no heavy CPU/builds here
+- **Home**: `/fshpc/dateschn` — 100 GB, 200k file limit → too small for data/venvs
+- **Project storage**: `/lustre/project/ki-proanagi` — 50 TB, 6.1M file limit →
+  all code, envs, engines, and data live here
+- **Workspace**: `/lustre/project/ki-proanagi/dateschn/` →
+  `claudius-proteomics/` (code), `engines/`, `data/`, `logs/`
+- **SLURM accounts**: `ki-proanagi` (proteomics, use this), `ki-cbr1fep`
+- **CPU partitions**: `ki-smallcpu` (default), `ki-parallel`, `ki-longtime`
+  (12 d), `ki-largemem`, `ki-hugemem`
+- **GPU partitions**: `a100ai`, `a40`, `mi250`, `topml`
+- **Modules**: `lang/Python/3.12.3-GCCcore-13.3.0`,
+  `lang/Rust/1.91.1-GCCcore-13.3.0`, `tools/Apptainer/1.3.4-GCCcore-13.3.0`,
+  `lang/Java/17.0.6`
+- Compute nodes have outbound internet (PyPI, crates.io, GitHub, Docker Hub).
+
+### Working rule: never run heavy work on the login node
+
+Anything CPU/memory-heavy (compiling imspy/Rust, the smoke-test simulation,
+pipeline runs, searches, extraction) must go through SLURM:
+```bash
+# Short blocking job, output streamed back:
+ssh mogon-nhr 'srun --account=ki-proanagi --partition=ki-smallcpu \
+    --cpus-per-task=8 --mem=16G --time=01:00:00 bash -c "<commands>"'
+
+# Long job: sbatch + poll squeue
+ssh mogon-nhr 'sbatch --account=ki-proanagi ... job.sh'
+ssh mogon-nhr 'squeue -u dateschn'
+```
+Login node is fine only for: `mkdir`, file edits, `rsync` transfers, `git`,
+job submission/monitoring.
+
+### Search engine binaries
+
+DIA-NN and Sage binaries built on a modern distro require glibc ≥ 2.29/2.32 and
+**do not run on the cluster's glibc 2.28**. Resolution:
+- **Sage**: build from source on the cluster with the Rust module (links 2.28).
+- **DIA-NN**: run inside an Apptainer container (`debian:12` base); point
+  `diann.path` at a wrapper that `apptainer exec`s the binary.
+- **FragPipe**: run via `containers/fragpipe-base/Singularity.def`
+  (`ubuntu:22.04` + JDK 17); FragPipe install is bind-mounted at runtime.

@@ -1,0 +1,274 @@
+# CLAUDIUS-PROTEOMICS Configuration
+# ==================================
+
+# Datasets to process (PRIDE accession numbers)
+datasets:
+  - PXD019086  # Meier et al. 2021 - CCS prediction study
+  - PXD046675  # Pig muscle 4D-LFQ (Wannanhua, timsTOF Pro)
+  - PXD069059  # Ovine macrophage differentiation (timsTOF Pro, DDA)
+  - PXD019746  # Ogata et al. 2021 - phospho CCS on timsTOF (jPOST)
+  - PXD067756  # Guinea pig retina/choroid/sclera myopia study (timsTOF Pro)
+  - PXD068782  # Chlamydomonas phospho-proteome, CDKL5 kinase (timsTOF Pro 2)
+
+# Dataset metadata: bias-aware fields (manually verified from publication)
+# Organism mapping is now handled automatically by sample_group_resolver.py
+dataset_metadata:
+  PXD019086:
+    description: "Meier et al. 2021 - multi-organism CCS prediction study"
+    instrument: "timsTOF Pro"
+    lab_id: "Max Planck Institute of Biochemistry"
+    gradient_length: 120  # minutes (from LC method name "120min")
+    column_type: "C18 25cm nanoLC"  # From publication methods
+    acquisition_mode: "PASEF"  # DDA-PASEF
+  PXD046675:
+    description: "Pig Longissimus dorsi muscle 4D-LFQ (Wannanhua, 120d vs 240d)"
+    organism: "pig"
+    instrument: "timsTOF Pro"
+    acquisition_mode: "PASEF"  # DDA-PASEF, 4D label-free
+  PXD069059:
+    description: "Ovine macrophage differentiation and polarization - cell lysates (Elkhamary et al. 2025)"
+    organism: "sheep"
+    instrument: "timsTOF Pro"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+  PXD019746:
+    description: "Ogata et al. 2021 - phosphopeptide CCS in TIMS (Kyoto University)"
+    organism: "human"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+    mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
+  PXD068782:
+    description: "Chlamydomonas CDKL5 phospho-proteome, cilia/flagella kinase signaling (Pazour lab)"
+    organism: "chlamydomonas"
+    instrument: "timsTOF Pro 2"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+    mod_profile: "phospho"  # Phospho(STY) variable mod
+  PXD067756:
+    description: "Guinea pig retina/choroid/sclera proteomics & phosphoproteomics (myopia study)"
+    organism: "guinea_pig"
+    instrument: "timsTOF Pro"
+    acquisition_mode: "PASEF"  # DDA-PASEF
+    mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
+
+# Download settings for PRIDE data
+download:
+  protocol: "ftp"  # ftp | aspera (aspera requires ascp client)
+  retry_count: 3
+  file_patterns:
+    - "*.d.zip"
+    - "*.d.tar"
+    - "*.d.rar"
+    - "*.d"
+    - "*.raw"
+    - "*.tdf"
+    - "*.tdf_bin"
+
+# Organism FASTA configuration
+# Local paths or UniProt IDs for automatic download
+organisms:
+  human:
+    taxon_id: 9606
+    proteome_id: "UP000005640"
+    local_fasta: null  # MOGON: download human proteome from UniProt
+    includes_contaminants: false  # MOGON: contaminants appended separately
+    # If local_fasta not available, will download from UniProt
+  yeast:
+    taxon_id: 559292
+    proteome_id: "UP000002311"
+    local_fasta: null  # Will download from UniProt
+  ecoli:
+    taxon_id: 83333
+    proteome_id: "UP000000625"
+    local_fasta: null
+  mouse:
+    taxon_id: 10090
+    proteome_id: "UP000000589"
+    local_fasta: null
+  drosophila:
+    taxon_id: 7227
+    proteome_id: "UP000000803"
+    local_fasta: null
+  c_elegans:
+    taxon_id: 6239
+    proteome_id: "UP000001940"
+    local_fasta: null
+  pig:
+    taxon_id: 9823
+    proteome_id: "UP000008227"
+    local_fasta: null
+  sheep:
+    taxon_id: 9940
+    proteome_id: "UP000664991"
+    local_fasta: null
+  chlamydomonas:
+    taxon_id: 3055
+    proteome_id: "UP000006906"
+    local_fasta: null
+  guinea_pig:
+    taxon_id: 10141
+    proteome_id: "UP000005447"
+    local_fasta: null
+
+# Contaminants database (appended to all FASTA files)
+contaminants:
+  enabled: true
+  source: "cRAP"  # Common Repository of Adventitious Proteins
+  url: "http://ftp.thegpm.org/fasta/cRAP/crap.fasta"
+
+# Enzyme definitions for search engines
+# Each enzyme has engine-specific syntax for FragPipe, DIA-NN, and Sage
+enzymes:
+  trypsin:
+    cleave_at: "KR"
+    restrict: "P"
+    terminal: "C"
+    missed_cleavages: 2
+    fragpipe_name: "stricttrypsin"
+    diann_cut: "K*,R*,!*P"
+    sage_cleave_at: "KR"
+    sage_restrict: "P"
+  lysc:
+    cleave_at: "K"
+    restrict: null
+    terminal: "C"
+    missed_cleavages: 2
+    fragpipe_name: "lysc"
+    diann_cut: "K*"
+    sage_cleave_at: "K"
+    sage_restrict: null
+  lysn:
+    cleave_at: "K"
+    restrict: null
+    terminal: "N"
+    missed_cleavages: 2
+    fragpipe_name: "lysn"
+    diann_cut: "*K"
+    sage_cleave_at: "K"
+    sage_restrict: null
+  nonspecific:
+    cleave_at: ""
+    restrict: null
+    terminal: null
+    missed_cleavages: 0
+    fragpipe_name: "nonspecific"
+    diann_cut: ""
+    sage_cleave_at: ""
+    sage_restrict: null
+
+# Modification profiles for different study types
+# Each engine translates from this canonical UNIMOD-based format
+mod_profiles:
+  standard:
+    description: "Standard: Cam(C) fixed, Ox(M) + Acetyl(N-term) variable"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+    max_variable_mods: 3
+    min_peptide_length: 7
+    max_peptide_length: 50
+
+  phospho:
+    description: "Phosphoproteomics: adds Phospho(STY) to standard"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+      - {unimod_id: 21, name: "Phospho", mass: 79.966331, residues: ["S", "T", "Y"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+
+  hla:
+    description: "Immunopeptidomics: non-specific enzyme, shorter peptides"
+    enzyme_override: "nonspecific"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+    max_variable_mods: 3
+    min_peptide_length: 7
+    max_peptide_length: 25
+
+# Local data paths (for testing without PRIDE download)
+local_data:
+  PXD019086: "/home/dateschn/raw-data/Raw_HeLa_Trp"
+
+# FragPipe configuration
+fragpipe:
+  path: "/lustre/project/ki-proanagi/dateschn/engines/fragpipe-run"  # MOGON: Apptainer wrapper dir
+  workflow: "LFQ-MBR"  # Good default for DDA timsTOF with match-between-runs
+  threads: 64
+  memory_gb: 128
+  timeout_hours: 12
+
+# DIA-NN configuration (v2.3.2 supports DDA mode)
+diann:
+  path: "/lustre/project/ki-proanagi/dateschn/engines/bin/diann-linux"  # MOGON: Apptainer wrapper
+  threads: 64
+  qvalue: 1.0  # Report ALL results - no q-value filtering (San José applies thresholds at query time)
+  timeout_hours: 72
+  # DIA-NN 2.3+ can run in DDA mode with --dda flag
+
+# Sage configuration (fast Rust-based search engine)
+sage:
+  path: "/lustre/project/ki-proanagi/dateschn/engines/sage/sage"  # MOGON: native build
+  config: "config/sage_config.json"
+  threads: 64
+  timeout_hours: 2
+  # Sage uses timsrust for reading Bruker .d files
+
+# San José mode: report ALL results without FDR/PEP filtering
+# Thresholds are applied at query time, not during search
+san_jose:
+  report_all: true  # Disable FDR filtering in all search engines
+
+# Raw extraction settings (imspy)
+extraction:
+  mz_tolerance_ppm: 20
+  rt_tolerance_sec: 15  # Total window = ±7.5s around apex (increased for better signal capture)
+  mobility_tolerance: 0.05
+  extract_chromatogram: true
+  extract_mobilogram: true
+  extract_isotopes: true
+  batch_size: 10000  # Precursors per batch (reduces peak memory from ~65GB to ~10GB)
+  threads: 8  # Threads for MS1 extraction
+
+# Model training settings
+training:
+  test_split: 0.1
+  validation_split: 0.1
+  batch_size: 256
+  epochs: 100
+  early_stopping_patience: 10
+
+# Models to train
+models:
+  - ccs_v1
+
+# Container paths (built Singularity images)
+containers:
+  download: "containers/download.sif"
+  fragpipe_base: "containers/fragpipe-base.sif"
+  imspy: "containers/imspy.sif"
+
+# Paper-based metadata extraction (Step 1 substep)
+# Downloads OA PDFs via Unpaywall and uses Claude API to extract LC-MS parameters
+paper_extraction:
+  enabled: true
+  unpaywall_email: "your-email@university.edu"  # Required by Unpaywall TOS
+  model: "claude-sonnet-4-20250514"  # Cost-efficient for structured extraction
+  max_pdf_chars: 80000
+  skip_if_exists: true
+  # API key via ANTHROPIC_API_KEY env var (never in config)
+
+# Test mode: use subset of data for quick validation
+test_mode:
+  enabled: false
+  max_files: 1
+
+# Temp directory for MSFragger cache files (use SSD for performance)
+# This avoids writing cache files next to raw data on potentially full drives
+temp_dir: "/home/dateschn/claudius-proteomics/tmp"
