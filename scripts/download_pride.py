@@ -5,7 +5,7 @@ Download raw data from PRIDE Archive with metadata extraction.
 This script:
 1. Fetches metadata from PRIDE REST API
 2. Parses protocol text for gradient/column/mode hints
-3. Downloads raw files using pridepy
+3. Downloads raw files over HTTPS from the ftp.ebi.ac.uk mirror
 4. Creates metadata YAML with validation status
 
 Usage:
@@ -40,6 +40,33 @@ PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
 
 # ProteomeXchange API for cross-repository resolution
 PX_API_BASE = "https://proteomecentral.proteomexchange.org/cgi/GetDataset"
+
+# PRIDE raw files are served from ftp.pride.ebi.ac.uk over FTP/Aspera. Those
+# protocols (and that host) are unreachable from networks that only permit
+# HTTPS through an allow-list proxy — e.g. the Mogon NHR HPC cluster. The
+# general EBI server ftp.ebi.ac.uk mirrors the identical /pride/data/archive
+# tree over HTTPS, so every PRIDE file URL is rewritten to that host before
+# download.
+EBI_HTTPS_BASE = "https://ftp.ebi.ac.uk"
+
+
+def to_ebi_https_url(url: str) -> str:
+    """Rewrite a PRIDE file URL to the proxy-reachable ftp.ebi.ac.uk HTTPS mirror.
+
+    ``ftp://ftp.pride.ebi.ac.uk/pride/data/archive/...`` (and the http[s]
+    variants) become ``https://ftp.ebi.ac.uk/pride/data/archive/...``. The
+    archive path is identical between the two servers. Any other URL — and
+    Aspera ``prd_ascp@...`` locations, which cannot be rewritten — is returned
+    unchanged.
+    """
+    for host_prefix in (
+        "ftp://ftp.pride.ebi.ac.uk",
+        "https://ftp.pride.ebi.ac.uk",
+        "http://ftp.pride.ebi.ac.uk",
+    ):
+        if url.startswith(host_prefix):
+            return EBI_HTTPS_BASE + url[len(host_prefix):]
+    return url
 
 
 def _resolve_repository(accession: str) -> tuple:
@@ -348,6 +375,50 @@ def _create_px_metadata(accession: str, px_data: dict, metadata_dir: Path) -> No
         json.dump(px_data, f, indent=2)
 
 
+def _get_file_list_pride_api(accession: str) -> List[dict]:
+    """
+    List all files for a PRIDE project via the v2 REST API.
+
+    Uses the paginated ``/projects/{accession}/files`` endpoint and normalises
+    each entry to a dict with ``fileName``, ``fileSize``, ``fileCategory`` and
+    ``ftpLink`` — where ``ftpLink`` is the FTP-protocol location already
+    rewritten to the ftp.ebi.ac.uk HTTPS mirror.
+    """
+    files: List[dict] = []
+    page = 0
+    page_size = 100
+
+    while True:
+        url = (
+            f"{PRIDE_API_BASE}/projects/{accession}/files"
+            f"?pageSize={page_size}&page={page}"
+        )
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        batch = resp.json()
+        if not batch:
+            break
+
+        for f in batch:
+            ftp_url = None
+            for loc in f.get("publicFileLocations", []):
+                if loc.get("name") == "FTP Protocol":
+                    ftp_url = loc.get("value")
+                    break
+            files.append({
+                "fileName": f.get("fileName", ""),
+                "fileSize": f.get("fileSizeBytes", 0),
+                "fileCategory": f.get("fileCategory", {}).get("value", ""),
+                "ftpLink": to_ebi_https_url(ftp_url) if ftp_url else None,
+            })
+
+        if len(batch) < page_size:
+            break
+        page += 1
+
+    return files
+
+
 def get_file_list(accession: str) -> tuple:
     """
     Get list of files for a PRIDE accession.
@@ -355,25 +426,21 @@ def get_file_list(accession: str) -> tuple:
     Returns tuple of (file_list, repo_name) where file_list is a list of
     file info dicts with fileName, fileSize, ftpLink, etc.
 
-    Falls back through: PRIDE API → PRIDE FTP → ProteomeXchange → jPOST FTP.
+    Falls back through: PRIDE API → EBI HTTPS index → ProteomeXchange → jPOST.
     """
-    url = f"{PRIDE_API_BASE}/files/byProject?accession={accession}"
-
+    # Primary: PRIDE v2 REST API project files endpoint.
     try:
-        response = requests.get(url, timeout=60)
-
-        if response.status_code == 200 and response.text.strip():
-            return (response.json(), "pride")
-
-        if response.status_code == 200:
-            # API returns empty body for PARTIAL submissions
-            print("   API returned empty file list (PARTIAL submission), trying FTP fallback...")
-            ftp_files = _get_file_list_ftp(accession)
-            if ftp_files:
-                return (ftp_files, "pride")
-
+        api_files = _get_file_list_pride_api(accession)
+        if api_files:
+            return (api_files, "pride")
+        print("   PRIDE API returned no files, trying HTTPS index fallback...")
     except requests.RequestException as e:
         print(f"   PRIDE file API failed: {e}")
+
+    # Fallback: scrape the EBI HTTPS directory index for the archive path.
+    ftp_files = _get_file_list_ftp(accession)
+    if ftp_files:
+        return (ftp_files, "pride")
 
     # PRIDE didn't work — resolve via ProteomeXchange
     repo_name, repo_info = _resolve_repository(accession)
@@ -392,14 +459,15 @@ def get_file_list(accession: str) -> tuple:
 
 def _get_file_list_ftp(accession: str) -> List[dict]:
     """
-    Fallback: list files via FTP directory listing.
+    Fallback: list files by scraping the EBI HTTPS directory index.
 
-    Discovers the FTP path from the PRIDE API publication date and lists
-    files directly from the FTP server.
+    Discovers the archive path from the PRIDE API publication date and parses
+    the Apache autoindex page at ftp.ebi.ac.uk (the HTTPS mirror), so it works
+    behind HTTPS-only proxies where FTP is unavailable.
     """
-    import ftplib
+    import html
 
-    # Get publication date to construct FTP path
+    # Get publication date to construct the archive path
     proj_url = f"{PRIDE_API_BASE}/projects/{accession}"
     proj_resp = requests.get(proj_url, timeout=60)
     proj_resp.raise_for_status()
@@ -407,38 +475,38 @@ def _get_file_list_ftp(accession: str) -> List[dict]:
 
     pub_date = proj_data.get("publicationDate", "")
     if not pub_date:
-        print("   Cannot determine FTP path: no publication date")
+        print("   Cannot determine archive path: no publication date")
         return []
 
     year, month = pub_date.split("-")[:2]
-    ftp_dir = f"/pride/data/archive/{year}/{month}/{accession}"
+    archive_dir = f"/pride/data/archive/{year}/{month}/{accession}"
+    index_url = f"{EBI_HTTPS_BASE}{archive_dir}/"
 
-    print(f"   FTP path: ftp.pride.ebi.ac.uk{ftp_dir}")
+    print(f"   HTTPS index: {index_url}")
 
     files = []
     try:
-        ftp = ftplib.FTP("ftp.pride.ebi.ac.uk", timeout=60)
-        ftp.login()
-        entries = []
-        ftp.dir(ftp_dir, entries.append)
-        ftp.quit()
+        resp = requests.get(index_url, timeout=60)
+        resp.raise_for_status()
 
-        for entry in entries:
-            parts = entry.split()
-            if len(parts) < 9:
+        # Apache autoindex: <a href="filename">. Skip column-sort links
+        # (href="?...") and the parent-directory / sub-directory links
+        # (absolute paths or trailing slash).
+        seen = set()
+        for match in re.finditer(r'href="([^"?/][^"]*)"', resp.text):
+            name = html.unescape(match.group(1))
+            if name.endswith("/") or name in seen:
                 continue
-            size = int(parts[4])
-            name = " ".join(parts[8:])  # Handle filenames with spaces
-            ftp_link = f"ftp://ftp.pride.ebi.ac.uk{ftp_dir}/{name}"
+            seen.add(name)
             files.append({
                 "fileName": name,
-                "fileSize": size,
-                "ftpLink": ftp_link,
+                "fileSize": 0,  # not reliably available from the index page
+                "ftpLink": f"{index_url}{name}",
             })
 
-        print(f"   Found {len(files)} files via FTP")
+        print(f"   Found {len(files)} files via HTTPS index")
     except Exception as e:
-        print(f"   FTP listing failed: {e}")
+        print(f"   HTTPS index listing failed: {e}")
 
     return files
 
@@ -460,16 +528,33 @@ def filter_raw_files(
         Filtered list of files
     """
     if patterns is None:
-        # Default: timsTOF raw data patterns (including TDF for jPOST deposits)
-        patterns = ["*.d.zip", "*.d.tar", "*.d.rar", "*.d", "*.raw", "*.tdf", "*.tdf_bin"]
+        # Bruker timsTOF raw data: .d folders (usually archived) and loose TDF.
+        patterns = ["*.d.zip", "*.d.tar", "*.d.tar.*", "*.d.rar", "*.d.7z",
+                    "*.d", "*.tdf", "*.tdf_bin"]
+
+    # Non-Bruker raw / derived formats. San José processes Bruker .d data only,
+    # but some timsTOF-classified PRIDE datasets are multi-instrument and ship
+    # foreign raw files — reject these even when tagged fileCategory "RAW".
+    non_bruker = (".raw", ".wiff", ".wiff2", ".wiff.scan", ".lcd",
+                  ".mzml", ".mzxml", ".mgf")
 
     import fnmatch
 
     filtered = []
     for f in files:
         filename = f.get("fileName", "")
+        low = filename.lower()
+        if low.endswith(non_bruker):
+            continue
+        # PRIDE tags raw-data files with fileCategory "RAW"; trust that over
+        # filename globs so Bruker bundle archives (e.g. original_data.zip,
+        # Raw_HeLa_Trp.zip) are still selected — the non-Bruker extension check
+        # above has already excluded foreign raw files.
+        if f.get("fileCategory", "") == "RAW":
+            filtered.append(f)
+            continue
         for pattern in patterns:
-            if fnmatch.fnmatch(filename.lower(), pattern.lower()):
+            if fnmatch.fnmatch(low, pattern.lower()):
                 filtered.append(f)
                 break
 
@@ -505,79 +590,6 @@ def filter_raw_files(
     return filtered
 
 
-def download_with_pridepy(
-    accession: str,
-    output_dir: Path,
-    file_list: Optional[List[dict]] = None,
-    protocol: str = "ftp",
-    retry_count: int = 3,
-) -> bool:
-    """
-    Download files using pridepy CLI.
-
-    Args:
-        accession: PRIDE accession
-        output_dir: Directory to save files
-        file_list: Optional list of specific files to download
-        protocol: Download protocol ("ftp" or "aspera")
-        retry_count: Number of retries for failed downloads
-
-    Returns:
-        True if download succeeded
-    """
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Check if pridepy is available
-    try:
-        subprocess.run(
-            ["pridepy", "--help"],
-            capture_output=True,
-            check=True,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("Error: pridepy is not installed. Install with: pip install pridepy")
-        return False
-
-    # Build pridepy command
-    cmd = [
-        "pridepy",
-        "download-all-raw-files",
-        "-a", accession,
-        "-o", str(output_dir),
-        "-p", protocol,
-    ]
-
-    print(f"Running: {' '.join(cmd)}")
-
-    for attempt in range(retry_count):
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=3600 * 4,  # 4 hour timeout for large datasets
-            )
-
-            if result.returncode == 0:
-                print("Download completed successfully")
-                return True
-
-            print(f"Download attempt {attempt + 1} failed: {result.stderr}")
-
-        except subprocess.TimeoutExpired:
-            print(f"Download attempt {attempt + 1} timed out")
-        except Exception as e:
-            print(f"Download attempt {attempt + 1} error: {e}")
-
-        if attempt < retry_count - 1:
-            wait_time = 30 * (attempt + 1)
-            print(f"Retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
-
-    return False
-
-
 def download_with_wget(
     files: List[dict],
     output_dir: Path,
@@ -601,7 +613,15 @@ def download_with_wget(
     fail_count = 0
 
     for f in files:
-        url = f.get("ftpLink") or f.get("publicFileLocations", [{}])[0].get("value")
+        url = f.get("ftpLink")
+        if not url:
+            # Prefer the FTP-protocol location; Aspera locations cannot be
+            # fetched over HTTPS. Order in publicFileLocations is not fixed.
+            for loc in f.get("publicFileLocations", []):
+                if loc.get("name") == "FTP Protocol":
+                    url = loc.get("value")
+                    break
+        url = to_ebi_https_url(url) if url else None
         filename = f.get("fileName", "")
 
         if not url:
@@ -624,9 +644,8 @@ def download_with_wget(
 
         cmd = [
             "wget",
-            "-c",  # Continue partial downloads
-            "-q",
-            "--show-progress",
+            "-c",   # Continue partial downloads
+            "-nv",  # One concise line per file — no dotted progress spam in logs
             "-O", str(output_path),
             url,
         ]
@@ -769,7 +788,6 @@ def download_pride(
     accession: str,
     output_dir: Path,
     metadata_dir: Optional[Path] = None,
-    protocol: str = "ftp",
     retry_count: int = 3,
     max_files: int = 0,
     file_patterns: Optional[List[str]] = None,
@@ -782,7 +800,6 @@ def download_pride(
         accession: PRIDE accession number (e.g., PXD019086)
         output_dir: Directory to save downloaded files
         metadata_dir: Directory for metadata files (default: data/metadata/{accession})
-        protocol: Download protocol ("ftp" or "aspera")
         retry_count: Number of retries for failed downloads
         max_files: Maximum number of files (0 = unlimited, for testing)
         file_patterns: Glob patterns for file selection
@@ -880,22 +897,12 @@ def download_pride(
     if len(files) > 5:
         print(f"     ... and {len(files) - 5} more")
 
-    # Step 3: Download files
-    print(f"\n3. Downloading files (protocol: {protocol})...")
+    # Step 3: Download files over HTTPS from the ftp.ebi.ac.uk mirror.
+    # FTP, Aspera and pridepy are unreachable behind HTTPS-only allow-list
+    # proxies (e.g. Mogon NHR), so every file is fetched via HTTPS instead.
+    print(f"\n3. Downloading {len(files)} files via HTTPS...")
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    if repo_name == "pride":
-        # Try pridepy first for PRIDE datasets
-        success = download_with_pridepy(
-            accession, output_dir, files, protocol, retry_count
-        )
-        if not success:
-            print("   pridepy failed, trying wget fallback...")
-            success = download_with_wget(files, output_dir, retry_count)
-    else:
-        # Non-PRIDE repos: use wget directly (pridepy only works with PRIDE)
-        print(f"   Using wget for {repo_name} repository...")
-        success = download_with_wget(files, output_dir, retry_count)
+    success = download_with_wget(files, output_dir, retry_count)
 
     if not success:
         print("   Download failed!")
@@ -944,12 +951,6 @@ def main():
         "--metadata-only",
         action="store_true",
         help="Only fetch metadata, don't download files"
-    )
-    parser.add_argument(
-        "--protocol",
-        choices=["ftp", "aspera"],
-        default="ftp",
-        help="Download protocol (default: ftp)"
     )
     parser.add_argument(
         "--retry",
@@ -1011,7 +1012,6 @@ def main():
         accession=args.accession,
         output_dir=args.output,
         metadata_dir=args.metadata_dir,
-        protocol=args.protocol,
         retry_count=args.retry,
         max_files=args.max_files,
         extract=not args.no_extract,
