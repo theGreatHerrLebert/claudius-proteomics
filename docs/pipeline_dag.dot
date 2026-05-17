@@ -1,0 +1,141 @@
+digraph snakemake_dag {
+    graph[bgcolor=white, margin=0.2, rankdir=TB, fontname=sans, label=<<B>San José Pipeline – Full Rule Graph</B>>, labelloc=t, fontsize=16];
+    node[shape=box, style="rounded,filled", fontname=sans, fontsize=10, penwidth=2];
+    edge[penwidth=1.5, color=grey40];
+
+    // --- Phase 1: FASTA Preparation ---
+    subgraph cluster_fasta {
+        label=<<B>Step 0 · FASTA Preparation</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        get_or_download_fasta  [label="get_or_download_fasta",  fillcolor="#e8f5e9", color="#388e3c"];
+        download_contaminants  [label="download_contaminants",  fillcolor="#e8f5e9", color="#388e3c"];
+        prepare_search_database[label="prepare_search_database",fillcolor="#e8f5e9", color="#388e3c"];
+        add_decoys             [label="add_decoys",             fillcolor="#e8f5e9", color="#388e3c"];
+    }
+
+    // --- Phase 1: Download ---
+    subgraph cluster_download {
+        label=<<B>Step 1 · Download</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        fetch_pride_metadata   [label="fetch_pride_metadata",   fillcolor="#e3f2fd", color="#1565c0"];
+        download_raw_files     [label="download_raw_files",     fillcolor="#e3f2fd", color="#1565c0"];
+        extract_raw_metadata   [label="extract_raw_metadata",   fillcolor="#e3f2fd", color="#1565c0"];
+        validate_metadata      [label="validate_metadata",      fillcolor="#e3f2fd", color="#1565c0"];
+    }
+
+    // --- Phase 1: Triple Search ---
+    subgraph cluster_search {
+        label=<<B>Step 2 · Triple Orthogonal Search</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        fragpipe_search [label="fragpipe_search", fillcolor="#fff3e0", color="#e65100"];
+        diann_search    [label="diann_search",    fillcolor="#fff3e0", color="#ef6c00"];
+        sage_search     [label="sage_search",     fillcolor="#fff3e0", color="#f57c00"];
+    }
+
+    // --- Phase 1: Extraction ---
+    subgraph cluster_extract {
+        label=<<B>Step 3 · Raw 4D Extraction</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        extract_im_calibration      [label="extract_im_calibration",      fillcolor="#fce4ec", color="#c62828"];
+        extract_precursors          [label="extract_precursors",          fillcolor="#fce4ec", color="#c62828"];
+        extract_all_precursors      [label="extract_all_precursors",      fillcolor="#fce4ec", color="#c62828"];
+        merge_extracted_precursors  [label="merge_extracted_precursors",  fillcolor="#fce4ec", color="#c62828"];
+    }
+
+    // --- Phase 1: Merge ---
+    subgraph cluster_merge {
+        label=<<B>Step 4 · Merge</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        merge_psm_raw [label="merge_psm_raw", fillcolor="#f3e5f5", color="#6a1b9a"];
+    }
+
+    // --- Phase 1: Database ---
+    subgraph cluster_database {
+        label=<<B>Step 5 · Database</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        merge_to_database        [label="merge_to_database",        fillcolor="#ede7f6", color="#4527a0"];
+        update_database_metadata [label="update_database_metadata", fillcolor="#ede7f6", color="#4527a0"];
+    }
+
+    // --- Phase 2: Snapshot ---
+    subgraph cluster_snapshot {
+        label=<<B>Step 6 · Snapshot</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        create_training_snapshot [label="create_training_snapshot", fillcolor="#e0f7fa", color="#00695c"];
+    }
+
+    // --- Phase 2: Training ---
+    subgraph cluster_train {
+        label=<<B>Step 7 · Model Training</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        train_ccs_model        [label="train_ccs_model",        fillcolor="#fff9c4", color="#f9a825"];
+        evaluate_trained_model [label="evaluate_trained_model", fillcolor="#fff9c4", color="#f9a825"];
+        export_model           [label="export_model",           fillcolor="#fff9c4", color="#f9a825"];
+    }
+
+    // --- Aggregate targets ---
+    subgraph cluster_targets {
+        label=<<B>Aggregate Targets</B>>;
+        style="dashed"; color=grey70; fontname=sans; fontsize=11;
+        add_dataset      [label="add_dataset",      fillcolor="#eceff1", color="#37474f", style="rounded,filled,bold"];
+        add_all_datasets [label="add_all_datasets", fillcolor="#eceff1", color="#37474f", style="rounded,filled,bold"];
+        process_full     [label="process_full",     fillcolor="#eceff1", color="#37474f", style="rounded,filled,bold"];
+        train_model      [label="train_model",      fillcolor="#eceff1", color="#37474f", style="rounded,filled,bold"];
+    }
+
+    // ============ EDGES ============
+
+    // FASTA chain
+    get_or_download_fasta  -> prepare_search_database;
+    download_contaminants  -> prepare_search_database;
+    prepare_search_database -> add_decoys;
+
+    // Download chain
+    fetch_pride_metadata -> download_raw_files;
+    download_raw_files   -> extract_raw_metadata;
+    extract_raw_metadata -> validate_metadata;
+
+    // Search engines (depend on FASTA + raw files)
+    add_decoys         -> fragpipe_search;
+    download_raw_files -> fragpipe_search;
+
+    prepare_search_database -> diann_search;
+    download_raw_files      -> diann_search;
+
+    prepare_search_database -> sage_search;
+    download_raw_files      -> sage_search;
+
+    // Extraction chain (depends on raw files)
+    download_raw_files     -> extract_im_calibration;
+    extract_im_calibration -> extract_precursors;
+    extract_precursors     -> extract_all_precursors;
+    extract_all_precursors -> merge_extracted_precursors;
+
+    // Merge (PSMs + raw features)
+    fragpipe_search            -> merge_psm_raw;
+    merge_extracted_precursors -> merge_psm_raw;
+
+    // Database insertion
+    merge_psm_raw              -> merge_to_database;
+    merge_to_database          -> update_database_metadata;
+
+    // Snapshot
+    merge_to_database          -> create_training_snapshot;
+    update_database_metadata   -> create_training_snapshot;
+
+    // Training chain
+    create_training_snapshot -> train_ccs_model;
+    train_ccs_model          -> evaluate_trained_model;
+    evaluate_trained_model   -> export_model;
+
+    // Aggregate targets
+    merge_to_database -> add_dataset [style=dashed, color="#78909c"];
+    add_dataset       -> add_all_datasets [style=dashed, color="#78909c"];
+
+    merge_extracted_precursors -> process_full [style=dashed, color="#78909c"];
+    fragpipe_search -> process_full [style=dashed, color="#78909c"];
+    diann_search    -> process_full [style=dashed, color="#78909c"];
+    sage_search     -> process_full [style=dashed, color="#78909c"];
+
+    train_ccs_model -> train_model [style=dashed, color="#78909c"];
+}
