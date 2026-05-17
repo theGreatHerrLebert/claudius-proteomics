@@ -215,6 +215,11 @@ data/raw/*
 data/processed/*
 data/extracted/*
 data/discovery/*
+data/merged/*
+data/checkpoints/*
+data/metadata/*
+data/datasets/*
+data/packages/*
 !data/*/.gitkeep
 
 # Database (large, but keep structure)
@@ -251,3 +256,12 @@ resources/fasta/*.fasta
 resources/fasta/search_db/*.fasta
 !resources/fasta/.gitkeep
 !resources/fasta/search_db/.gitkeep
+
+# IDE settings
+.idea/
+
+# Backup directories
+*.bak/
+
+# Notebooks and local analysis outputs
+notebook/
