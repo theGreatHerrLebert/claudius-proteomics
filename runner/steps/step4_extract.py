@@ -159,12 +159,18 @@ def run_step4_extract(
         metadata_dir = output_base_dir / "metadata" / accession
         sg_path = metadata_dir / "sample_groups.yaml"
 
+        manifest = None
         if sg_path.exists():
             from scripts.sample_group_resolver import SampleGroupManifest
 
             manifest = SampleGroupManifest.from_yaml(sg_path)
             print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
 
+        # A manifest with zero groups (e.g. organism resolution failed and every
+        # run is unassigned) is functionally identical to having no manifest at
+        # all. Fall through to legacy single-group mode so raw_features.parquet
+        # lands at the flat path that Steps 3 and 5 read from.
+        if manifest is not None and manifest.groups:
             group_results = {}
             total_precursors = 0
             total_files = 0
@@ -223,6 +229,14 @@ def run_step4_extract(
                     "n_files": group_stats["n_files"],
                     "blob_size_bytes": group_stats["blob_size_bytes"],
                 }
+
+            # Guard: if per-group mode produced no output at all, fail loudly
+            # instead of reporting a misleading success.
+            if total_files == 0:
+                raise RuntimeError(
+                    f"No files extracted: manifest has {len(manifest.groups)} "
+                    f"groups, none yielded .d files"
+                )
 
             # Compute quality statistics
             quality_stats = _compute_quality_stats(all_quality_metrics)

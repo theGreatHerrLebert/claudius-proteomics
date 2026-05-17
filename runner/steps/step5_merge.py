@@ -71,12 +71,17 @@ def run_step5_merge(
         metadata_dir = output_base_dir / "metadata" / accession
         sg_path = metadata_dir / "sample_groups.yaml"
 
+        manifest = None
         if sg_path.exists():
             from scripts.sample_group_resolver import SampleGroupManifest
 
             manifest = SampleGroupManifest.from_yaml(sg_path)
             print(f"  Loaded {len(manifest.groups)} sample groups from {sg_path}")
 
+        # A manifest with zero groups is functionally identical to having no
+        # manifest: use legacy single-group mode (flat paths) instead of an
+        # empty per-group loop that would produce no precursor_store.parquet.
+        if manifest is not None and manifest.groups:
             group_results = {}
             total_precursors = 0
             total_outputs = []
