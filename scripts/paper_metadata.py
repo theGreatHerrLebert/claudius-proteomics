@@ -227,7 +227,7 @@ def extract_metadata_with_llm(
     paper_text: str,
     accession: str,
     api_key: str,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "claude-sonnet-4-6",
 ) -> Optional[Dict[str, Any]]:
     """
     Use Claude API to extract structured LC-MS metadata from paper text.
@@ -379,6 +379,37 @@ def _extract_json_from_text(text: str) -> Optional[Dict]:
     return None
 
 
+def _merge_paper_into_pride(metadata_dir: Path) -> int:
+    """Merge paper_extraction.yaml fields into pride_metadata.yaml.
+
+    Runs after a fresh extraction *and* when a paper_extraction.yaml has been
+    shipped in from off-cluster (e.g. to Mogon NHR, which has no Anthropic API
+    access) — no API or PDF needed, just the merge. Returns fields merged.
+    """
+    metadata_dir = Path(metadata_dir)
+    extraction_path = metadata_dir / "paper_extraction.yaml"
+    pride_metadata_path = metadata_dir / "pride_metadata.yaml"
+    if not extraction_path.exists() or not pride_metadata_path.exists():
+        return 0
+    try:
+        try:
+            from scripts.pride_metadata import DatasetMetadata
+        except ImportError:
+            import sys
+            sys.path.insert(0, str(Path(__file__).parent.parent))
+            from scripts.pride_metadata import DatasetMetadata
+
+        metadata = DatasetMetadata.from_yaml(pride_metadata_path)
+        n = metadata.merge_paper_extraction(extraction_path)
+        metadata.to_yaml(pride_metadata_path)
+        if n:
+            print(f"    Merged {n} paper field(s) into {pride_metadata_path.name}")
+        return n
+    except Exception as e:
+        print(f"    Could not merge into pride_metadata.yaml: {e}")
+        return 0
+
+
 def run_paper_extraction(
     accession: str,
     metadata_dir: Path,
@@ -414,6 +445,9 @@ def run_paper_extraction(
     extraction_path = metadata_dir / "paper_extraction.yaml"
     if paper_config.get("skip_if_exists", True) and extraction_path.exists():
         print(f"    Paper extraction already exists: {extraction_path}")
+        # Still merge — a shipped/cached extraction must reach pride_metadata.yaml
+        # even though we skip re-extraction (the step-6 merge below is bypassed).
+        _merge_paper_into_pride(metadata_dir)
         return _load_yaml(extraction_path)
 
     # Load DOI from pride_metadata.yaml
@@ -434,7 +468,7 @@ def run_paper_extraction(
     # Step 1: Try to download PDF
     pdf_sources = []
     if doi:
-        unpaywall_email = paper_config.get("unpaywall_email")
+        unpaywall_email = os.environ.get("UNPAYWALL_EMAIL") or paper_config.get("unpaywall_email")
         pdf_path = download_paper_pdf(doi, papers_dir, unpaywall_email)
         if pdf_path:
             pdf_sources.append({
@@ -511,7 +545,7 @@ def run_paper_extraction(
         _save_yaml(result, extraction_path)
         return result
 
-    model = paper_config.get("model", "claude-sonnet-4-20250514")
+    model = paper_config.get("model", "claude-sonnet-4-6")
     print(f"    Calling {model} for metadata extraction...")
     llm_result = extract_metadata_with_llm(full_text, accession, api_key, model)
 
@@ -566,22 +600,8 @@ def run_paper_extraction(
     _save_yaml(result, extraction_path)
     print(f"    Saved: {extraction_path}")
 
-    # Merge into pride_metadata.yaml
-    if pride_metadata_path.exists():
-        try:
-            try:
-                from scripts.pride_metadata import DatasetMetadata
-            except ImportError:
-                import sys
-                sys.path.insert(0, str(Path(__file__).parent.parent))
-                from scripts.pride_metadata import DatasetMetadata
-
-            metadata = DatasetMetadata.from_yaml(pride_metadata_path)
-            metadata.merge_paper_extraction(extraction_path)
-            metadata.to_yaml(pride_metadata_path)
-            print(f"    Merged paper fields into {pride_metadata_path.name}")
-        except Exception as e:
-            print(f"    Could not merge into pride_metadata.yaml: {e}")
+    # Step 6: merge into pride_metadata.yaml
+    _merge_paper_into_pride(metadata_dir)
 
     return result
 
