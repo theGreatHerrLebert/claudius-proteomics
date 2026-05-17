@@ -122,6 +122,8 @@ def run_step1_download(
                 "organism": metadata.get("organism", "unknown"),
                 "instrument": metadata.get("instrument", "unknown"),
                 "lab_id": metadata.get("lab_id", "unknown"),
+                "tissue": metadata.get("tissue"),
+                "matrix_tier": metadata.get("matrix_tier"),
                 "completeness": metadata.get("completeness", 0),
             },
             "paper_extraction": {
@@ -214,27 +216,43 @@ def _create_local_metadata(
     local_path: Path,
     metadata_dir: Path,
 ) -> Dict[str, Any]:
-    """Create metadata for local data."""
+    """Build metadata for a locally-staged dataset.
+
+    Local data is still a real PRIDE accession, so its experiment metadata is
+    collected the same way as for downloaded data: reuse a pride_metadata.yaml
+    already on disk (e.g. written by download_pride.py), else fetch it fresh
+    from the PRIDE API, else fall back to a minimal stub.
+    """
     import yaml
 
     metadata_dir.mkdir(parents=True, exist_ok=True)
 
-    # Try to read existing metadata
-    existing_metadata_file = local_path / "metadata.yaml"
-    if existing_metadata_file.exists():
-        with open(existing_metadata_file) as f:
-            metadata = yaml.safe_load(f) or {}
-    else:
-        metadata = {}
+    have_metadata = (
+        (metadata_dir / "pride_metadata.yaml").exists()
+        or (metadata_dir / "metadata.yaml").exists()
+    )
 
-    # Fill in defaults
+    # No metadata on disk — fetch it from the PRIDE API.
+    if not have_metadata:
+        try:
+            from scripts.pride_metadata import DatasetMetadata
+
+            ds = DatasetMetadata.from_pride_api(accession)
+            ds.to_yaml(metadata_dir / "pride_metadata.yaml")
+            print(f"  Fetched PRIDE metadata for {accession}")
+            have_metadata = True
+        except Exception as e:
+            print(f"  PRIDE metadata fetch failed ({e}); using minimal stub")
+
+    # Flatten via the shared loader (handles pride_metadata.yaml / metadata.yaml).
+    metadata = _load_metadata(metadata_dir) if have_metadata else {}
+
     metadata.setdefault("accession", accession)
     metadata.setdefault("source", "local")
     metadata.setdefault("local_path", str(local_path))
 
-    # Write metadata
-    output_file = metadata_dir / "metadata.yaml"
-    with open(output_file, "w") as f:
+    # Keep a flat metadata.yaml alongside for compatibility.
+    with open(metadata_dir / "metadata.yaml", "w") as f:
         yaml.dump(metadata, f, default_flow_style=False)
 
     return metadata
@@ -258,6 +276,8 @@ def _load_metadata(metadata_dir: Path) -> Dict[str, Any]:
             "organism": fields.get("organism", {}).get("value", "unknown"),
             "instrument": fields.get("instrument", {}).get("value", "unknown"),
             "lab_id": fields.get("lab_id", {}).get("value", "unknown"),
+            "tissue": (fields.get("tissue") or {}).get("value"),
+            "matrix_tier": (fields.get("matrix_tier") or {}).get("value"),
             "completeness": 1.0 if data.get("validation", {}).get("complete") else 0.5,
         }
 
