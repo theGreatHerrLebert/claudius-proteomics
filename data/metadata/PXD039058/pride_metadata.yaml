@@ -1,0 +1,86 @@
+accession: PXD039058
+version: '1.0'
+generated_at: '2026-05-17T21:08:47.322217'
+title:
+  value: Proteomic characteristics and diagnostic potential of exhaled breath particles
+    in patients with COVID-19
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1186/s12014-023-09403-2
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD039058
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Sandra Lindstedt, Dept. of Cardiothoracic Surgery and Transplantation,
+      Skane University Hospital / Dept. of Clinical Sciences, Lund University, Lund,
+      Sweden
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 21
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+  column_type:
+    value: 8 cm x 150 um Evosep column packed with 1.5 um ReproSil-Pur C18-AQ particles
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+  acquisition_mode:
+    value: DDA PASEF
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+  lc_system:
+    value: Evosep One liquid chromatography (LC) system (Evosep One, Odense, Denmark)
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+  sample_prep:
+    value: EBP samples incubated in 2% SDS in 50 mM TEAB at 37 C for 2 h, reduced
+      with 400 mM DTT (45 min), alkylated with 800 mM iodoacetamide in dark (30 min),
+      acidified with phosphoric acid to 1.2%, proteins collected onto S-TRAP columns
+      with 90% methanol/100 mM TEAB; peptides eluted with 50 mM TEAB, 0.2% formic
+      acid and 50% acetonitrile with 0.2% formic acid, dried by speedvac at 45 C and
+      re-dissolved in 20 uL 0.1% FA / 2% ACN
+    status: inferred
+    source: paper:10.1186_s12014-023-09403-2.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Lung
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

@@ -1,0 +1,89 @@
+accession: PXD064837
+version: '1.0'
+generated_at: '2026-05-17T21:09:16.781741'
+title:
+  value: Glycoproteomics analysis of Complement Factor H and its effect on complement
+    regulatory function during Streptococcus pneumoniae-associated hemolytic uremic
+    syndrome
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.3389/FIMMU.2025.1645196
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD064837
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Lambertus P. van den Heuvel, Radboud University Medical Centre, Nijmegen,
+      Netherlands (corresponding author; bert.vandenheuvel@radboudumc.nl)
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 25
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.95
+  column_type:
+    value: "75 \xB5m x 150 mm C18 reversed-phase column, 1.9 \xB5m particle size,\
+      \ 120 \xC5 pore size (Bruker Daltonics)"
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.95
+  acquisition_mode:
+    value: dda-PASEF
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.97
+  lc_system:
+    value: Bruker nanoElute liquid chromatography system
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.97
+  sample_prep:
+    value: Human plasma proteins denatured in 8 M urea / 10 mM Tris-HCl pH 8, reduced
+      and alkylated, trypsin digested overnight; glycopeptides enriched on Sepharose
+      CL-4B beads in 96 multiwell filter plates, washed with 83% ACN and 83% ACN/0.1%
+      TFA, eluted with water
+    status: inferred
+    source: paper:10.3389_FIMMU.2025.1645196.pdf
+    confidence: 0.92
+  tissue:
+    value:
+    - Blood plasma
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: body_fluid
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

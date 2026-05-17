@@ -1,0 +1,88 @@
+accession: PXD060977
+version: '1.0'
+generated_at: '2026-05-17T21:07:58.653262'
+title:
+  value: iTF Microglia Cell-Surface Proteomics
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1186/s13024-025-00883-4
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD060977
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: James A. Wells, Department of Pharmaceutical Chemistry / Department of
+      Cellular and Molecular Pharmacology, University of California, San Francisco
+      (UCSF)
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 90
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.95
+  column_type:
+    value: Aurora Ultimate CSI 25 cm x 75 um C18 (Ionopticks) OR PepSep XTREME 25
+      cm x 150 um (Bruker)
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: DDA PASEF
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.95
+  lc_system:
+    value: nanoElute UHPLC system (Bruker)
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Cell-surface biotinylation via WGA-HRP / biotin tyramide; NeutrAvidin-coated
+      agarose bead pull-down of biotinylated proteins; on-bead processing with PreOmics
+      iST kit; desalting on PreOmics columns; peptides quantified with Pierce Quantitative
+      Colorimetric Peptide Assay
+    status: inferred
+    source: paper:10.1186_s13024-025-00883-4.pdf
+    confidence: 0.9
+  tissue:
+    value:
+    - Microglial cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

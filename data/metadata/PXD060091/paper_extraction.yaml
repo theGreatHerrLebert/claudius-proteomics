@@ -1,0 +1,135 @@
+accession: PXD060091
+extracted_at: "2026-05-17T19:34:03Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-025-58429-7.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.85
+    evidence: "The gradient ran as follows: 6-22% B over 44min, 22-30% B over the next 12min, ramping up to 80% B in the following 2min, and holding at 80% B for the last 2min at a flow rate of 450nl/min."
+  lc_system:
+    value: NanoElute high-performance liquid chromatography system
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "Liquid chromatography-mass spectrometry analysis was performed on a NanoElute high-performance liquid chromatography system."
+  mobile_phases:
+    value:
+      A: "0.1% formic acid and 2% acetonitrile"
+      B: "0.1% formic acid in acetonitrile"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "Mobile phase A consisted of 0.1% formic acid and 2% acetonitrile, while phase B was 0.1% formic acid in acetonitrile."
+  flow_rate:
+    value: "450 nl/min"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "holding at 80% B for the last 2min at a flow rate of 450nl/min."
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.5
+    evidence: "Liquid chromatography-mass spectrometry analysis was performed on a NanoElute high-performance liquid chromatography system."
+  cell_lines_tissues:
+    value: "10 pairs of human cholangiocarcinoma and adjacent non-tumor tissues"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "Our study conducted a comprehensive proteomic analysis on protein extracts from 10 pairs of human cholangiocarcinoma and adjacent non-tumor tissues."
+  sample_prep:
+    value: "Protein samples equilibrated in lysis buffer, subjected to 20% trichloroacetic acid (TCA) precipitation, centrifuged at 4500xg for 5min at 4C, pellet washed 2-3 times with cold acetone and dried, then resuspended in 200mM triethylammonium bicarbonate (TEAB) and sonicated."
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.9
+    evidence: "Protein samples were equilibrated in concentration using lysis buffer and subjected to trichloroacetic acid (TCA) precipitation with 20% TCA, followed by centrifugation at 4500xg for 5min at 4C. The supernatant was discarded, and the pellet was washed 2-3 times with cold acetone before drying. The dried pellet was resuspended in 200mM triethylammonium bicarbonate (TEAB) and sonicated."
+  digestion_details:
+    value:
+      enzyme: "Trypsin"
+      ratio: "1:50 enzyme-to-protein"
+      time: "overnight"
+      reduction: "5mM dithiothreitol at 56C for 30min"
+      alkylation: "11mM iodoacetamide in the dark at room temperature for 15min"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.92
+    evidence: "Trypsin digestion was performed at a 1:50 enzyme-to-protein ratio overnight. The digested samples were then reduced with 5mM dithiothreitol at 56C for 30min and alkylated with 11mM iodoacetamide in the dark at room temperature for 15min."
+  fractionation:
+    value:
+      method: "Affinity enrichment of succinyl-lysine peptides with succinyl-lysine-specific resin (PTM-402, PTM Bio); peptides eluted with 0.1% trifluoroacetic acid and desalted with C18 ZipTips"
+      n_fractions: 1
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.85
+    evidence: "Peptides were solubilized in IP buffer and incubated with succinyl-lysine-specific resin (PTM-402, PTMBio) overnight at 4C on a rotator. Post-binding, the resin was washed with IP buffer and deionized water, and peptides were eluted with 0.1% trifluoroacetic acid, vacuum dried, and desalted using C18 ZipTips."
+  quantification_method:
+    value: "Label-free quantification (LFQ)"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "Label-free quantification was employed, maintaining identification and peptide-spectrum match FDRs at 1%."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "1.6.6.0"
+        purpose: "Database search, identification and label-free quantification of proteomics raw data"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.95
+    evidence: "Data were analyzed using MaxQuant version 1.6.6.0 against the Homo sapiens database (20,366 sequences)."
+  search_database:
+    value:
+      source: "Homo sapiens database"
+      species: "Homo sapiens"
+      entries: 20366
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.9
+    evidence: "Data were analyzed using MaxQuant version 1.6.6.0 against the Homo sapiens database (20,366 sequences), incorporating a decoy strategy to assess false discovery rates and removing contaminants."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "20 ppm"
+      enzyme: "Trypsin/P"
+      missed_cleavages: 4
+      min_peptide_length: 7
+      max_modifications_per_peptide: 5
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Acetylation of protein N-termini, methionine oxidation, lysine succinylation"
+      fdr: "1% at peptide and peptide-spectrum match level"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.92
+    evidence: "Search settings included trypsin/P as the cleavage enzyme, up to 4 missed cleavages, a minimum peptide length of 7, and a maximum of 5 modifications per peptide. Parent ion and fragment ion mass tolerances were set at 20ppm. Fixed modification was carbamidomethyl (C), and variable modifications included acetylation of protein N-termini, methionine oxidation, and lysine succinylation. Label-free quantification was employed, maintaining identification and peptide-spectrum match FDRs at 1%."
+  lab_id:
+    value: "Jiabei Wang, Yao Liu and Lianxin Liu - The First Affiliated Hospital of USTC, Division of Life Sciences and Medicine, University of Science and Technology of China, Hefei, China"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.9
+    evidence: "Correspondence and requests for materials should be addressed to Jiabei Wang, Yao Liu or Lianxin Liu. e-mail: jbwang16@ustc.edu.cn; liuyao66@ustc.edu.cn; liulx@ustc.edu.cn"
+  study_type:
+    value: phosphoproteomics
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.6
+    evidence: "Peptides were solubilized in IP buffer and incubated with succinyl-lysine-specific resin (PTM-402, PTMBio) overnight at 4C on a rotator (succinyl-lysine PTM enrichment / succinylproteomics study)."
+  number_of_replicates:
+    value:
+      biological: "10 paired tumor / non-tumor tissue samples"
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.85
+    evidence: "Our study conducted a comprehensive proteomic analysis on protein extracts from 10 pairs of human cholangiocarcinoma and adjacent non-tumor tissues."
+  key_findings:
+    value: "Succinyl-lysine proteomic analysis of paired human cholangiocarcinoma and adjacent non-tumor tissues identified PDHA1 K83 succinylation; this modification inhibits PDH activity, elevates alpha-ketoglutarate, and suppresses macrophage MHC-II antigen presentation in cholangiocarcinoma."
+    status: inferred
+    source: "paper:10.1038_s41467-025-58429-7.pdf"
+    confidence: 0.8
+    evidence: "Single-cell and Bulk RNA-seq analyses together reveal that PDHA1 K83 succinylation inhibits macrophage antigen presentation function."
+status: success

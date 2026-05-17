@@ -217,11 +217,17 @@ data/extracted/*
 data/discovery/*
 data/merged/*
 data/checkpoints/*
-data/metadata/*
 data/datasets/*
 data/packages/*
 data/provenance/*
 !data/*/.gitkeep
+
+# data/metadata/: the curated per-dataset YAMLs (pride_metadata.yaml,
+# paper_extraction.yaml, metadata.yaml) ARE committed — small, version-worthy,
+# the project's metadata layer. Only the PDFs / extracted full text (copyright,
+# size) and the raw API cache are excluded.
+data/metadata/**/papers/
+data/metadata/**/raw_api_response.json
 
 # Database (large, but keep structure)
 database/peptides/*

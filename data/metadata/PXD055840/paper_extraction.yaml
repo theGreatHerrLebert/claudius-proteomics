@@ -1,0 +1,115 @@
+accession: PXD055840
+extracted_at: "2026-05-17T19:31:43Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1007_s44164-025-00087-6.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.6
+    evidence: "Raw files from LC-MS/MS analyses were submitted to MaxQuant software (ver 2.0.3.0) for protein identification and label-free quantification."
+  ce_strategy:
+    value: "Not described in this paper; LC-MS/MS analysis stated to have been described previously in references [8, 22]"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.4
+    evidence: "The proteomic analysis, using LC-MS/MS, have been described previously [8, 22]."
+  cell_lines_tissues:
+    value: "Primary human skeletal muscle satellite cells isolated from musculus vastus lateralis biopsies, cultured as three-dimensional (3D) myospheres"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.95
+    evidence: "Human satellite cells were isolated from muscle biopsy samples as previously described [18]. ... Myospheres were cultured and differentiated for 10 days, washed in DPBS and spun down at 1000 rpm at 4 C for 5 min."
+  sample_prep:
+    value: "Myospheres formed by seeding ~3x10^4 myoblasts per well in ultra-low-attachment U-bottom 96-well plates, aggregated by natural sedimentation; cultured and differentiated for 10 days, washed in DPBS, spun down at 1000 rpm at 4 C for 5 min, snap frozen in liquid nitrogen and stored at -80 C"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.85
+    evidence: "Myospheres were cultured and differentiated for 10 days, washed in DPBS and spun down at 1000 rpm at 4 C for 5 min. The cells were then snap frozen in liquid nitrogen and stored at -80 C."
+  digestion_details:
+    value:
+      enzyme: "Trypsin (without proline restriction)"
+      missed_cleavages: 2
+      alkylation: "Carbamidomethylation of cysteine (set as fixed modification in search)"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.5
+    evidence: "Carbamidomethyl (C) was set as a fixed modification ... Trypsin without proline restriction enzyme option was used, with two allowed mis-cleavages."
+  quantification_method:
+    value: label-free
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.95
+    evidence: "Raw files from LC-MS/MS analyses were submitted to MaxQuant software (ver 2.0.3.0) for protein identification and label-free quantification. ... Normalised intensities (LFQ) were log10 transformed"
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "2.0.3.0"
+        purpose: "Protein identification and label-free quantification"
+      - name: Perseus
+        version: "1.6.15.0"
+        purpose: "Downstream statistical analysis of MaxQuant proteinGroups output"
+      - name: STRING
+        version: "12.0"
+        purpose: "KEGG pathway analysis of differentially regulated proteins"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.95
+    evidence: "Raw files ... were submitted to MaxQuant software (ver 2.0.3.0) ... MaxQuant proteinGroup-file was further analyzed in Perseus software (ver 1.6.15.0). ... KEGG pathway analysis of differential regulated proteins was made using STRING version 12.0"
+  search_database:
+    value:
+      source: UniProt
+      species: "Homo sapiens (human)"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.85
+    evidence: "The Uniprot human database was used."
+  search_settings:
+    value:
+      precursor_tolerance: "First search error window 20 ppm; main search error 6 ppm"
+      enzyme: "Trypsin without proline restriction"
+      missed_cleavages: 2
+      min_unique_peptides: 1
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Protein N-terminal acetylation; methionine oxidation"
+      fdr: "1% (0.01) FDR for both peptide and protein identification; reversed-sequence decoy strategy"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.95
+    evidence: "Carbamidomethyl (C) was set as a fixed modification and protein N-acetylation and methionine oxidation as variable modifications. First search error window was 20 ppm and main search error 6 ppm. Trypsin without proline restriction enzyme option was used, with two allowed mis-cleavages. Minimal unique peptides were set to one, and FDR allowed was 0.01 (1%) for peptide and protein identification. ... Generation of reversed sequences was selected to assign FDR rate."
+  lab_id:
+    value: "G. Hege Thoresen, Section for Pharmacology and Pharmaceutical Biosciences, Department of Pharmacy, University of Oslo, Oslo, Norway (corresponding author); proteomics performed at the Department of Immunology, Institute of Clinical Medicine, University of Oslo and Oslo University Hospital, Norway"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.9
+    evidence: "G. Hege Thoresen hege.thoresen@farmasi.uio.no  1 Section for Pharmacology and Pharmaceutical Biosciences, Department of Pharmacy, University of Oslo, Oslo, Norway"
+  study_type:
+    value: drug_treatment
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.7
+    evidence: "The aim of this study was to explore the effects of krill oil supplementation in vivo in a 3D myosphere model, and to compare the human skeletal muscle 3D cell model to a 2D model."
+  number_of_replicates:
+    value:
+      biological: "5 donors successfully analyzed for protein expression (out of 7 participants); filtering required at least 3/5 valid values in at least one group"
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.8
+    evidence: "Due to technical reasons, only four and five of the donors were successfully analyzed for gene and protein expression, respectively. ... data was filtered to have at least 3/5 valid values in at least one group"
+  reported_ids:
+    value:
+      proteins: 3381
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.9
+    evidence: "The proteomic analysis identified 3381 proteins, of which 104 were upregulated and 61 were downregulated"
+  key_findings:
+    value: "In vivo krill oil supplementation increased expression of proteins in glycolysis/gluconeogenesis and fatty acid degradation pathways in 3D human myospheres, while downregulating oxidative phosphorylation proteins. The 3D myosphere model showed metabolic and expression changes more compatible with in vivo skeletal muscle observations than the 2D myotube model."
+    status: inferred
+    source: "paper:10.1007_s44164-025-00087-6.pdf"
+    confidence: 0.9
+    evidence: "Proteomic analyses after krill oil intervention showed increased expression of proteins in glycolysis/gluconeogenesis and fatty acid degradation. ... the 3D cell model might better reflect krill oil-induced modifications in skeletal muscle performance in vivo than the 2D model."
+status: success

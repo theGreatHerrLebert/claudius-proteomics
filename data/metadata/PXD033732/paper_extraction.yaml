@@ -1,0 +1,136 @@
+accession: PXD033732
+extracted_at: "2026-05-17T19:23:00Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41598-022-26359-9.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 42
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "Peptides were separated on a 25 cm x 75 µm Aurora column (Ion optics) at 60 °C with a solvent gradient over 42 min, using acetonitrile with 0.1% formic acid as eluent at a flow rate of 600 nL min-1."
+  column_type:
+    value: "25 cm x 75 µm Aurora column (Ion optics, IonOpticks)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.9
+    evidence: "Peptides were separated on a 25 cm x 75 µm Aurora column (Ion optics) at 60 °C"
+  lc_system:
+    value: "Dionex Ultimate 3000RSnano chromatography system (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "analyzed on a Bruker TIMS-TOF PRO mass spectrometer (Bruker Daltonics) in the positive ion mode with a Captivespray ion source on-line connected to a Dionex Ultimate 3000RSnano chromatography systems (Thermo Fisher Scientific)."
+  mobile_phases:
+    value: "Eluent B: acetonitrile with 0.1% formic acid (mobile phase A composition not explicitly stated)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.6
+    evidence: "with a solvent gradient over 42 min, using acetonitrile with 0.1% formic acid as eluent at a flow rate of 600 nL min-1."
+  flow_rate:
+    value: "600 nL/min"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "using acetonitrile with 0.1% formic acid as eluent at a flow rate of 600 nL min-1."
+  column_temp:
+    value: "60 °C"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "Peptides were separated on a 25 cm x 75 µm Aurora column (Ion optics) at 60 °C"
+  acquisition_mode:
+    value: diaPASEF
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "The mass spectrometer was operated in DIA PASEF mode with 0.53 s cycle time and TIMS ramp time of 100 ms."
+  cell_lines_tissues:
+    value: "Primary human coronary artery smooth muscle cells (HCASMC, donor 1522, Cell Applications)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.95
+    evidence: "Primary human coronary artery smooth muscle cells (HCASMC, donor 1522) purchased from Cell Applications (San Diego, CA, USA) were used between passages 2 and 5."
+  sample_prep:
+    value: "Conditioned media (300 µL) from HCASMC exposed to 30 µM AN (wt or L37AY40A) for 24 h in basal media; samples loaded on 1 mL HiTrap HisTrap columns to remove AN, flow-through concentrated to 300 µL and mixed with 8 M urea, then in-solution digested in a spin filter"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.85
+    evidence: "Supernatants (300 µL) containing conditioned media from cells exposed to +/- 30 µM AN (wt or L37AY40A AN) for 24 h in basal media as described above were loaded on 1 mL HiTrap HisTrap columns (Cytiva life science) ... The flow-through was concentrated to 300 µL and mixed with 200 µL 8 M urea (in 0.1 M Tris, pH 8.5) in a spin filter (10,000 kD MWCO, Vivacon 500, Sartorius)"
+  digestion_details:
+    value:
+      enzyme: trypsin
+      ratio: "1 µg/µL trypsin (0.1 µg/µL) added"
+      time: overnight
+      temperature: "20 °C"
+      reduction: "50 mM DTT in 8 M urea/Tris buffer, incubated 30 min at 20 °C"
+      alkylation: "50 mM iodoacetamide in 8 M urea/Tris buffer, incubated 30 min at 20 °C in the dark"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.85
+    evidence: "400 µL 8 M urea in Tris buffer containing 50 mM DTT was added and incubated at 20 °C for 30 min. ... before addition of 400 µL 8 M urea in Tris buffer containing 50 mM iodoacetamide, and incubated for another 30 min at 20 °C in the dark. ... 100 µL 1.6 M urea in 0.1 M Tris (pH 8.0) and 1 µg trypsin (0.1 µg/µL) were added followed by incubation overnight at 20 °C."
+  quantification_method:
+    value: "label-free (DIA quantification via DIA-NN)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.85
+    evidence: "Database searches were performed using DIA-NN version 1.8 with a spectral library generated in silico from the human UniProt reference proteome ... Post-processing and statistical analysis on triplicate samples of culture supernatants was performed using Perseus (version 1.6.15.0), with a permutation based t-test (FDR 0.05, S0 0.75)"
+  processing_software:
+    value:
+      - name: DIA-NN
+        version: "1.8"
+        purpose: "Database search of diaPASEF data using an in silico spectral library"
+      - name: Perseus
+        version: "1.6.15.0"
+        purpose: "Post-processing and statistical analysis (permutation-based t-test)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.9
+    evidence: "Database searches were performed using DIA-NN version 1.8 ... Post-processing and statistical analysis on triplicate samples of culture supernatants was performed using Perseus (version 1.6.15.0), with a permutation based t-test (FDR 0.05, S0 0.75)"
+  search_database:
+    value: "Human UniProt reference proteome UP000000558 (in silico generated spectral library)"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.9
+    evidence: "Database searches were performed using DIA-NN version 1.8 with a spectral library generated in silico from the human UniProt reference proteome (UP000000558)"
+  search_settings:
+    value:
+      enzyme: trypsin
+      missed_cleavages: 1
+      fixed_modifications: "cysteine carbamidomethylation"
+      variable_modifications: "methionine oxidation, N-terminal acetylation"
+      precursor_tolerance: "MS1 accuracy +/- 10 ppm"
+      fdr: "1% precursor FDR"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.9
+    evidence: "using the following parameters: trypsin with 1 missed cleavage, methionine oxidation and N-terminal acetylation (variable modifications), cysteine carbamidomethylation (fixed modification), MS1 accuracy +/- 10 ppm, precursor false discovery rate (FDR) 1%."
+  lab_id:
+    value: "Per Hägglund (pmh@sund.ku.dk) and Michael J. Davies, Department of Biomedical Sciences, University of Copenhagen, Denmark"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.9
+    evidence: "Michael J. Davies and Per Hagglund. email: davies@sund.ku.dk; pmh@sund.ku.dk ... Department of Biomedical Sciences, University of Copenhagen, Copenhagen, Denmark."
+  study_type:
+    value: drug_treatment
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.7
+    evidence: "Culture supernatants from HCASMC were subjected to proteomics analysis to evaluate if wt or L37AY40A AN induced changes in the levels of specific proteins secreted from the cells."
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: "not specified"
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.7
+    evidence: "Post-processing and statistical analysis on triplicate samples of culture supernatants was performed using Perseus (version 1.6.15.0)"
+  key_findings:
+    value: "Anastellin (wild-type and L37AY40A mutant) impacts the processing of extracellular matrix proteins by human coronary artery smooth muscle cells, with increased secretion of collagens, proteases and inflammatory cytokines (including IL-6) and decreased laminin and fibronectin in conditioned media. Wt and L37AY40A AN elicit slightly different but partially overlapping responses in ECM processing."
+    status: inferred
+    source: "paper:10.1038_s41598-022-26359-9.pdf"
+    confidence: 0.85
+    evidence: "Proteomic analyses reveal that anastellin also impacts on the processing of other ECM proteins, with increased collagen and decreased laminin detected in media from cells exposed to wild-type anastellin. Moreover, both anastellin forms stimulate release of inflammatory cytokines, including interleukin 6."
+status: success

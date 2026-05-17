@@ -1,0 +1,139 @@
+accession: PXD069593
+extracted_at: "2026-05-17T19:34:42Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s44318-025-00675-y.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: "phosphoproteome: 30 samples-per-day Evosep gradient (~44 min); total proteome: 75 min"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.7
+    evidence: "using the 30 samples per day (spd) gradient method of an Evosep One LC system. ... Tryptic peptides were trapped and separated over a 75 min gradient, going from 3 to 20% B (0.1% FA in 80% ACN) in 40 min, to 35% in 20 min, up to 99% B in 1 min and then staying at 99% for 14 min."
+  column_type:
+    value: "phosphoproteome: 15 cm x 150 um x 1.5 um analytical column (EV1137, Evosep); total proteome: EASY-SPRAY PepMapNeo column 50 cm x 75 um, with PepMapNeo trap (5 um, 300 um x 5 mm)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.9
+    evidence: "Peptides were chromatographically separated on a 15cm x 150 um x 1.5 um analytical column (EV1137, Evosep) ... EASY-SPRAY PepMapNeo column (50cm x 75 um, 1500bar; Thermo Fisher) ... using a PepMapNeo trap (5 um, 300 um x 5mm; Thermo Fisher) with backflash"
+  lc_system:
+    value: "phosphoproteome: Evosep One; total proteome: Vanquish Neo UHPLC"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.95
+    evidence: "analysed by LC-MS/MS using the Evosep One connected to a tims-TOF Pro mass spectrometer. ... The corresponding total proteomes were analysed using the Vanquish Neo UHPLC connected to Thermo Orbitrap Ascend mass spectrometer"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid in water"
+      B: "0.1% FA in 80% ACN (total proteome)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.55
+    evidence: "going from 3 to 20% B (0.1% FA in 80% ACN) in 40 min"
+  flow_rate:
+    value: "300 nL/min (total proteome gradient)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "The flow rate was maintained at 300nL/min throughout the gradient."
+  acquisition_mode:
+    value: "phosphoproteome: ddaPASEF; total proteome: DIA"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.95
+    evidence: "Phosphopeptide MS data were acquired in data-dependent parallel accumulation serial fragmentation (ddaPASEF) mode. ... MS data were acquired in Data Independent Acquisition (DIA) mode"
+  ce_strategy:
+    value: "phosphoproteome (timsTOF): ion mobility-dependent collision energy increasing nonlinearly over the ion mobility range; total proteome (Orbitrap): fixed 30% normalised collision energy in DIA MS2"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "Ions selected for fragmentation were isolated by the quadrupole and fragmented using an ion mobility-dependent collision energy that increased nonlinearly over the ion mobility range ... DIA MS2 scans were then acquired ... and a 30% collision energy."
+  cell_lines_tissues:
+    value: "LN229 (glioblastoma), H4 (neuroglioma), HEK293T, Flp-In T-REx HEK293; FBXO42 K/O cells and siRNA PP4C"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "Heatmap of the total proteomes of LN229 and FBXO42 K/O cells ... Heatmap of the Phosphopeptides in LN229 and FBXO42 K/O cells and siRNA PP4C ... LN229, HEK293T and H4 were obtained from American Type Culture Collection (ATCC)"
+  sample_prep:
+    value: "Cells lysed in RIPA buffer (50 mM Tris-HCl, 150 mM NaCl, 0.1% SDS, 0.5% Na deoxycholate, 1% NP40) with phosSTOP phosphatase inhibitors and protease inhibitors; SDS removed; proteins methanol/chloroform precipitated; pellet resuspended in 8 M urea in 20 mM HEPES pH 8 with phosphatase inhibitors"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "Cells were lysed in RIPA buffer (50mm Tris-HCl, 150mM NaCl, 0.1 SDS, 0.5% Nadecoxylate, 1% NP40) supplemented with phosSTOP phosphatase inhibitors (Roche) and protease inhibitors. ... cell lysates ... were sequentially reduced with 5mM DTT ... and alkylated with 20mM IAA ... before proteins were precipitated using Methanol: chloroform ... Protein pellets were resuspended with 8M urea in 20mM HEPES at pH8 containing phosphatase inhibitors."
+  digestion_details:
+    value:
+      enzyme: trypsin
+      ratio: "1:50 (trypsin:protein)"
+      time: "16 h"
+      temperature: "37 C"
+      reduction: "5 mM DTT, 30 min at room temperature"
+      alkylation: "20 mM iodoacetamide (IAA), 30 min at room temperature"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "sequentially reduced with 5mM DTT (final concentration) for 30min at room temperature and alkylated with 20mM IAA (final concentration) for 30min at room temperature ... Urea concentration was diluted down to <1M with 20m HEPES at pH8 before adding Trypsin (ratio 1:50) for 16h at 37 C."
+  fractionation:
+    value:
+      method: "TiO2 phospho-enrichment (Agilent Bravo AssayMap, 5 ul TiO2 cartridges); 10% of tryptic digest kept for total proteome"
+      n_fractions: "2 (total proteome fraction + phospho-enriched fraction)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.7
+    evidence: "10% of the tryptic digests were kept aside to perform a total proteome analysis. The rest of the tryptic digests were desalted ... The phospho-enrichment step was performed using the predefine Agilent Bravo AssayMap liquid handler workflow for TiO2 cartridges (AssayMap 5 ul Titanium Dioxide TiO2 cartridges ... Agilent)."
+  quantification_method:
+    value: "label-free (DIA quantification for total proteome via DIA-NN; LFQ-phospho for phosphoproteome via FragPipe)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.8
+    evidence: "Phospho-enriched samples were analysed in Fragpipe (v20.0) using the LFQ-phospho workflow ... total proteomes were analysed using DIA-NN (v1.8.1) in library-free mode with default settings."
+  processing_software:
+    value:
+      - name: FragPipe
+        version: "20.0"
+        purpose: "phosphoproteome search (LFQ-phospho workflow)"
+      - name: DIA-NN
+        version: "1.8.1"
+        purpose: "total proteome DIA library-free search and quantification"
+      - name: Perseus
+        version: "1.6.2.2"
+        purpose: "downstream statistical analysis"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.9
+    evidence: "Phospho-enriched samples were analysed in Fragpipe (v20.0) using the LFQ-phospho workflow ... total proteomes were analysed using DIA-NN (v1.8.1) in library-free mode ... Search results were analysed in Perseus (v1.6.2.2)."
+  search_database:
+    value: "reviewed Human proteome (UniProtKB), downloaded 2022-02, 20386 sequences"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.9
+    evidence: "FBOX42 and PP4C full proteome and phosphoproteome data were searched against the reviewed Human proteome (UniProtKB, downloaded 202202, 20386 sequences)."
+  search_settings:
+    value:
+      enzyme: "trypsin (strict cleavage in FragPipe; protease in DIA-NN)"
+      missed_cleavages: "FragPipe: 2; DIA-NN: 1"
+      fixed_modifications: "carbamidomethylation (C)"
+      variable_modifications: "FragPipe: phosphorylation (STY), oxidation (M), acetylation (N-terminus); DIA-NN: oxidation (M), N-term M excision on"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.85
+    evidence: "Fragpipe (v20.0) using the LFQ-phospho workflow with the predefined settings, which included strict trypsin cleavage (2 missed cleavages), phosphorylation (STY), oxidation (M) and acetylation (N-terminus) as variable modifications and carbamidomethylation (C) as fixed modification ... DIA-NN (v1.8.1) ... Trypsin was selected as protease (1 missed cleavage), carbamidomethylation on Cysteines as fixed modification and Oxidation on methionine as variable (N-term M excision turn on)."
+  lab_id:
+    value: "Hongbin Yang et al., The EMBO Journal (study on FBXO42 / PP4 phosphatase)"
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.3
+    evidence: "Hongbin Yang et al The EMBO Journal"
+  study_type:
+    value: phosphoproteomics
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.7
+    evidence: "full proteome and phosphoproteome data PXD069593 ... Phospho-enriched samples were analysed in Fragpipe (v20.0) using the LFQ-phospho workflow"
+  key_findings:
+    value: "FBXO42 was knocked out (CRISPR) in glioblastoma LN229 cells and PP4C depleted by siRNA; comparative total-proteome and phosphoproteome profiling implicate FBXO42 in the DNA damage response via non-degradative ubiquitination of the PP4 phosphatase complex."
+    status: inferred
+    source: "paper:10.1038_s44318-025-00675-y.pdf"
+    confidence: 0.7
+    evidence: "the overall reduction of phosphorylation events is indicative of a defect in the DNA damage response ... we predict PP4 complex to be ubiquitinated by FBXO42, although not targeted for degradation."
+status: success

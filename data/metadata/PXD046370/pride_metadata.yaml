@@ -1,0 +1,94 @@
+accession: PXD046370
+version: '1.0'
+generated_at: '2026-05-17T21:05:58.557210'
+title:
+  value: A complete peptidome workflow for neoantigen identification and validation
+    by mass spectrometry-based immunopeptidomics
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.21203/RS.3.RS-3520814/V1
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD046370
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: 'Corresponding authors: Ming Li (David R. Cheriton School of Computer Science,
+      University of Waterloo, Ontario, Canada), Baozhen Shan (Bioinformatics Solutions
+      Inc., Waterloo, Ontario, Canada), Yi Zhang (Biotherapy Center, The First Affiliated
+      Hospital of Zhengzhou University, Zhengzhou, China)'
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.95
+  column_type:
+    value: "Homemade C18 column, 200 mm x 75 \xB5m i.d., 1.9 \xB5m particle size (Dr.\
+      \ Maisch GmbH); reverse-phase C18 packing"
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: DDA-PASEF (data-dependent acquisition with Parallel Accumulation-Serial
+      Fragmentation, 10 PASEF scans per cycle)
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.95
+  lc_system:
+    value: nanoElute HPLC (Bruker)
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.95
+  sample_prep:
+    value: HLA peptide (immunopeptidome) enrichment using the Neo Discovery immunopeptidome
+      enrichment Kit (BaizhenBio Inc.). Tissues homogenized in a grinding mill with
+      liquid nitrogen; lysis buffer added to pellet and incubated on ice 1 hour; sonicated
+      3 minutes on ice; centrifuged 20000g at 4 degC for 1 hour. Supernatant used
+      for MHC-peptide complex enrichment with anti-HLA I antibody crosslinked beads.
+      Immuno-peptides separated and desalted by C18 spin column (GL science) and dried
+      by speed-vacuum.
+    status: inferred
+    source: paper:10.21203_RS.3.RS-3520814_V1.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Cervical carcinoma cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

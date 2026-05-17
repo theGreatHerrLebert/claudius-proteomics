@@ -1,0 +1,87 @@
+accession: PXD069593
+version: '1.0'
+generated_at: '2026-05-17T21:11:55.538261'
+title:
+  value: Pervasive phenotypic effects of FBXO42 promoted by regulation of PP4 phosphatase
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s44318-025-00675-y
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD069593
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Hongbin Yang et al., The EMBO Journal (study on FBXO42 / PP4 phosphatase)
+    status: inferred
+    source: paper:10.1038_s44318-025-00675-y.pdf
+    confidence: 0.3
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: Bruker Daltonics timsTOF series
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 75
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: 'phosphoproteome: 15 cm x 150 um x 1.5 um analytical column (EV1137, Evosep);
+      total proteome: EASY-SPRAY PepMapNeo column 50 cm x 75 um, with PepMapNeo trap
+      (5 um, 300 um x 5 mm)'
+    status: inferred
+    source: paper:10.1038_s44318-025-00675-y.pdf
+    confidence: 0.9
+  acquisition_mode:
+    value: 'phosphoproteome: ddaPASEF; total proteome: DIA'
+    status: inferred
+    source: paper:10.1038_s44318-025-00675-y.pdf
+    confidence: 0.95
+  lc_system:
+    value: 'phosphoproteome: Evosep One; total proteome: Vanquish Neo UHPLC'
+    status: inferred
+    source: paper:10.1038_s44318-025-00675-y.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Cells lysed in RIPA buffer (50 mM Tris-HCl, 150 mM NaCl, 0.1% SDS, 0.5%
+      Na deoxycholate, 1% NP40) with phosSTOP phosphatase inhibitors and protease
+      inhibitors; SDS removed; proteins methanol/chloroform precipitated; pellet resuspended
+      in 8 M urea in 20 mM HEPES pH 8 with phosphatase inhibitors
+    status: inferred
+    source: paper:10.1038_s44318-025-00675-y.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Ln-229 cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

@@ -1,0 +1,65 @@
+accession: PXD058328
+extracted_at: "2026-05-17T19:31:50Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_fmed.2024.1537770.pdf
+    source: unpaywall
+fields:
+  acquisition_mode:
+    value: "4D label-free (timsTOF / PASEF-based 4D proteomics; DDA vs DIA not specified in main text)"
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.55
+    evidence: "Anterior capsule, nucleus, and cortex specimens from the patient (designated as PT_CAP, PT_PHACO, and PT_CTX, respectively) and age-related cataract controls (C_CAP, C_PHACO, and C_CTX, respectively) were collected and subjected to 4D label-free quantitative proteomics."
+  quantification_method:
+    value: "label-free (4D label-free quantification)"
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.95
+    evidence: "Protein extracts originating from distinct components of both the patient's and controls' lenses were meticulously collected for 4D Label-Free analysis"
+  cell_lines_tissues:
+    value: "Human ocular lens tissue: anterior capsule, lens nucleus (phacoemulsification collection fluid), and lens cortex; from one patient with toad venom-induced toxic cataract and three age-related cataract controls."
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.95
+    evidence: "Samples of the lens anterior capsule, phacoemulsification collection fluid, and lens cortex were collected and designated as follows: Control's lens anterior capsule samples 1, 2, and 3 (C_CAP 1, C_CAP 2, and C_CAP 3) ..."
+  sample_prep:
+    value: "Lens specimens (anterior capsule, nucleus, and cortex) collected intraoperatively during micro-incision phacoemulsification and IOL implantation surgery; protein extracts prepared from the distinct lens components for proteomic analysis."
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.7
+    evidence: "Protein extracts originating from distinct components of both the patient's and controls' lenses were meticulously collected for 4D Label-Free analysis, as depicted in the flow diagram presented in Figure 2A."
+  lab_id:
+    value: "Wen Xu (corresponding author), Eye Center of the 2nd Affiliated Hospital, School of Medicine, Zhejiang University, Hangzhou, Zhejiang, China; Zhejiang Provincial Key Lab of Ophthalmology, Hangzhou, Zhejiang, China."
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.95
+    evidence: "*CORRESPONDENCE Wen Xu xuwen2003@zju.edu.cn ... 1 Eye Center of the 2nd Affiliated Hospital, School of Medicine, Zhejiang University, Hangzhou, Zhejiang, China, 2 Zhejiang Provincial Key Lab of Ophthalmology, Hangzhou, Zhejiang, China"
+  study_type:
+    value: clinical
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.85
+    evidence: "TYPE Original Research ... To report a singular case of cataract caused by toad venom inoculation and to scrutinize the pathological mechanisms through proteomic sequencing of the lens specimen."
+  number_of_replicates:
+    value:
+      biological: "1 patient versus 3 age-related cataract controls per lens component (no technical replicates reported)"
+      technical: "not reported"
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.8
+    evidence: "three patients afflicted with age-related cataracts but devoid of systemic diseases were recruited as the control cohort ... Control's lens anterior capsule samples 1, 2, and 3 (C_CAP 1, C_CAP 2, and C_CAP 3)"
+  reported_ids:
+    value:
+      proteins: "Differentially expressed proteins reported per comparison: 204 DEPs (PT_CAP vs C_CAP), 109 DEPs (PT_CTX vs C_CTX), 95 DEPs (PT_PHACO vs C_PHACO); total identified protein count not stated in main text."
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.7
+    evidence: "a total of 204 DEPs were identified in PT_CAP compared to C_CAP ... A sum of 109 DEPs were delineated in PT_CTX compared to C_CTX ... Ninety-five DEPs were pinpointed in PT_PHACO compared to C_PHACO"
+  key_findings:
+    value: "This first documented case of toxic cataract caused by ocular toad venom inoculation used 4D label-free proteomics of patient lens components to reveal numerous differentially expressed proteins, implicating altered Na+/K+-ATPase activity in cataract development."
+    status: inferred
+    source: "paper:10.3389_fmed.2024.1537770.pdf"
+    confidence: 0.9
+    evidence: "Proteomic sequencing indicated a correlation between cataract and alterations in Na+/K+-ATPase activity, providing insights for the clinical management of ocular toad venom inoculation in subsequent cases."
+status: success

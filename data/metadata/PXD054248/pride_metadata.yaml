@@ -1,0 +1,88 @@
+accession: PXD054248
+version: '1.0'
+generated_at: '2026-05-17T21:13:48.079965'
+title:
+  value: Warehouse-based, immunopeptidome-guided design of personalised peptide vaccines
+    shows feasibility in clinical trial evaluation in CLL patients
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.3389/FIMMU.2024.1482715
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD054248
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Juliane S. Walz (juliane.walz@med.uni-tuebingen.de), Clinical Collaboration
+      Unit Translational Immunology, Department of Internal Medicine, University Hospital
+      Tuebingen, Tuebingen, Germany
+    status: inferred
+    source: paper:10.3389_FIMMU.2024.1482715.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: Orbitrap Fusion Lumos
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: C18
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.85
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: Patient PBMCs isolated by density gradient centrifugation and stored at
+      -80 C; HLA peptides isolated from CLL cells for immunopeptidome analysis (detailed
+      isolation protocol deferred to Supplementary Information, not available)
+    status: inferred
+    source: paper:10.3389_FIMMU.2024.1482715.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Peripheral blood mononuclear cell
+    - Peripheral blood mononuclear cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: body_fluid
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 4
+  manual_fields: 0
+  missing_fields: 2
+  missing_field_names:
+  - gradient_length
+  - lc_system
+  requires_review: true

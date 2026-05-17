@@ -1,0 +1,144 @@
+accession: PXD047232
+extracted_at: "2026-05-17T19:30:45Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S44319-023-00043-Z.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "The total gradient length was 60min."
+  column_type:
+    value: "50 cm in-house packed HPLC-column, 75-um inner diameter, packed with 1.9-um ReproSil-Pur C18-AQ silica beads (Dr. Maisch GmbH)"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "Peptides were loaded on a 50cm in-house packed HPLC-column (75-um inner diameter packed with 1.9-um ReproSilPur C18-AQ silica beads, Dr. Maisch GmbH, Germany)."
+  lc_system:
+    value: "EASY-nLC-1200 system (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "Liquid chromatography-mass spectrometry (LC-MS) analysis was performed with an EASY-nLC-1200 system (Thermo Fisher Scientific)"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid in LC-MS grade H2O"
+      B: "0.1% formic acid, 80% ACN in LC-MS grade H2O"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "from 5 to 30% buffer B (0.1% formic acid, 80% ACN in LC-MS grade H2O) ... Buffer A consisted of 0.1% formic acid in LC-MS grade H2O."
+  flow_rate:
+    value: "300 nl/min"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "then to 95% buffer B for 5min and back to 5% buffer B in the final 5min at 300nl/min."
+  column_temp:
+    value: "60 C"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "We used an in-house made column oven to keep the column temperature constant at 60C."
+  acquisition_mode:
+    value: ddaPASEF
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "Mass spectrometric analysis was performed essentially as described in Brunner et al ... in data-dependent (ddaPASEF) mode. For ddaPASEF, 1 MS1 survey TIMS-MS and 10 PASEF MS/MS scans were acquired per acquisition cycle."
+  ce_strategy:
+    value: "Collision energy lowered linearly as a function of increasing ion mobility"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.95
+    evidence: "The collision energy was lowered linearly as a function of increasing mobility starting from 59eV at 1/K0=1.6Vscm-2 to 20eV at 1/K0=0.6Vscm-2."
+  cell_lines_tissues:
+    value: "HeLa cells (GFP-Trap affinity purification); peptides eluted from GFP-Trap Agarose beads"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.8
+    evidence: "Partial on-bead digestion was used for peptide elution from GFP-Trap Agarose (Chromotek)."
+  sample_prep:
+    value: "Affinity purification mass spectrometry (AP-MS) via GFP-Trap; partial on-bead digestion; peptides desalted on SDB-RPS StageTips; dried and dissolved in 2% ACN / 0.1% TFA"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.95
+    evidence: "Partial on-bead digestion was used for peptide elution from GFP-Trap Agarose (Chromotek). ... Peptides were desalted and purified with styrene-divinylbenzene reversed-phase sulfonate (SDB-RPS) StageTips."
+  digestion_details:
+    value:
+      enzyme: trypsin
+      reduction: "2 mM DTT in elution buffer"
+      alkylation: "25 mM CAA (chloroacetamide)"
+      time_temp: "incubated 37 C for 30 min then digested overnight at room temperature"
+      stop: "1% trifluoroacetic acid (TFA) added to stop digestion"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.95
+    evidence: "100ul of elution buffer (2M urea; 2mM DTT; 20ug/ml trypsin; and 50mM Tris, pH 7.5) was added and incubated at 37C for 30min. Samples were alkylated with 25mM CAA and digested overnight at room temperature before addition of 1% trifluoroacetic acid (TFA) to stop digestion."
+  quantification_method:
+    value: "Label-free quantification (LFQ) with MaxLFQ algorithm"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "Label-free quantification was performed with the MaxLFQ algorithm (Cox et al, 2014) and a minimum ratio count of two."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "1.6.7.0"
+        purpose: "Peptide/protein identification and quantification for ddaPASEF timsTOF raw files"
+      - name: AlphaPept
+        version: "0.4.8"
+        purpose: "Analysis of Orbitrap Exploris DDA raw data (search engine, default settings)"
+      - name: Perseus
+        version: "not stated"
+        purpose: "Downstream proteomics data analysis and statistics"
+      - name: R
+        version: "not stated"
+        purpose: "Statistical analysis environment"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.95
+    evidence: "Mass spectrometric raw files acquired in ddaPASEF mode were analyzed with MaxQuant (version 1.6.7.0) ... Orbitrap Exploris generated raw data was analyzed using the AlphaPept Search engine (Strauss, 2021) version 0.4.8 using default settings. ... Proteomics data analysis was performed with Perseus (Tyanova et al, 2016) and within the R environment."
+  search_database:
+    value: "UniProt human database, 2019 release (UP000005640_9606)"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 1.0
+    evidence: "The Uniprot database (2019 release, UP000005640_9606) was searched with a peptide spectral match (PSM) and protein level FDR of 1%."
+  search_settings:
+    value:
+      enzyme: trypsin
+      missed_cleavages: 2
+      first_search_tolerance: "70 ppm"
+      main_search_tolerance: "20 ppm"
+      min_peptide_length: 7
+      fixed_modifications: "cysteine carbamidomethylation"
+      variable_modifications: "N-terminal acetylation, methionine oxidation"
+      fdr: "1% at PSM and protein level"
+      match_between_runs: "enabled, 0.7-min retention-time match window, 0.05 1/K0 ion mobility window"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.95
+    evidence: "A minimum of seven amino acids was required including N-terminal acetylation and methionine oxidation as variable modifications and cysteine carbamidomethylation as fixed modification. Enzyme specificity was set to trypsin with a maximum of two allowed missed cleavages. The first and main search mass tolerance was set to 70ppm and 20ppm, respectively. ... matching four-dimensional isotope patterns between the runs (MBR) with a 0.7-min retention-time match window and a 0.05 1/K0 ion mobility window."
+  lab_id:
+    value: "Dimitriya H Garvanska et al; SARS-CoV-2 work conducted at University of Texas Medical Branch (UTMB), Galveston"
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.5
+    evidence: "DimitriyaHGarvanskaetal ... approved by the University of Texas Medical Branch Institutional Biosafety Committee."
+  study_type:
+    value: interactomics
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.9
+    evidence: "Affinity purification and mass spectrometry (AP-MS) ... Partial on-bead digestion was used for peptide elution from GFP-Trap Agarose (Chromotek)."
+  key_findings:
+    value: "SARS-CoV-2 NSP3 directly binds the KH2 domain of FMRP family proteins (FXR1/FMRP), preventing their incorporation into stress granules; a 20-amino-acid NSP3 region is necessary and sufficient for the interaction."
+    status: inferred
+    source: "paper:10.1038_S44319-023-00043-Z.pdf"
+    confidence: 0.85
+    evidence: "Collectively this shows that the 20-amino acid sequence of SARS-CoV-2 NSP3 is required and sufficient for interaction with FMRPs. ... NSP3 prevents the incorporation of FMRPs into stress granules."
+status: success

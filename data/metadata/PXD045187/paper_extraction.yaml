@@ -1,0 +1,168 @@
+accession: PXD045187
+extracted_at: "2026-05-17T19:24:36Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_fgene.2024.1451024.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "Evosep 150 mm x 0.15 mm C18 reversed phase column (EV1106), 1.9 um C18AQ particles from Dr Maisch"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.97
+    evidence: "separated using the pre-defined 30 samples per day protocol in combination with an Evosep 150 mm x 0.15 mm C18 reversed phase column (EV1106 endurance column packed with 1.9 um C18AQ particles from Dr Maisch)"
+  lc_system:
+    value: "Evosep One nanoflow liquid chromatography system"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.98
+    evidence: "All samples were measured using an Evosep One nanoflow liquid chromatography system (Evosep) connected online to a timsTOF Pro2 mass spectrometer (Bruker Daltonics)"
+  gradient_length:
+    value: 44
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.6
+    evidence: "separated using the pre-defined 30 samples per day protocol"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid (Merck) in ultra-pure water (Biosolve)"
+      B: "0.1% formic acid in acetonitrile (Biosolve)"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.97
+    evidence: "using 0.1% formic acid (Merck) in ultra-pure water (Biosolve) as solvent A and 0.1% formic acid in acetonitrile (Biosolve) as solvent B"
+  acquisition_mode:
+    value: "dda-PASEF"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.98
+    evidence: "The mass spectrometer was operated in positive ionization mode using the instrument default 1.1 s duty cycle time data dependent acquisition parallel accumulation serial fragmentation (dda-PASEF) method."
+  ce_strategy:
+    value: "Ramped collision energy linearly scaled with ion mobility (1/K0)"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.85
+    evidence: "Settings: ... 20eV collision energy at 0.6 1/K0 up to 59eV at 1.6 1/K0, dynamic exclusion enabled for 0.4 min."
+  cell_lines_tissues:
+    value: "Human neural retina (post-mortem) from three non-visually impaired individuals"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.97
+    evidence: "Human neural retinal samples (n = 3) from non-visually impaired individuals were obtained from Fondazione Banca degli Occhi del Veneto (Venice, Italy)"
+  sample_prep:
+    value: "Neural retinal tissue homogenized with the PlusOne Sample grinding kit; retina protein homogenates subjected to in-solution digestion"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.95
+    evidence: "The neural retinal tissue was homogenized with the PlusOne Sample grinding kit following the standard protocol. Retina protein homogenates were subjected to in-solution digestion using trypsin (Promega), chymotrypsin (Merck) or a combination of LysC (Wako chemicals) and AspN (Merck)."
+  digestion_details:
+    value:
+      enzymes: "trypsin (Promega), chymotrypsin (Merck), and combined LysC (Wako) + AspN (Merck) - three separate digests"
+      protein_input: "10 ug of total protein per digest"
+      reduction: "1 uL 10 mM dithiothreitol, incubation at RT for 20 min"
+      alkylation: "1 uL 50 mM chloroacetamide, incubation at RT in the dark for 20 min"
+      trypsin: "pre-digested with 0.2 ug LysC for 3 h at RT, diluted with 3 volumes of 50 mM ammonium bicarbonate, then 0.2 ug trypsin, overnight at 37 C"
+      chymotrypsin: "diluted with 3 volumes of 50 mM ammonium bicarbonate, then 0.2 ug chymotrypsin, overnight at 25 C"
+      lysc_aspn: "pre-digested 3 h at RT with 0.2 ug LysC, diluted with 3 volumes of 50 mM ammonium bicarbonate, then AspN at 37 C in 1 mM methylamine, overnight"
+      cleanup: "digests diluted 1:1 with 2% trifluoroacetic acid, stored at -20 C prior to shotgun proteomics analysis"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.95
+    evidence: "For each digest, 10 ug of total protein was reduced by incubation at RT for 20 min with 1 uL 10 mM dithiotrytol (Sigma-Aldrich) followed by incubation for 20 min at RT in the dark with 1 uL 50 mM chloroacetamide (Sigma-Aldrich). For tryptic digestion, alkylated proteins were pre-digested by addition of 0.2 ug LysC enzyme and incubated for 3 h at RT. Samples were diluted with 3 volumes of 50 mM ammoniumbicarbonate (Sigma-Aldrich) prior to the addition of 0.2 ug trypsin and subsequent overnight incubation at 37 C. Chymotrypsin digestion was performed by diluting alkylated proteins with 3 volumes of 50 mM ammoniumbicarbonate prior to addition of 0.2 ug chymotrypsin and subsequent overnight incubation at 25 C. For the combined LysC + AspN digestion, alkylated proteins were pre-digested for 3 h at RT using 0.2 ug LysC then the sample was diluted by adding 3 volumes of 50 mM ammoniumbicarbonate prior to overnight digestion with AspN at 37 C in 1 mM methylamine (Sigma-Aldrich)."
+  fractionation:
+    value:
+      method: "Multi-enzyme digestion (three separate digests with trypsin, chymotrypsin, and LysC+AspN) to maximize sequence coverage"
+      n_fractions: 3
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.7
+    evidence: "Digestions with three different enzymes were performed to maximize the sequence coverage of the proteome and the chances of detecting novel peptides."
+  quantification_method:
+    value: "Label-free (protein quantification with IonQuant)"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.85
+    evidence: "The false discovery rate (FDR) was set to 1%, and protein quantification was performed using IonQuant (v1.8.10)."
+  processing_software:
+    value:
+      - name: "MSFragger"
+        version: "3.7"
+        purpose: "Peptide search with open search parameters against the custom PacBio-GENCODE hybrid database"
+      - name: "Philosopher"
+        version: "4.8.1"
+        purpose: "Add decoys to the PacBio-GENCODE hybrid database"
+      - name: "IonQuant"
+        version: "1.8.10"
+        purpose: "Protein quantification"
+      - name: "Pyteomics"
+        version: "4.6"
+        purpose: "In silico digestion of the hybrid database"
+      - name: "PDV"
+        version: "1.7.4"
+        purpose: "Manual validation / visualization of novel peptide spectra"
+      - name: "Coding-Potential Assessment Tool (CPAT)"
+        version: "3.0.4"
+        purpose: "ORF prediction for novel transcripts"
+      - name: "IsoQuant"
+        version: "3.1.2"
+        purpose: "Transcript classification of long-read data"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.95
+    evidence: "Philosopher (v4.8.1) was used to add decoys to the PacBio-GENCODE hybrid database. MSFragger (v3.7) was run with open search parameters and digestion enzymes stricttrypsin, chymotrypsin, or aspn and lysc-p with a maximum of two missed cleavages. ... The false discovery rate (FDR) was set to 1%, and protein quantification was performed using IonQuant (v1.8.10)."
+  search_database:
+    value: "Custom PacBio-GENCODE hybrid peptide search database (novel ORFs from PacBio IsoQuant transcripts combined with GENCODE ORFs); 12,499 novel ORFs combined with 91,124 GENCODE ORFs"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.93
+    evidence: "We combined these novel ORFs with 91,124 GENCODE ORFs to form a complete peptide search database (Figure 3A). ... Our custom database contained 12,499 unique novel ORFs from 22,138 novel transcripts"
+  search_settings:
+    value:
+      enzymes: "stricttrypsin, chymotrypsin, or aspn and lysc-p (three separate searches matching the three digests)"
+      missed_cleavages: 2
+      fragment_mass_tolerance: "20 ppm"
+      search_mode: "open search parameters"
+      fixed_modifications: "carbamidomethyl of cysteine"
+      variable_modifications: "oxidation of methionine, acetylation of the N-terminus"
+      fdr: "1% (false discovery rate)"
+      peptide_length: "minimum 7 amino acids (in silico digestion of hybrid database)"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.9
+    evidence: "MSFragger (v3.7) was run with open search parameters and digestion enzymes stricttrypsin, chymotrypsin, or aspn and lysc-p with a maximum of two missed cleavages. The fragment mass tolerance was set to 20 ppm. We included carbamidomethyl of cysteine as fixed modification and oxidation of methionine and acetylation of the N-terminus as variable modifications. The false discovery rate (FDR) was set to 1%"
+  lab_id:
+    value: "Peter A. C. 't Hoen, Department of Medical BioSciences, Radboud University Medical Center, Nijmegen, Netherlands"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.96
+    evidence: "*CORRESPONDENCE Peter A. C. 't Hoen, Peter-Bram.tHoen@radboudumc.nl ... 1Department of Medical BioSciences, Radboud University Medical Center, Nijmegen, Netherlands"
+  study_type:
+    value: "method_development"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.75
+    evidence: "we generated a proteogenomic atlas that combines PacBio long-read RNA-sequencing data with mass spectrometry and whole genome sequencing data of three healthy human neural retina samples ... ten novel peptides confirmed novel transcript isoforms"
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: "not specified"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.9
+    evidence: "Human neural retinal samples (n = 3) from non-visually impaired individuals"
+  reported_ids:
+    value:
+      peptides: "33,503 unique peptides"
+      proteins: "3,122 unique genes/proteins"
+      novel_peptides: "Ten novel peptides passed manual validation confirming novel IsoQuant isoforms"
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.93
+    evidence: "Analysis of the data using the PacBio-GENCODE hybrid database resulted in 33,503 unique peptides from 3,122 unique genes (Table 1)."
+  key_findings:
+    value: "A human neural retina proteogenomic atlas combining PacBio long-read RNA-sequencing, mass spectrometry, and whole genome sequencing identified nearly 60,000 transcript isoforms (about one-third novel). Ten novel peptides confirmed novel transcript isoforms, including a novel IMPDH1 isoform supported by peptide evidence."
+    status: inferred
+    source: "paper:10.3389_fgene.2024.1451024.pdf"
+    confidence: 0.95
+    evidence: "We identified nearly 60,000 transcript isoforms, of which approximately one-third are novel. Additionally, ten novel peptides confirmed novel transcript isoforms. For instance, we identified a novel IMPDH1 isoform with a novel combination of known exons that is supported by peptide evidence."
+status: success

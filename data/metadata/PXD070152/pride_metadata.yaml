@@ -1,0 +1,73 @@
+accession: PXD070152
+version: '1.0'
+generated_at: '2026-05-17T21:05:30.313707'
+title:
+  value: Determining changes in the oxidized proteome of human CD8+ T cells with enhancing
+    proteasome activity
+  status: auto
+  source: pride_api.title
+publication_doi: null
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD070152
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF HT
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: null
+    status: missing
+    hint: Check if DDA, DIA, PASEF, diaPASEF, PRM, etc.
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 4
+  inferred_fields: 0
+  manual_fields: 0
+  missing_fields: 8
+  missing_field_names:
+  - lab_id
+  - publication_doi
+  - gradient_length
+  - column_type
+  - acquisition_mode
+  - lc_system
+  - sample_prep
+  - tissue
+  requires_review: true

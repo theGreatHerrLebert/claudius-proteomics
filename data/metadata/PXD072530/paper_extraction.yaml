@@ -1,0 +1,142 @@
+accession: PXD072530
+extracted_at: "2026-05-17T19:34:46Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41557-026-02093-X.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: reversed phase
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.4
+    evidence: "Samples were measured on a TIMS-TOF HT (Bruker Daltonics) with a reversed phase Evosep One (Evosep). For peptide separation, we used the standard SPD methods."
+  lc_system:
+    value: Evosep One
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.95
+    evidence: "Samples were measured on a TIMS-TOF HT (Bruker Daltonics) with a reversed phase Evosep One (Evosep)."
+  acquisition_mode:
+    value: "dda-PASEF (DDA-PASEF); representative peptides validated by PRM-PASEF"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.95
+    evidence: "The mass spectrometer was operated in a data-dependent acquisition PASEF mode with ten PASEF scans per topN acquisition cycle ... Representative 2HG-modified peptides were validated by PRM-PASEF."
+  ce_strategy:
+    value: "Collision energy ramped as a function of increasing ion mobility (mobility-dependent CE ramp)"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.85
+    evidence: "The collision energy was ramped as a function of increasing mobility starting from 20 eV at 0.6 V s-1 cm-2 to 60 eV at 1.6 V s-1 cm-2."
+  cell_lines_tissues:
+    value: "Human ICC cell lines RBE (IDH1-mutant) and SSP25; HEK293T (H293T) cells; RBE cells used in initial screening"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.9
+    evidence: "ICC cell lines with different genotypes (RBE and SSP25) were provided by N. Bardeesy (Massachusetts General Hospital). H293T cells were obtained from American Type Culture Collection (catalogue no. CRL-3216)."
+  sample_prep:
+    value: "Cells lysed in 8 M urea / 50 mM Tris-HCl pH 8.0 with EDTA-free protease inhibitor, sonicated on ice; protein quantified by BCA; FASP-based digestion; 2HG-modified peptides enriched with polyMAC beads (Ti4+-based); phosphopeptides enriched separately by polyMAC; C18 desalting; label-free LC-MS"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.85
+    evidence: "Cells were resuspended in lysis buffer (8 M urea in 50 mM Tris-HCl buffer, pH 8.0) with one tablet of EDTA-free protease inhibitor Cocktail, and then sonicated on ice ... The obtained proteins were digested by a filter-aided sample preparation method (FASP) ... The 2HG peptides were enriched using polyMAC beads."
+  digestion_details:
+    value:
+      enzyme: "Sequential trypsin then GluC (also trypsin-only in optimization)"
+      ratio: "1:50 enzyme-to-protein for both trypsin and GluC"
+      time: "Trypsin 16 h, then GluC 8 h"
+      temperature: "37 C"
+      reduction: "DTT 10 mM final, 30 C for 45 min"
+      alkylation: "Chloroacetamide 30 mM final, room temperature in the dark for 30 min"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.9
+    evidence: "A 1 M dithiothreitol (DTT) stock solution was added into cell lysates to a final concentration of 10 mM ... incubated at 30 C for 45 min. Then, 0.6 M chloroacetamide stock solution was added to a final concentration of 30 mM ... incubation at room temperature in the dark for 30 min ... Trypsin (enzyme:sample = 1:50) was added into the solution and incubated at 37 C for 16 h. Then, the same volume of phosphate buffer (pH 7.5) and GluC (enzyme:sample = 1:50) was added into the solution and incubated at 37 C for 8 h."
+  fractionation:
+    value:
+      method: "No peptide-level fractionation; sequential polyMAC enrichment in three serial tubes"
+      n_fractions: 1
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.5
+    evidence: "we identified approximately 200 2HG-modified peptides in a single LC-MS run"
+  quantification_method:
+    value: label-free
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.9
+    evidence: "Peptides with D2HG modification were enriched using polyMAC and analysed by LC-MS with label-free quantitation ... Peptide abundance was calculated from peak areas normalized to the total ion current (TIC)."
+  processing_software:
+    value:
+      - name: FragPipe
+        version: "21.0"
+        purpose: "Proteomic data analysis (database search, peptide/protein identification)"
+      - name: "Bruker Compass DataAnalysis"
+        version: "6.1"
+        purpose: "Manual validation of peptide peaks"
+      - name: "Bruker Compass HyStar"
+        version: "6.3"
+        purpose: "LC-MS data collection"
+      - name: "GraphPad Prism"
+        version: "8.0"
+        purpose: "Statistical analysis"
+      - name: "Origin"
+        version: "2019b"
+        purpose: "Plotting MS/MS spectra and chromatograms"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.95
+    evidence: "Bruker Compass DataAnalysis 6.1 were used for manually validation of peptide peaks; FragPipe software 21.0 were used for proteomic data analysis; Graphpad Prism 8.0 was used for statistical analysis throughout this study; Origin 2019b was used for plotting MS/MS spectra and chromatograms."
+  search_database:
+    value:
+      source: UniProt
+      species: "Homo sapiens (human)"
+      version: "Reviewed (Swiss-Prot), downloaded March 2024"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.9
+    evidence: "The reviewed human fasta database was downloaded from UniProt in March 2024 (https://www.uniprot.org/uniprotkb)."
+  search_settings:
+    value:
+      variable_modifications: "2-hydroxyglutarylation (D2HG: +130.0266 Da; L2HG: +148.0372 Da) considered on serine, threonine and tyrosine (O-linked); initial screening also probed lysine (N-linked) and cysteine (S-linked); other modifications not explicitly reported"
+      enzyme: "Trypsin / GluC (sequential trypsin-GluC)"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.45
+    evidence: "Incorporating these possibilities as variable modifications in database searches ... our focus was on O-2-hydroxyglutarylation of serine, threonine and tyrosine ... For D2HG and L2HG, 130.0266 Da and 148.0372 Da neutral losses ..."
+  lab_id:
+    value: "W. Andy Tao, Purdue University, West Lafayette, IN, USA"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.9
+    evidence: "Correspondence and requests for materials should be addressed to W. Andy Tao ... Purdue Institute for Cancer Research, Purdue University, West Lafayette, IN, USA."
+  study_type:
+    value: "method_development (chemical proteomics discovery of a novel PTM, O-2-hydroxyglutarylation)"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.8
+    evidence: "In this study, we report the discovery of covalent modifications by D2HG by chemical proteomics, employing a chemical affinity-based enrichment method ... This study offers a powerful framework for investigating chirally dependent protein modifications (O-2-hydroxyglutarylation) in cancer."
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: "2 (up to 5 in reproducibility assessment)"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.75
+    evidence: "Data represent mean +/- s.d. (n = 3 biological replicates per group) ... Number of 2HG-modified peptides identified using different enrichment approaches (n = 2 technical replicates per group) ... Reproducibility assessment of 2HG-modified peptide intensities across five technical replicates using Pearson correlation analysis."
+  reported_ids:
+    value:
+      modified_sites: 308
+      modified_peptides: "138 (initial tryptic screen); ~200 2HG-modified peptides per single LC-MS run after optimization"
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.75
+    evidence: "we identified 308 modified sites from 138 peptides: 238 O-linked, 62 N-linked (Lys) and 8 S-linked (Cys) ... we identified approximately 200 2HG-modified peptides in a single LC-MS run."
+  key_findings:
+    value: "The study discovers covalent O-2-hydroxyglutarylation of serine, threonine and tyrosine residues by the oncometabolite D2HG, enriched via a chemical affinity (polyMAC) approach. The enantiomers D2HG and L2HG modify distinct sets of proteins, revealing chirally dependent protein modifications relevant to cancer progression."
+    status: inferred
+    source: "paper:10.1038_S41557-026-02093-X.pdf"
+    confidence: 0.85
+    evidence: "we revealed distinct protein groups modified by each metabolite, shedding light on molecular pathways that drive cancer progression. This study offers a powerful framework for investigating chirally dependent protein modifications (O-2-hydroxyglutarylation) in cancer."
+status: success

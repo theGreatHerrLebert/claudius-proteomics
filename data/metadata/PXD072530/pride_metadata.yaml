@@ -1,0 +1,86 @@
+accession: PXD072530
+version: '1.0'
+generated_at: '2026-05-17T21:04:16.478518'
+title:
+  value: Discovery of Chirally-dependent Protein O-2-Hydroxyglutarylation
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/S41557-026-02093-X
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD072530
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: W. Andy Tao, Purdue University, West Lafayette, IN, USA
+    status: inferred
+    source: paper:10.1038_S41557-026-02093-X.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF HT
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: C18
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: dda-PASEF (DDA-PASEF); representative peptides validated by PRM-PASEF
+    status: inferred
+    source: paper:10.1038_S41557-026-02093-X.pdf
+    confidence: 0.95
+  lc_system:
+    value: Evosep One
+    status: inferred
+    source: paper:10.1038_S41557-026-02093-X.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Cells lysed in 8 M urea / 50 mM Tris-HCl pH 8.0 with EDTA-free protease
+      inhibitor, sonicated on ice; protein quantified by BCA; FASP-based digestion;
+      2HG-modified peptides enriched with polyMAC beads (Ti4+-based); phosphopeptides
+      enriched separately by polyMAC; C18 desalting; label-free LC-MS
+    status: inferred
+    source: paper:10.1038_S41557-026-02093-X.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Epithelial cell
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 5
+  manual_fields: 0
+  missing_fields: 1
+  missing_field_names:
+  - gradient_length
+  requires_review: true

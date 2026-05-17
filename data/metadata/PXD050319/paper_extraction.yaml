@@ -1,0 +1,139 @@
+accession: PXD050319
+extracted_at: "2026-05-17T19:31:11Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41467-024-48427-6.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 67
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.85
+    evidence: "An increasing linear gradient (v/v) was used (t(min),%B): 0,2; 40,17; 60,25; 66,37; 67,95, followed by an equilibration step."
+  column_type:
+    value: "C18 HPLC column (Aurora, 25 cm length, 75 um ID, IonOpticks)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.95
+    evidence: "LC separations were performed on C18 HPLC column (Aurora 25 cm and 75 um ID, IonOpticks) kept at 50 C."
+  lc_system:
+    value: "Bruker nanoElute II"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.95
+    evidence: "For the iPOND data, samples were measured using a nanoElute II LC system coupled to a timsTOF SCP mass spectrometer with an electrospray source (Bruker Daltonics)."
+  mobile_phases:
+    value:
+      A: "0.1% aqueous formic acid"
+      B: "0.1% formic acid in CH3CN (acetonitrile)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.95
+    evidence: "Gradient elution was performed with a binary system consisting of (A) 0.1% aqueous formic acid and (B) 0.1% formic acid in CH3CN."
+  column_temp:
+    value: "50 C"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.95
+    evidence: "LC separations were performed on C18 HPLC column (Aurora 25 cm and 75 um ID, IonOpticks) kept at 50 C."
+  acquisition_mode:
+    value: diaPASEF
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.97
+    evidence: "Mass spectrometric analysis was performed in a data independent acquisition parallel accumulation serial fragmentation (dia-PASEF) mode"
+  ce_strategy:
+    value: "Collision energy applied as a linear ramp scaled with ion mobility (1/K0)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.9
+    evidence: "the collision energy as a linear ramp from 20 eV at 1/K0 = 0.6 Vscm-2 to 59 eV at 1/K0 = 1.6 Vscm-2."
+  cell_lines_tissues:
+    value: "RPE1-hTERT TP53-/- (Parental) and RPE1-hTERT TP53-/- BRCA1-/- cells, with or without GFP-tagged BRCA1 wild type or I26A mutant rescue"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.85
+    evidence: "Ten confluent 150 mm dishes of RPE1 TP53-/- (Parental) and RPE1 TP53-/- BRCA1-/- cells rescued or not with GFP-tagged BRCA1 wild type or I26A mutant were labeled with EdU for 15 min."
+  sample_prep:
+    value: "Isolation of Proteins On Nascent DNA (iPOND): EdU labeling, formaldehyde cross-linking, click reaction with biotin azide, streptavidin bead capture, on-bead tryptic digestion; peptides desalted on triple-disc C18 Stage-tips"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.9
+    evidence: "Isolation of Proteins On Nascent DNA (iPOND) technique was performed as stablished in ref. 62 ... cells were ... incubated with a click reaction cocktail (1x PBS, 10 uM biotin azide (Invitrogen) ... Lysates were incubated with 100 uL of streptavidin beads ... Beads were digested with 250 ng of sequencing grade modified trypsin (Promega) at 37 C while shaking at 1400 rpm overnight."
+  digestion_details:
+    value:
+      enzyme: "Sequencing grade modified trypsin (Promega)"
+      amount: "250 ng"
+      time: overnight
+      temp: "37 C"
+      conditions: "On streptavidin beads, shaking at 1400 rpm; beads pre-washed three times with 50 mM ammonium bicarbonate"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.85
+    evidence: "Beads were digested with 250 ng of sequencing grade modified trypsin (Promega) at 37 C while shaking at 1400 rpm overnight."
+  quantification_method:
+    value: "label-free (DIA quantification)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.8
+    evidence: "dia-PASEF data from the iPOND experiments was analyzed using DIA-NN (version 1.8.1)."
+  processing_software:
+    value:
+      - name: DIA-NN
+        version: "1.8.1"
+        purpose: "Analysis of dia-PASEF iPOND data (peptide/protein identification and quantification)"
+      - name: Perseus
+        version: "1.6.7.0"
+        purpose: "Statistical analysis of exported quantification output"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.9
+    evidence: "dia-PASEF data from the iPOND experiments was analyzed using DIA-NN (version 1.8.1). ... Output from MaxQuant or DIA-NN data were exported and processed for statistical analysis in the Perseus computational platform version 1.6.7.0."
+  search_database:
+    value:
+      source: UniProt
+      species: "Homo sapiens"
+      type: "Reference proteome, canonical only, in-silico predicted spectral library"
+      version: "19th January 2024"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.9
+    evidence: "Using an in-silico predicted spectral library using UniProt reference proteome for Homo sapiens including canonical (19th January 2024), without variable modifications, enabling 1 mis cleavage with trypsin and with mass ranges of 100-1700 m/z."
+  search_settings:
+    value:
+      enzyme: "Trypsin"
+      missed_cleavages: 1
+      variable_modifications: "None"
+      precursor_mz_range: "100-1700 m/z"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.85
+    evidence: "Using an in-silico predicted spectral library using UniProt reference proteome for Homo sapiens including canonical (19th January 2024), without variable modifications, enabling 1 mis cleavage with trypsin and with mass ranges of 100-1700 m/z."
+  lab_id:
+    value: "Roman Gonzalez-Prieto, University of Sevilla, Spain (corresponding author)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.85
+    evidence: "Correspondence and requests for materials should be addressed to Roman Gonzalez-Prieto."
+  study_type:
+    value: interactomics
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.75
+    evidence: "iPOND experiments comparing (a) Parental and BRCA1-KO cells or (b) BRCA1-WT or BRCA1-I26A rescued cells ... protein purification and identification by LC-MS/MS."
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: null
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.7
+    evidence: "proteins not identified in 4 out of 4 replicates (3 out of 3 for iPOND) in at least one group were removed."
+  key_findings:
+    value: "iPOND coupled to dia-PASEF mass spectrometry revealed that BRCA1/BARD1 ubiquitinates PCNA at nascent DNA to promote replication fork stability, while RAD18 ubiquitinates PCNA at higher levels upon replication-blocking lesions, identifying two distinct PCNA ubiquitination pathways."
+    status: inferred
+    source: "paper:10.1038_S41467-024-48427-6.pdf"
+    confidence: 0.8
+    evidence: "Proposed model for PCNA ubiquitination in two different scenarios. During unperturbed conditions BRCA1/BARD1 ubiquitinates PCNA at low levels to promote continuous DNA synthesis. Upon replication fork barrier-inducing lesions, such as UV irradiation, RAD18 ubiquitinates PCNA at higher levels."
+status: success

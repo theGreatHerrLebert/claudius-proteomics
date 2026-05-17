@@ -1,0 +1,79 @@
+accession: PXD068118
+version: '1.0'
+generated_at: '2026-05-17T21:00:55.715446'
+title:
+  value: Tracking Arabidopsis PCNA1 and PCNA2 with a Human PCNA Nanobody-Based Chromobody
+  status: auto
+  source: pride_api.title
+publication_doi: null
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD068118
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Arabidopsis thaliana (mouse-ear cress)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Arabidopsis thaliana (mouse-ear cress)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 70
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: reversed phase
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.7
+  acquisition_mode:
+    value: DIA
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.85
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue:
+    value:
+    - Bud
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 5
+  inferred_fields: 3
+  manual_fields: 0
+  missing_fields: 4
+  missing_field_names:
+  - lab_id
+  - publication_doi
+  - lc_system
+  - sample_prep
+  requires_review: true

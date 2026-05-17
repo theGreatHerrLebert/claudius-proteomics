@@ -1,0 +1,130 @@
+accession: PXD046535
+extracted_at: "2026-05-17T19:24:35Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41467-024-46380-Y.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 100
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "The peptide extract equivalent to 60 x 106 cells was injected and separated using an Aurora 25 cm packed emitter column (Ionoptiks) with a gradient of 2-37% B (2% ACN with 0.1% FA (v/v)) over 100 min at a flow rate of 0.2 mL/min."
+  column_type:
+    value: "Aurora 25 cm packed emitter column (Ionoptiks)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.8
+    evidence: "The peptide extract equivalent to 60 x 106 cells was injected and separated using an Aurora 25 cm packed emitter column (Ionoptiks) with a gradient of 2-37% B"
+  lc_system:
+    value: "Bruker nanoElute"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.95
+    evidence: "A nanoElute LC system (Bruker, Billerica, US) coupled to a timsTOF Pro mass spectrometer (Bruker Daltonics) was used for DDA-PASEF data acquisition."
+  mobile_phases:
+    value:
+      A: "water with 0.1% FA (v/v)"
+      B: "2% ACN with 0.1% FA (v/v)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.75
+    evidence: "separated using an Aurora 25 cm packed emitter column (Ionoptiks) with a gradient of 2-37% B (2% ACN with 0.1% FA (v/v)) over 100 min at a flow rate of 0.2 mL/min."
+  flow_rate:
+    value: "0.2 uL/min"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "with a gradient of 2-37% B (2% ACN with 0.1% FA (v/v)) over 100 min at a flow rate of 0.2 mL/min."
+  acquisition_mode:
+    value: "DDA-PASEF"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.97
+    evidence: "A nanoElute LC system (Bruker, Billerica, US) coupled to a timsTOF Pro mass spectrometer (Bruker Daltonics) was used for DDA-PASEF data acquisition. ... DDA-PASEF mode with either 6 or 10 PASEF scans covered a mass range from 100 m/z to 1700 m/z with charge states set from 0 to 5+."
+  ce_strategy:
+    value: "Two ion-mobility-dependent collision energy ramps were used for peptide fragmentation; HL60 immunopeptidomics samples were acquired with a CE-test design varying collision energy ramp settings and accumulation times."
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.7
+    evidence: "The dual TIMS configuration utilized a ramp time and different accumulation times (100, 166, or 200 ms). DDA-PASEF mode with either 6 or 10 PASEF scans covered a mass range from 100 m/z to 1700 m/z with charge states set from 0 to 5+. The capillary voltage was set at 1500 V. Four ion mobility ranges (1.6-0.6, 1.7-0.6, 1.75-0.65 and 1.7-0.65 Vs/cm2), two collision energy ramps (59-20 and 55-10 eV) and threshold intensity (2500 and 1500) were used."
+  cell_lines_tissues:
+    value: "HL60 (human acute promyelocytic leukemia cell line, ATCC CCL-240)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.95
+    evidence: "HL60 cells (CCL-240) purchased from the American Type Culture Collection (ATCC) were cultured in-house in RPMI medium supplemented by 10% FBS (v/v) and 5% penicillin/ streptomycin (v/v). The cell suspension was harvested at 1500 rpm at 4 C for 5 min prior counting and freezing at -80 C overnight and -150 C until further use."
+  sample_prep:
+    value: "HLA class I ligands enriched by immunoprecipitation. 600 x 10^6 HL60 cells lysed; HLA-peptide complexes captured on CNBr-activated sepharose 4B beads linked to W6/32 anti-panHLA Class I antibody, eluted with 25% ACN / 0.1% TFA, evaporated and resuspended in water with 0.1% FA for LC-MS analysis."
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.9
+    evidence: "Sample preparation in Carapito lab (HL60 samples). HLA class I ligands were enriched by immunoprecipitation as previously described. The HB-95 hybridoma producing anti-panHLA Class I antibody W6/32 was purchased from ATCC ... A total of 600 x 106 in house cultured HL60 cells were lysed ... HLA-peptide-complexes were captured on CNBr-activated sepharose 4B beads (Cytivia) linked to W6/32 antibody. ... Finally, HLA peptides were purified from the HLA-I complex after the elution with 25% ACN (v/v), 0.1% TFA (v/v). Samples were evaporated under vacuum and resuspended in water with 0.1% FA (v/v)."
+  digestion_details:
+    value: "Not applicable - HLA class I immunopeptides are enriched directly by immunoprecipitation without enzymatic digestion (naturally processed peptides)."
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "HLAips are generated by a complex multi-step process, including various proteolytic events. ... HLA class I ligands were enriched by immunoprecipitation as previously described."
+  quantification_method:
+    value: "label-free"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.75
+    evidence: "HL60 immunopeptidomics samples were analyzed by DDA-PASEF with no isotopic or chemical labeling; identifications were used to train the timsTOF MS2PIP peak intensity prediction model."
+  processing_software:
+    value:
+      - name: PEAKS XPro
+        version: "v10.0, build 20201221"
+        purpose: "Database search of immunopeptidomics raw data with unspecific cleavage"
+      - name: MS2Rescore
+        version: "v3.0.0b4"
+        purpose: "PSM rescoring with timsTOF MS2PIP, DeepLC and ionmob predictors"
+      - name: Mokapot
+        version: ""
+        purpose: "Semi-supervised FDR calculation during rescoring"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "Data analysis was performed in PEAKS XPro (v10.0, build 20201221). ... Identifications were then rescored using an updated version of MS2Rescore (v3.0.0b4) with the timsTOF MS2PIP model ... the MS2 mass accuracy tolerance was 0.04 Da, DeepLC was used for retention time prediction, and the ionmob GRU predictor was used for CCS prediction. ... the semi-supervised machine learning-based FDR calculation of Mokapot."
+  search_database:
+    value:
+      source: "UniProtKB (Swiss-Prot)"
+      species: "Homo sapiens (plus Epstein-Barr virus, GFP, SARS-CoV-2, SiORF1, 172 contaminants)"
+      version: "Homo sapiens downloaded 02/Feb/2020"
+      entries: ""
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "The protein database was composed of the UniProtKB (Swiss-Prot) reference proteomes of Homo sapiens (Taxon ID 9606, downloaded 02/Feb/2020), Epstein-Barr virus (strain GD1, Taxon ID 10376, downloaded 06/Feb/2022), GFP from Aequorea victoria (P42212), and SARS-CoV-2 (Taxon ID 2697049, downloaded 10/March/2021), as well as the SiORF1 reported ... supplemented with a list of 172 possible contaminants."
+  search_settings:
+    value:
+      enzyme: "unspecific cleavage (no enzyme)"
+      precursor_tolerance: "15 ppm (MS1, timsTOF data, PEAKS)"
+      fragment_tolerance: "0.05 Da (MS2, timsTOF data, PEAKS); MS2Rescore MS2 tolerance 0.04 Da"
+      variable_modifications: "Methionine oxidation, cysteine cysteinylation, Protein N-terminal acetylation (up to two per peptide)"
+      fdr: "protein -10lgP >= 20; peptide identifications exported at peptide FDR <= 0.01, or combined with MS2Rescore Mokapot q-value <= 0.01"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.8
+    evidence: "For database searches, protein in silico digestion was configured to unspecific cleavage and no enzyme. Up to two variable modifications per peptide were allowed, including Methionine oxidation, cysteine cysteinylation, and Protein N-terminal acetylation. ... Mass tolerance for timsTOF data with CID fragmentation was set to 15 ppm for MS1 and 0.05 Da for MS2. ... A threshold of protein -10lgP >= 20 was used. ... peptide identifications ... exported from PEAKS at peptide FDR <= 0.01, or the combination of this file with the output of MS2Rescore filtered at mokapotqvalue <= 0.01."
+  lab_id:
+    value: "Sample prep and CE-test LC-MS in Christine Carapito lab; corresponding authors David Gomez-Zepeda (DKFZ Heidelberg) and Stefan Tenzer (University Medical Center, Johannes Gutenberg University Mainz)"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.85
+    evidence: "Data from Carapito lab have been deposited to the ProteomeXchange repositories ... PXD046535 for HL60 immunopeptidomics ... e-mail: david.gomez-zepeda@dkfz-heidelberg.de; tenzer@uni-mainz.de"
+  study_type:
+    value: "method_development"
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.9
+    evidence: "Here, we develop a highly sensitive method for identifying HLAIps using liquid chromatography-ion mobility-tandem mass spectrometry (LC-IMS-MS/MS). ... The optimized method, Thunder-DDA-PASEF, semi-selectively fragments singly and multiply charged HLAIps based on their IMS and m/z."
+  key_findings:
+    value: "Thunder-DDA-PASEF is an optimized DDA-PASEF immunopeptidomics method that semi-selectively fragments singly and multiply charged HLA class I peptides, doubling immunopeptidome coverage versus standard DDA-PASEF. A timsTOF-specific MS2PIP fragmentation prediction model (trained partly on these HL60 immunopeptidomics data) used in MS2Rescore boosts HLAIp identification by up to 41.7%."
+    status: inferred
+    source: "paper:10.1038_S41467-024-46380-Y.pdf"
+    confidence: 0.9
+    evidence: "The optimized method, Thunder-DDA-PASEF, semi-selectively fragments singly and multiply charged HLAIps based on their IMS and m/z. ... doubling the coverage of immunopeptidomics analyses, compared to the proteomics-tailored DDA-PASEF. Additionally, rescoring boosts the HLAIps identification by 41.7% to 33%."
+status: success

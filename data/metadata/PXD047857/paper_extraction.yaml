@@ -1,0 +1,169 @@
+accession: PXD047857
+extracted_at: "2026-05-17T19:31:00Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1186_s12014-024-09477-6.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 30
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.6
+    evidence: "or 30 min active gradient elution (2 to 11% solvent B during 19 min; 11 to 16% during 7 min; 16% to 25% during 4 min; 25% to 80% for 3 min and finally 80% for 7 min to wash the column, flowrate 250nL/min). Multiple gradients tested: 12 and 30 min on nanoElute, 11 min (100 SPD) and 21 min (60 SPD) on Evosep One."
+  column_type:
+    value: "Multiple columns used: nanoElute - packed emitter column C18, 25 cm x 75 um, 1.6 um (Ion Opticks/IonOpticks); Evosep 100/60 SPD - 8 cm C18 Performance column; Evosep 40 SPD whisper - packed emitter column C18, 15 cm x 75 um, 1.7 um (Ion Opticks)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "a packed emitter column (C18, 25 cm x 75 um 1.6 um) (Ion Optics, Australia) ... using an 8 cm C18 Performance column and on a 40SPD whisper method using a packed emitter column (C18, 15 cm x 75 um 1.7 um) (Ion Optics, Australia)."
+  lc_system:
+    value: "nanoElute (Bruker Daltonics) HPLC and Evosep One system"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "200 ng were injected on a nanoelute (Bruker Daltonics, Germany) HPLC (high-performance liquid chromatography) or an Evosep One system coupled to a timsTOF Pro 2 (Bruker Daltonics, Germany) mass spectrometer."
+  mobile_phases:
+    value:
+      A: "0.1% formic acid in water"
+      B: "0.1% formic acid in acetonitrile"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.97
+    evidence: "HPLC separation (Solvent A: 0.1% formic acid in water; Solvent B: 0.1% formic acid in acetonitrile)"
+  flow_rate:
+    value: "nanoElute: 400 nL/min (12 min gradient) or 250 nL/min (30 min gradient)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "a 12 min active gradient elution ... flowrate 400nL/min) or 30 min active gradient elution ... flowrate 250nL/min)"
+  acquisition_mode:
+    value: "diaPASEF (DIA mode with PASEF); some DDA files also acquired"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "Mass-spectrometric data were acquired using the parallel accumulation serial fragmentation (PASEF) acquisition method in DIA mode with a 19-windows method ... We tested two different dia-PASEF acquisition methods"
+  ce_strategy:
+    value: "Collision energy not described in detail; standard timsTOF Pro 2 diaPASEF acquisition (raw collision-energy values reside in the .d files and were not extracted)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.3
+    evidence: "Mass-spectrometric data were acquired using the parallel accumulation serial fragmentation (PASEF) acquisition method in DIA mode"
+  cell_lines_tissues:
+    value: "Human neat plasma (33 plasma samples); extracellular vesicle (EV) fraction also used for the EV boost approach"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "We used a test set of 33 plasma samples for all evaluations. ... we introduce the EV boost approach, that leverages on the extracellular vesicle fraction to enhance protein identification in neat plasma samples."
+  sample_prep:
+    value: "Plasma digested using S-Trap micro spin column workflow; EVs resuspended in 5% SDS in 50 mM TEAB; Evotip offline experiment with Evotips Pure for plasma fractionation; peptides resuspended in 2% ACN, 0.1% formic acid before injection"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "Protein digestion using a S-Trap micro spin column (Protifi, Hutington, USA) digestion was performed on 1uL of plasma according to manufacturer's instructions. ... Peptides were resuspended in 2% ACN, 0.1% formic acid in HPLC-grade water and 200 ng were injected"
+  digestion_details:
+    value:
+      enzyme: "Trypsin (Promega)"
+      ratio: "2.5 ug trypsin per sample"
+      time: "1 h (plasma); 2 h (EVs)"
+      temp: "47 C"
+      reduction: "20 mM TCEP (Tris(2-carboxyethyl)phosphine hydrochloride)"
+      alkylation: "50 mM CAA (chloroacetamide), 5 min at 95 C"
+      missed_cleavages: "up to 1 (DIA-NN) / up to 2 (MaxQuant)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "reduced with 20 mM TCEP (Tris(2-carboxyethyl) phosphine hydrochloride) and alkylated with 50 mM CAA (chloracetamide) for 5 min at 95 C ... Samples were digested with 2.5 ug of trypsin (Promega) at 47 C for 1 h. ... An amount of 2.5 ug of trypsin at 47 C for 2 h was used to digest the proteins."
+  fractionation:
+    value:
+      method: "No peptide pre-fractionation; Evotip-based plasma fractionation (input, flow-through, eluate) used in the offline Evotip / EV boost experiment"
+      n_fractions: "3 fractions in Evotip experiment (Input, flow-through F1+W, eluate)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.5
+    evidence: "200 ng of total plasma (Input), eluates and flow-throughs (F1 + W) were analysed on nanoElute coupled to timsTOF Pro"
+  quantification_method:
+    value: "DIA quantification (label-free) via DIA-NN; LFQ label-free quantification for DDA files via MaxQuant"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "Data analysis of all DIA files was performed using DIA-NN software ... Proteins were quantified according to the MaxQuant label-free algorithm using LFQ intensities"
+  processing_software:
+    value:
+      - name: "DIA-NN"
+        version: "1.8.1 and 1.8.2 beta27 (EV boost search)"
+        purpose: "DIA protein identification and quantification, library-free search"
+      - name: "MaxQuant"
+        version: "2.3.0.0"
+        purpose: "DDA MS file processing with Andromeda search engine"
+      - name: "R"
+        version: "4.2.2"
+        purpose: "Statistical analysis and figure generation"
+      - name: "RStudio"
+        version: "2022.07.2"
+        purpose: "Analysis environment"
+      - name: "ggplot2"
+        version: "3.4.4"
+        purpose: "Plotting (within tidyverse 2.0.0)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "Data analysis of all DIA files was performed using DIA-NN software (version 1.8.1 and version 1.8.2 beta27 for the EV boost search). ... The DDA MS files were processed with the MaxQuant software version 2.3.0.0 ... All R figures was created using R (version 4.2.2) and RStudio (version 2022.07.2)."
+  search_database:
+    value:
+      source: "UniProtKB/Swiss-Prot"
+      species: "Homo sapiens"
+      version: "Downloaded/released February 2021"
+      entries: 20396
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "A search against the human UniProtKB/Swiss-Prot Homo sapiens database (downloaded in February, 2021, 20,396 entries) was performed using library free workflow."
+  search_settings:
+    value:
+      precursor_tolerance: "10 ppm (DIA-NN, set manually); 10 ppm main search (MaxQuant)"
+      fragment_tolerance: "10 ppm (DIA-NN); 40 ppm (MaxQuant)"
+      enzyme: "Trypsin"
+      missed_cleavages: "1 (DIA-NN); up to 2 (MaxQuant)"
+      peptide_length: "7-30 amino acids (DIA-NN); minimum 7 (MaxQuant)"
+      precursor_charge: "2-4 (DIA-NN)"
+      precursor_mz_range: "300-1300"
+      fragment_mz_range: "300-1300"
+      fixed_modifications: "Carbamidomethylation (Cys)"
+      variable_modifications: "DIA-NN: protein N-terminal methionine excision, methionine oxidation, N-terminal acetylation (max 2 variable mods); MaxQuant: oxidation (Met), N-term acetylation (Prot N-term)"
+      fdr: "1% at protein and peptide level"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "A maximum of 1 trypsin missed cleavages was allowed and the maximum variable modification was set to 2. Carbamidomethylation (Cys) was set as the fixed modification, whereas protein N-terminal methionine excision, methionine oxidation and N-terminal acetylation were set as variable modifications. The peptide length range was set to 7-30 amino acids, precursor charge range 2-4, precursor m/z range 300-1300, and fragment ion m/z range 300-1300. To search the parent mass and fragment ions, accuracy was set to 10 ppm manually. The false discovery rates (FDRs) at the protein and peptide level were set to 1%."
+  lab_id:
+    value: "Ida Chiara Guerrera (chiara.guerrera@inserm.fr), Proteomics Platform Necker, Universite Paris Cite-Structure Federative de Recherche Necker, INSERM US24/CNRS UAR3633, 75015 Paris, France"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.95
+    evidence: "*Correspondence: Ida Chiara Guerrera chiara.guerrera@inserm.fr 1 Proteomics Platform Necker, Universite Paris Cite-Structure Federative de Recherche Necker, INSERM US24/CNRS UAR3633, 75015 Paris, France"
+  study_type:
+    value: "method_development"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.85
+    evidence: "This study explores ways to improve proteome coverage in neat plasma both in MS data acquisition and MS data analysis. ... Globally, our optimized analysis workflow allows the quantification of over 1000 proteins in neat plasma with a 24SPD throughput."
+  number_of_replicates:
+    value: "33 neat plasma samples used as the test set; Evotip offline experiment performed in triplicate (n=3)"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.7
+    evidence: "We used a test set of 33 plasma samples for all evaluations. ... For the Evotip offline experiment, Evotips Pure (n = 3) ... The experiment was performed in triplicate"
+  reported_ids:
+    value: "Over 1000 protein groups quantified in neat plasma at 24 SPD; 30 min gradient: average 811 +/- 78 PG IDs; Broad method: 1,210 protein groups, 10,795 peptides; Narrow method: 966 protein groups, 8,334 modified sequences"
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.85
+    evidence: "our optimized analysis workflow allows the quantification of over 1000 proteins in neat plasma with a 24SPD throughput. ... allowing the identification of an average of 811 +/- 78 PG IDs in 1 h global run time (24 SPD). ... proteins identified with the Broad method (1,210 protein groups, 10,795 peptides in total respective matrices), with the Narrow method (966 protein groups, 8,334 modified sequences"
+  key_findings:
+    value: "Optimizing diaPASEF acquisition (broader ion mobility/mass range), increasing chromatographic separation, and using library-free DIA-NN searches improve neat plasma proteome coverage, enabling quantification of over 1000 proteins at 24 SPD throughput. An EV boost approach leveraging the extracellular vesicle fraction further enhances protein identification in neat plasma."
+    status: inferred
+    source: "paper:10.1186_s12014-024-09477-6.pdf"
+    confidence: 0.9
+    evidence: "We demonstrate the value of sampling smaller hydrophilic peptides, increasing chromatographic separation, and using library-free searches. Additionally, we introduce the EV boost approach, that leverages on the extracellular vesicle fraction to enhance protein identification in neat plasma samples."
+status: success

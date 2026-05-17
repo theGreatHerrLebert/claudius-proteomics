@@ -1,0 +1,156 @@
+accession: PXD039058
+extracted_at: "2026-05-17T19:24:43Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1186_s12014-023-09403-2.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 21
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 1.0
+    evidence: "Separation was performed with the 60 SPD method (gradient length 21 min) using an 8 cm x 150 um Evosep column packed with 1.5 um ReproSil-Pur C18-AQ particles."
+  column_type:
+    value: "8 cm x 150 um Evosep column packed with 1.5 um ReproSil-Pur C18-AQ particles"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 1.0
+    evidence: "using an 8 cm x 150 um Evosep column packed with 1.5 um ReproSil-Pur C18-AQ particles."
+  lc_system:
+    value: "Evosep One liquid chromatography (LC) system (Evosep One, Odense, Denmark)"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 1.0
+    evidence: "Digested peptides were separated with nanoflow reversed-phase chromatography with an Evosep One liquid chromatography (LC) system (Evosep One, Odense, Denmark) after loading the samples on Evosep tips."
+  acquisition_mode:
+    value: "DDA PASEF"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 1.0
+    evidence: "The instrument was operated in the DDA PASEF mode with 10 PASEF scans per acquisition cycle and accumulation and ramp times of 100 ms each."
+  ce_strategy:
+    value: "Not explicitly described; collision energy settings stored in raw timsTOF .d files"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.3
+    evidence: "The instrument was operated in the DDA PASEF mode with 10 PASEF scans per acquisition cycle and accumulation and ramp times of 100 ms each."
+  cell_lines_tissues:
+    value: "Exhaled breath particles (EBPs) collected from human subjects (COVID-19 patients and healthy controls); EBPs originate from respiratory tract lining fluid of the distal lung"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "Particles were collected using a PExA 2.0 device (PExA, Gothenburg, Sweden). ... EBPs originate from the respiratory tract lining fluid that covers the epithelial surface of the distal parts of the lung."
+  sample_prep:
+    value: "EBP samples incubated in 2% SDS in 50 mM TEAB at 37 C for 2 h, reduced with 400 mM DTT (45 min), alkylated with 800 mM iodoacetamide in dark (30 min), acidified with phosphoric acid to 1.2%, proteins collected onto S-TRAP columns with 90% methanol/100 mM TEAB; peptides eluted with 50 mM TEAB, 0.2% formic acid and 50% acetonitrile with 0.2% formic acid, dried by speedvac at 45 C and re-dissolved in 20 uL 0.1% FA / 2% ACN"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "EBP samples were incubated in 2% sodium dodecyl sulfate (SDS, Sigma-Aldrich, St. Louis, USA) in 50 mM Triethylammonium bicarbonate (TEAB, Thermo Fisher Scientific) at 37 C for 2 h with subsequent addition of 400 mM dithiothreitol (Sigma-Aldrich) and further incubation for 45 min.. Alkylation was performed in the dark for 30 min with the addition of 800 mM iodoacetamide (Sigma-Aldrich) after which 12% aqueous phosphoric acid was added to a final concentration of 1.2%. Proteins were collected onto S-TRAP columns (Protifi, Farmingdale, USA) with a mixture of 90% methanol and 100 mM TEAB."
+  digestion_details:
+    value:
+      enzyme: "Lys-C followed by Trypsin (sequencing grade)"
+      reduction: "400 mM dithiothreitol (DTT), 45 min incubation"
+      alkylation: "800 mM iodoacetamide, 30 min in the dark"
+      lys_c_step: "1 ug Lys-C incubated at 37 C for 2 h"
+      trypsin_step: "1 ug trypsin added, incubated overnight with 0.45 ug additional trypsin after 12 h"
+      temperature: "37 C"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "Digestion of proteins was performed with 1 ug of Lys-C (Lys-C, Mass Spec Grade, Promega, Fitchburg, USA) incubated at 37 C for 2 h after which 1 ug of trypsin (Promega sequence grade) was added overnight with addition of 0.45 ug Trypsin after 12 h."
+  quantification_method:
+    value: "LFQ (label-free quantification)"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 1.0
+    evidence: "Subsequently, identified proteins were quantified with label free quantification (LFQ) of exhaled particles."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "2.0.20"
+        purpose: "Raw MS data analysis with Andromeda database search algorithm"
+      - name: NormalyzerDE
+        version: ""
+        purpose: "Data normalization using robust linear regression normalization"
+      - name: Perseus
+        version: "2.0.5.0"
+        purpose: "Downstream analysis of proteomics data, missing value imputation, feature selection"
+      - name: RStudio
+        version: "4.2.0"
+        purpose: "Downstream analysis, heatmap rendering with pheatmap"
+      - name: STRING
+        version: "v11.5"
+        purpose: "Protein-protein interaction and Reactome pathway analysis (via stringApp in Cytoscape)"
+      - name: Cytoscape
+        version: "v3.9.1"
+        purpose: "Network visualization of protein-protein interactions"
+      - name: CellWhere
+        version: "v.1.1"
+        purpose: "Subcellular localization determination"
+      - name: GraphPad Prism
+        version: "9"
+        purpose: "Statistical analysis of particle data (PEV)"
+      - name: "R CARET package"
+        version: "6.0-93"
+        purpose: "Random forest machine learning classification model"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "MaxQuant (v2.0.20, Max Planck institute of biochemistry, Munich, Germany) using the Andromeda database search algorithm was used to analyze raw MS data. ... Data was first normalized with NormalyzerDE using robust linear regression normalization. Perseus (v2.0.5.0, Max Planck institute of biochemistry, Germany) and RStudio (v4.2.0, RStudio, Boston, MA, US) were used for downstream analysis. ... A diagnostic classification model was built using the R CARET package (version 6.0-93)."
+  search_database:
+    value:
+      primary: "UniProt filtered and reviewed human protein database"
+      additional: "UniProt SARS-CoV-2 proteome database (Proteome ID: UP000464024)"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.9
+    evidence: "Spectra files were searched against the UniProt filtered and reviewed human protein database using the following parameters... Subsequently the Spectra files were searched against the UniProt SARS-CoV-2 proteome database (Proteome ID: UP000464024) using the same parameters."
+  search_settings:
+    value:
+      type: "TIMS-DDA LFQ"
+      ms1_match_tolerance: "20 ppm first search, 40 ppm main search"
+      enzyme: "Trypsin/P"
+      missed_cleavages: 2
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Oxidation (M), Acetyl (Protein N-term)"
+      match_between_runs: false
+      fdr: "1% at both protein and peptide levels"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "Type: TIMS-DDA LFQ, Variable modifications: Oxidation (M), Acetyl (Protein N-term) and Fixed modifications: Carbamidomethyl (C). Digestion, Trypsin/P, Match between runs: False. FDR was set at 1% for both protein and peptide levels. MS1 match tolerance was set as 20 ppm for the first search and 40 ppm for the main search. Missed cleavages allowed was set to 2."
+  lab_id:
+    value: "Sandra Lindstedt, Dept. of Cardiothoracic Surgery and Transplantation, Skane University Hospital / Dept. of Clinical Sciences, Lund University, Lund, Sweden"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "*Correspondence: Sandra Lindstedt sandra.lindstedt_ingemansson@med.lu.se ... 1Dept. of Clinical Sciences, Lund University, Lund, Sweden. ... 7Dept. of Cardiothoracic Surgery and Transplantation, Skane University Hospital, SE-221 85 Lund, Sweden."
+  study_type:
+    value: "clinical/biomarker"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "Proteomic analysis of exhaled breath particles (EBPs) ... presents as a novel explorative and diagnostic tool. ... We demonstrated promising results for the use of an integrated EBP biomarker panel together with particle concentration for diagnosis of COVID-19."
+  number_of_replicates:
+    value:
+      biological: "34 samples analyzed by LC-MS/MS (12 COV-POS, 12 COV-NEG, 10 HCO) from 48 prospectively recruited patients"
+      technical: "Not reported"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.85
+    evidence: "Patient samples with 100 ng or more collected particles were selected for LC-MS/MS protein identification yielding a total of 34 samples for further analysis. 12 samples each from the COV-POS and COV-NEG groups were analyzed and 10 samples from the HCO group."
+  reported_ids:
+    value:
+      proteins: "267 unique proteins identified across all three groups after exclusion of potential contaminants; mean of 110.1 proteins per sample (SD 15.8); 26 proteins significantly differentially expressed"
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.9
+    evidence: "In total 267 unique proteins could be identified across all three groups after exclusion of potential contaminants. ... Mean number of proteins identified per sample was 110.1 (SD: 15.8). ... In total 26 proteins were identified as significantly differentially expressed."
+  key_findings:
+    value: "Mass-spectrometry-based proteomic profiling of exhaled breath particles revealed significant differences in protein composition (immune activation, acute phase response, surfactant proteins) between COVID-19 patients and healthy controls. An integrated EBP biomarker panel combined with particle concentration enabled a random forest classifier to diagnose COVID-19 with 92% accuracy."
+    status: inferred
+    source: "paper:10.1186_s12014-023-09403-2.pdf"
+    confidence: 0.95
+    evidence: "We demonstrated promising results for the use of an integrated EBP biomarker panel together with particle concentration for diagnosis of COVID-19 as well as a robust method for protein identification in EBPs. ... achieving an accuracy of 0.92."
+status: success

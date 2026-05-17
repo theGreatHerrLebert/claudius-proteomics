@@ -1,0 +1,83 @@
+accession: PXD042316
+version: '1.0'
+generated_at: '2026-05-17T21:09:32.017379'
+title:
+  value: Presentation of DNAJB1-PRKACA fusion neoantigens by different HLA class I
+    alleles
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1016/j.xcrm.2024.101469
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD042316
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: null
+    status: missing
+    hint: Check if DDA, DIA, PASEF, diaPASEF, PRM, etc.
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue:
+    value:
+    - Leukocyte
+    - Cell culture
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 6
+  inferred_fields: 0
+  manual_fields: 0
+  missing_fields: 6
+  missing_field_names:
+  - lab_id
+  - gradient_length
+  - column_type
+  - acquisition_mode
+  - lc_system
+  - sample_prep
+  requires_review: true

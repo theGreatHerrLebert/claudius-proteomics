@@ -1,0 +1,81 @@
+accession: PXD046777
+version: '1.0'
+generated_at: '2026-05-17T21:05:41.465827'
+title:
+  value: Direct translation of incoming retroviral genomes
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41467-023-44501-7
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: true
+fields:
+  dataset_id:
+    value: PXD046777
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Oya Cingoz, Robert Koch Institute, Department of Infectious Diseases, Unit
+      of Sexually Transmitted Bacterial Pathogens and HIV (FG18), Berlin, Germany
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.95
+  organism:
+    value: Human immunodeficiency virus 1
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Human immunodeficiency virus 1
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: Bruker Daltonics timsTOF series
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 44
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.6
+  column_type:
+    value: Evosep performance column, 15 cm x 75 um, 1.9 um particle size
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.97
+  acquisition_mode:
+    value: ddaPASEF
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.98
+  lc_system:
+    value: Evosep One
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.98
+  sample_prep:
+    value: SILAC metabolic labeling followed by anti-p24 immunoprecipitation; cells
+      grown in light medium transduced with virus, switched to heavy medium at transduction,
+      incubated 18h, washed and lysed in IP-MS cell lysis buffer with protease inhibitors,
+      immunoprecipitated with anti-p24 antibody (183-H12-5C) on Pierce Protein A/G
+      magnetic beads, eluted proteins analyzed by LC-MS
+    status: inferred
+    source: paper:10.1038_s41467-023-44501-7.pdf
+    confidence: 0.9
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 5
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 1
+  missing_field_names:
+  - tissue
+  requires_review: true

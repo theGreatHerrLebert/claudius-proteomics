@@ -1,0 +1,84 @@
+accession: PXD060460
+version: '1.0'
+generated_at: '2026-05-17T21:11:15.639755'
+title:
+  value: Newly-Diagnosed Rheumatoid Arthritis Patients have Elevated Levels of Plasma
+    Extracellular Vesicles with Protein Cargo Altered Towards Inflammatory Processes
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s41598-025-96325-8
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD060460
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Anne Rydland / Benedicte A. Lie (corresponding authors), Department of
+      Medical Genetics, University of Oslo and Oslo University Hospital, Oslo, Norway
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.92
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF fleX
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.95
+  column_type:
+    value: 25 cm reversed-phase C18 column, 75 um inner diameter, 1.6 um bead size,
+      120 A pore size (Ion Optics)
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.97
+  acquisition_mode:
+    value: DDA-PASEF
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.95
+  lc_system:
+    value: Bruker nanoElute UHPLC coupled to a timsTOF fleX mass spectrometer via
+      a CaptiveSpray ion source
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.97
+  sample_prep:
+    value: Plasma EVs enriched by size exclusion chromatography (qEV original 70 nm
+      column, Izon Science), SEC fractions 7-9 pooled. EVs lysed with 1% ProteaseMax
+      Surfactant in 50 mM NH4HCO3, vortexed and heated at 95 C for 20 min; protein
+      concentration by BCA assay. Serum samples (5 ul) precipitated with 70% acetonitrile
+      onto MagReSyn Amine magnetic beads. Peptides desalted by STAGE-TIP with C18
+      resin disk prior to MS.
+    status: inferred
+    source: paper:10.1038_s41598-025-96325-8.pdf
+    confidence: 0.9
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 5
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 1
+  missing_field_names:
+  - tissue
+  requires_review: true

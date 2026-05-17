@@ -1,0 +1,103 @@
+accession: PXD072978
+extracted_at: "2026-05-17T19:34:53Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41525-026-00564-1.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "Aurora Elite column, 15 cm x 75 µm ID, C18 1.7 µm beads (IonOpticks)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.98
+    evidence: "using the Aurora Elite column (15 cm x 75 µm ID, C18 1.7 µm beads, IonOpticks)"
+  lc_system:
+    value: "Evosep One (Evosep)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.98
+    evidence: "Peptide separation was carried out by nanoflow reverse phase liquid chromatography (Evosep One, Evosep)"
+  gradient_length:
+    value: 31
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.6
+    evidence: "with the 20 samples-a-day method (Whisper zoom)"
+  acquisition_mode:
+    value: "DIA-PASEF (data-independent acquisition with parallel accumulation serial fragmentation)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.98
+    evidence: "a timsTOF SCP mass spectrometer (Bruker Daltonics) applying the data-independent acquisition (DIA) with parallel accumulation serial fragmentation (PASEF) method"
+  cell_lines_tissues:
+    value: "Human dermal fibroblasts (from a patient with biallelic MRPL42 variant and unaffected unrelated controls)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.95
+    evidence: "Confluent dermal fibroblasts were seeded at 2x105 cells/well in a 6-well plate, cultured for 48 h and washed twice with PBS before lysing."
+  sample_prep:
+    value: "Confluent dermal fibroblasts seeded at 2x10^5 cells/well in 6-well plate, cultured 48 h, washed twice with PBS. Lysed under denaturing conditions in 100 µL buffer containing 3 M guanidinium chloride (GdmCl), 10 mM TCEP, 40 mM chloroacetamide, 100 mM Tris-HCl pH 8.5. Denatured at 95C for 10 min (1000 rpm) and sonicated 10 min. Protein concentration measured by BCA assay; 500 ng protein per sample used. Digests acidified with formic acid to 2% and loaded onto Evotip Pure (Evosep) tips."
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.95
+    evidence: "The human fibroblast samples were lysed under denaturing conditions in 100 uL of a buffer containing 3 M guanidinium chloride (GdmCl), 10 mM tris(2-carboxyethyl)phosphine (TCEP), 40 mM chloroacetamide and 100 mM Tris-HCl pH 8.5."
+  digestion_details:
+    value:
+      enzyme: "LysC then trypsin (sequential; both Roche, MS-grade)"
+      ratio: "1:50 (enzyme to protein) for both LysC and trypsin"
+      time_temp: "LysC 37C for 3.5 h at 800 rpm in 1 M GdmCl; trypsin 37C overnight at 800 rpm in 0.5 M GdmCl"
+      reduction: "10 mM TCEP in lysis buffer"
+      alkylation: "40 mM chloroacetamide in lysis buffer"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.97
+    evidence: "proteins were digested with LysC (Roche; enzyme to protein ratio 1:50; MS-grade) while shaking at 800 rpm at 37C for 3.5 h. The digestion mixture was diluted again with the same dilution buffer to reach 0.5 M GdmCl, followed by tryptic digestion (Roche; enzyme to protein ratio 1:50; MS-grade) and incubation at 37C overnight in a thermal shaker at 800 rpm."
+  quantification_method:
+    value: "Label-free quantification (DIA quantification via DIA-NN)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.85
+    evidence: "applying the data-independent acquisition (DIA) ... MS data were processed with Dia-NN (v2.0)"
+  processing_software:
+    value:
+      - name: "DIA-NN"
+        version: "2.0"
+        purpose: "DIA proteomics data processing and library-free search"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.98
+    evidence: "MS data were processed with Dia-NN (v2.0) and searched against a library of in silico predicted human spectra."
+  search_database:
+    value: "Library of in silico predicted human spectra (predicted spectral library, human)"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.9
+    evidence: "searched against a library of in silico predicted human spectra"
+  search_settings:
+    value:
+      enzyme: "Trypsin (sequential LysC/trypsin digestion)"
+      match_between_runs: true
+      precursor_mz_search_range: "400-1000 m/z"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.8
+    evidence: "The \"match between run\" feature was used and the search range was set to an m/z between 400 and 1000."
+  lab_id:
+    value: "Bjorn Fischer-Zirnsak / Felix Boschann (corresponding authors), Institute of Medical Genetics and Human Genetics, Charite - Universitatsmedizin Berlin, Germany; proteomics performed at Mass-Spectrometry Facility, Max Planck Institute for Molecular Genetics, Berlin"
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.9
+    evidence: "Corresponding author: Dr. Felix Boschann ... Dr. Bjorn Fischer-Zirnsak ... 14.Mass-Spectrometry Facility, Max Planck Institute for Molecular Genetics, Berlin, Germany."
+  study_type:
+    value: clinical
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.9
+    evidence: "A biallelic MRPL42 variant causes a combined oxidative phosphorylation deficiency syndrome revealed by multi-omics"
+  key_findings:
+    value: "A biallelic intronic MRPL42 variant causes a fatal combined OXPHOS-deficiency syndrome; multi-omics including DIA proteomics of patient fibroblasts revealed strongly reduced MRPL42 and a general decrease of complex I/IV and mitoribosomal (mtLSU/mtSSU) proteins, with lentiviral wildtype MRPL42 complementation correcting most phenotypes."
+    status: inferred
+    source: "paper:10.1038_S41525-026-00564-1.pdf"
+    confidence: 0.9
+    evidence: "a decrease of complex I, III, IV, and mitoribosomal-related proteins was identified by proteomics. Complementation with wildtype MRPL42 corrected most of these phenotypes"
+status: success

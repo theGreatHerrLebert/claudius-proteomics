@@ -1,0 +1,110 @@
+accession: PXD055830
+extracted_at: "2026-05-17T19:31:36Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S41467-025-61005-8.pdf
+    source: unpaywall
+fields:
+  lc_system:
+    value: "Thermo Orbitrap Fusion (mass spectrometer) at Stanford University Mass Spectrometry (SUMS); LC system not specified"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.4
+    evidence: "Samples were run on Thermo Orbitrap Fusion at Stanford University Mass Spectrometry (SUMS)."
+  acquisition_mode:
+    value: DDA
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.6
+    evidence: "Raw mass spec result files were processed using Bionic (Protein Metrics, Inc.) software ... Spectral counts were converted to normalized spectral abundance factor (NSAF) values"
+  ce_strategy:
+    value: "HCD fragmentation (QTOF/HCD fragmentation type specified in Byonic search parameters)"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.5
+    evidence: "fragmentation type: QTOF/HCD"
+  cell_lines_tissues:
+    value: "IMCD3 mouse ciliated cells expressing LAPN-tagged wild-type Rsg1 or GDP-locked Rsg1T69N (affinity purification mass spectrometry / APMS interactome study)"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.95
+    evidence: "5mL packed cell volume of IMCD3 cells expressing LAPN-tagged proteins were re-suspended with 20mL of LAP-resuspension buffer"
+  sample_prep:
+    value: "Tandem affinity purification (LAP tag): IMCD3 cells lysed in LAP-resuspension buffer with NP-40, clarified by two-step centrifugation; GFP-tagged proteins captured on GFP-coupled beads, GFP tag cleaved with TEV protease, then S-tagged protein captured on S-protein agarose; complexes eluted with 2X LDS buffer, run on Bolt Bis-Tris Plus Gels, stained with Colloidal Blue, gel lane cut into eight pieces"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.95
+    evidence: "purified protein complexes were eluted with 50uL of 2X LDS buffer and boiled at 95C for 3min. Samples were then run on Bolt Bis-Tris Plus Gels ... stained with Colloidal Blue Staining Kit ... the bands were cut into eight pieces."
+  digestion_details:
+    value:
+      enzyme: "Trypsin/LysC (Promega V5073), 125 ng per sample"
+      reduction_alkylation: "gel slices destained, reduced, and alkylated prior to in-gel digestion (specific reagents not stated)"
+      method: "in-gel digestion as in Shevchenko et al. 2006; tryptic peptides extracted from gel bands and dried in a speedvac"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "The gel slices were then destained, reduced, and alkylated followed by in-gel digestion using (125ng) Trypsin/LysC (V5073, Promega) as previously described67. Tryptic peptides were extracted from the gel bands and dried in a speedvac."
+  fractionation:
+    value:
+      method: "SDS-PAGE gel lane fractionation (in-gel digestion / GeLC-MS)"
+      n_fractions: 8
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "After the buffer was replaced with Optima water, the bands were cut into eight pieces."
+  quantification_method:
+    value: "Label-free spectral counting; spectral counts converted to normalized spectral abundance factor (NSAF) values"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "Spectral counts were converted to normalized spectral abundance factor (NSAF) values68 and significance of enrichment of bait-association was calculated"
+  processing_software:
+    value:
+      - name: "Byonic (Bionic, Protein Metrics, Inc.)"
+        version: "v2.16.11"
+        purpose: "peptide/protein identification from raw mass spec files"
+      - name: "Cytoscape"
+        version: "not specified"
+        purpose: "construction of protein interaction networks"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "Raw mass spec result files were processed using Bionic (Protein Metrics, Inc.) software (version: v2.16.11) ... protein interaction networks were constructed in Cytoscape"
+  search_database:
+    value: "FASTA library of all human RefSeq proteins (curated and predicted), downloaded 2018/06/18"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "a FASTA library of all human refseq proteins (curated and predicted) was used that was downloaded on 2018/06/18."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "40 ppm"
+      enzyme: "trypsin, fully specific"
+      missed_cleavages: 2
+      fixed_modifications: "propionamide on Cys"
+      variable_modifications: "oxidation of Met/His/Trp; deamidation of Asn/Gln; phosphorylation of Ser/Thr/Tyr (maximum 2 variable modifications)"
+      fdr: "0.01 FDR at the protein level"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.95
+    evidence: "precursor mass tolerance: 20 ppm, fragment mass tolerance: 40 ppm; fragmentation type: QTOF/HCD; propionamide as Cys fixed modification, variable modifications of Met, His and Trp oxidation, Asn and Gln deamidation, and Ser, Thr and Tyr phosphorylation, with maximum 2 variable modification; trypsin with maximum 2 missed cleavages and fully specific mode; identifications were filtered at 0.01 FDR at the protein level"
+  lab_id:
+    value: "Corresponding authors: Eduardo F. Tizzano (Vall d'Hebron University Hospital, Barcelona, Spain) and John B. Wallingford (Department of Molecular Biosciences, University of Texas at Austin, Austin, TX, USA); proteomics performed at Stanford University Mass Spectrometry (Peter K. Jackson lab, Baxter Laboratory, Stanford University School of Medicine)"
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "Correspondence and requests for materials should be addressed to Eduardo F. Tizzano or John B. Wallingford. e-mail: eduardo.tizzano@vallhebron.cat; wallingford@utexas.edu"
+  study_type:
+    value: interactomics
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "we expressed wild-type Rsg1 or GDP-locked Rsg1T69N in ciliated mouse IMCD3 cells and used affinity purification and mass spectrometry (APMS) to compare their interactomes."
+  key_findings:
+    value: "APMS of LAP-tagged Rsg1 in IMCD3 cells revealed that Rsg1 binds all CPLANE complex subunits and the transition zone protein Fam92 in a GTP-dependent manner, since the GDP-locked Rsg1T69N mutant lost these interactions. This established CPLANE2/RSG1 as a causative gene for human ciliopathy (Oral-Facial-Digital syndrome)."
+    status: inferred
+    source: "paper:10.1038_S41467-025-61005-8.pdf"
+    confidence: 0.9
+    evidence: "APMS reveals that Rsg1 binds CPLANE and the transition zone protein Fam92 in a GTP-dependent manner ... interactions with all four CPLANE subunits were almost completely absent for Rsg1T69N"
+status: success

@@ -1,0 +1,130 @@
+accession: PXD031993
+extracted_at: "2026-05-17T19:19:49Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41467-022-29690-x.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "home-made reversed-phase analytical column, 75 um i.d., 25 cm length"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.7
+    evidence: "The tryptic peptides were dissolved in solvent A (0.1% formic acid, 2% acetonitrile in water), directly loaded onto a home-made reversed-phase analytical column (75 cm length, 75/100 um i.d.)."
+  lc_system:
+    value: "nanoElute UHPLC"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.95
+    evidence: "all at a constant flow rate of 450 nL/min on a nanoElute UHPLC system (Bruker Daltonics)."
+  mobile_phases:
+    value:
+      A: "0.1% formic acid, 2% acetonitrile in water"
+      B: "0.1% formic acid in acetonitrile"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "The tryptic peptides were dissolved in solvent A (0.1% formic acid, 2% acetonitrile in water) ... Peptides were eluted with a gradient from 6% to 24% solvent B (0.1% formic acid in acetonitrile)"
+  gradient_length:
+    value: 90
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.8
+    evidence: "Peptides were eluted with a gradient from 6% to 24% solvent B (0.1% formic acid in acetonitrile) over 70 min, 24-35% in 14 min and climbing to 80% in 3 min then holding at 80% for the last 3 min"
+  flow_rate:
+    value: "450 nL/min"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.97
+    evidence: "all at a constant flow rate of 450 nL/min on a nanoElute UHPLC system (Bruker Daltonics)."
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.95
+    evidence: "The timsTOF Pro was operated in parallel accumulation serial fragmentation (PASEF) mode. Precursors with charge states 0-5 were selected for fragmentation, and 10 PASEF-MS/MS scans were acquired per cycle."
+  cell_lines_tissues:
+    value: "Cells treated with DMSO or APL-16-5 (specific proteomics cell line not stated in the methods; the study employed HEK293T, A549, and MDCK cell lines)"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.4
+    evidence: "To evaluate the selectivity of protein degradation by APL-16-5, we have characterized the protein profiles in cells treated with APL-16-5, using a multi-omics approach"
+  sample_prep:
+    value: "Protein profiles characterized in cells treated with DMSO or APL-16-5; proteins digested with trypsin and analyzed by LC-MS/MS to assess selectivity of APL-16-5-mediated protein degradation"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.5
+    evidence: "To evaluate the selectivity of protein degradation by APL-16-5, we have characterized the protein profiles in cells treated with APL-16-5, using a multi-omics approach (Supplementary Tables 4-6)."
+  digestion_details:
+    value:
+      enzyme: trypsin
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.6
+    evidence: "Quantitative proteomic analysis by LC-MS/MS. The tryptic peptides were dissolved in solvent A (0.1% formic acid, 2% acetonitrile in water)"
+  quantification_method:
+    value: "TMT (TMT-6plex)"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "TMT-6plex quantification was performed as variable modifications."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "1.6.15.0"
+        purpose: "MS/MS data processing, database search and protein quantification"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "The resulting MS/MS data were processed using MaxQuant search engine (version1.6.15.0)."
+  search_database:
+    value:
+      source: "SwissProt"
+      species: "Homo sapiens"
+      version: "Homo_sapiens-9606-SP-20201214.fasta"
+      entries: 20395
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "Tandem mass spectra were searched against human SwissProt database (version 9606-SP-20201214.fasta, 20395 entries) concatenated with reverse decoy database."
+  search_settings:
+    value:
+      enzyme: "Trypsin/P"
+      missed_cleavages: 2
+      precursor_tolerance: "40 ppm in First search, 40 ppm in Main search"
+      fragment_tolerance: "0.04 Da"
+      fixed_modifications: "Carbamidomethyl on Cys"
+      variable_modifications: "Acetylation on protein N-terminal, oxidation on Met, and acetylation/succinylation/ubiquitination/crotonylation/2-ohi-butyrylation/malonylation on Lys, phosphorylation on Ser/Thr/Tyr"
+      fdr: "FDR adjusted to < 1%"
+      hit_cutoff: "log2 FoldChange < 0.5 and p value < 0.05"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "Trypsin/P was specified as cleavage enzyme allowing up to two missing cleavages. The mass tolerance for precursor ions was set as 40 ppm in First search and 40 ppm in Main search, and the mass tolerance for fragment ions was set as 0.04 Da. Carbamidomethyl on Cys was specified as fixed modification ... FDR was adjusted to <1%. The cut-off values for identification of potential hits was set at log2FoldChange < 0.5 and p value < 0.05."
+  lab_id:
+    value: "Shan Cen, Institute of Medicinal Biotechnology, Chinese Academy of Medical Sciences and Peking Union Medical College, Beijing, PR China"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.85
+    evidence: "Correspondence and requests for materials should be addressed to Fei Guo, Liyan Yu or Shan Cen. ... 1 Institute of Medicinal Biotechnology, Chinese Academy of Medical Sciences and Peking Union Medical School, 100050 Beijing, PR China."
+  study_type:
+    value: drug_treatment
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.8
+    evidence: "To evaluate the selectivity of protein degradation by APL-16-5, we have characterized the protein profiles in cells treated with APL-16-5, using a multi-omics approach"
+  reported_ids:
+    value:
+      proteins_strongly_reduced: "1 protein (FN1) reduced more than 2-fold"
+      proteins_moderately_reduced: "12 proteins with moderate reduction (-0.5 > log2 > -1)"
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.6
+    evidence: "Only the level of FN1 protein was reduced by more than 2-fold in a TRIM25-dependent fashion at the post-transcriptional level. 12 more host proteins showed a moderate reduction (-0.5 > log2 > -1) (Supplementary Table 7)."
+  key_findings:
+    value: "Quantitative LC-MS/MS proteomic profiling of APL-16-5-treated cells demonstrated that APL-16-5-mediated protein down-regulation is highly selective and not promiscuous, with only FN1 reduced more than 2-fold and 12 additional proteins moderately reduced."
+    status: inferred
+    source: "paper:10.1038_s41467-022-29690-x.pdf"
+    confidence: 0.8
+    evidence: "These data demonstrate that APL-16-5-mediated protein down regulation is high selective, not promiscuous."
+status: success

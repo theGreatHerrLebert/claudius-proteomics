@@ -1,0 +1,132 @@
+accession: PXD046370
+extracted_at: "2026-05-17T19:24:35Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.21203_RS.3.RS-3520814_V1.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "separated on a homemade C18 column (200 mm x 75 µm i.d., 1.9 Å particle size; Dr. Maisch GmbH) by a nanoElute HPLC (Bruker) at 300nL/min with a 60 min gradient of 4-100% Acetonitrile (with 0.1% formic acid)."
+  column_type:
+    value: "Homemade C18 column, 200 mm x 75 µm i.d., 1.9 µm particle size (Dr. Maisch GmbH); reverse-phase C18 packing"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.9
+    evidence: "separated on a homemade C18 column (200 mm x 75 µm i.d., 1.9 Å particle size; Dr. Maisch GmbH)"
+  lc_system:
+    value: "nanoElute HPLC (Bruker)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "by a nanoElute HPLC (Bruker) at 300nL/min with a 60 min gradient of 4-100% Acetonitrile (with 0.1% formic acid)."
+  mobile_phases:
+    value:
+      A: "0.1% formic acid (aqueous); peptides reconstituted in 0.1% Formic Acid"
+      B: "Acetonitrile with 0.1% formic acid"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.8
+    evidence: "Peptides were reconstituted by 0.1% Formic Acid ... a 60 min gradient of 4-100% Acetonitrile (with 0.1% formic acid)."
+  flow_rate:
+    value: "300 nL/min"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "by a nanoElute HPLC (Bruker) at 300nL/min with a 60 min gradient"
+  acquisition_mode:
+    value: "DDA-PASEF (data-dependent acquisition with Parallel Accumulation-Serial Fragmentation, 10 PASEF scans per cycle)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "Data were acquired by a timsTOF Pro2 Mass Spectrometer (Bruker) in a data-dependent method with 10 PASEF (Parallel Accumulation–Serial Fragmentation)."
+  cell_lines_tissues:
+    value: "Frozen native cervical cancer tumor tissues from five patients (biopsy/surgical cutting block tissue; 18-110 mg per sample); PBMCs isolated from patient blood for in vitro T cell validation"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "Frozen cervical cancer tissues from five patients were selected for neoantigen discovery. The amount of the tissues varied from 18mg to 110mg."
+  sample_prep:
+    value: "HLA peptide (immunopeptidome) enrichment using the Neo Discovery immunopeptidome enrichment Kit (BaizhenBio Inc.). Tissues homogenized in a grinding mill with liquid nitrogen; lysis buffer added to pellet and incubated on ice 1 hour; sonicated 3 minutes on ice; centrifuged 20000g at 4 degC for 1 hour. Supernatant used for MHC-peptide complex enrichment with anti-HLA I antibody crosslinked beads. Immuno-peptides separated and desalted by C18 spin column (GL science) and dried by speed-vacuum."
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "MHC-peptide complexes were enriched with our Neo Discovery immunopeptidome enrichment Kit (BaizhenBio Inc.). The tissue samples were homogenized in a grinding mill with liquid nitrogen. Lysis buffer was then added into the pellet and incubated on ice for 1 hour. The mixtures were sonicated for 3 minutes on ice and centrifuged at 20000g, 4 degC for 1 hour. The supernatant was aspirated for MHC-peptide complex enrichment with anti-HLA I antibody crosslinked beads included in the kit. The immuno-peptides were then separated and desalted by a C18 spin column (GL science). Eluted fractions containing immunopeptide were dried out by a speed-vacuum instrument."
+  quantification_method:
+    value: "label-free (immunopeptidomics; no isotopic or isobaric labeling described)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.55
+    evidence: "MS-based immunopeptidomics study of native tumor tissues from five patients with cervical cancer ... acquired MS data of each patient was further analyzed using DeepNovo Peptidome workflow for neoantigen identification"
+  processing_software:
+    value:
+      - name: "DeepNovo Peptidome"
+        version: "implemented in PEAKS Studio and PEAKS Online platform"
+        purpose: "de novo sequencing-based HLA peptide identification and neoantigen discovery (integrates de novo sequencing with database search, spectral library search, FDR estimation)"
+      - name: "DeepSelf"
+        version: "TensorFlow 2.6 implementation (bi-directional LSTM, Keras Sequential model)"
+        purpose: "personalized immunogenicity prediction of candidate neoantigens"
+      - name: "NetMHCpan"
+        version: "4.1"
+        purpose: "HLA-I peptide binding prediction"
+      - name: "NetMHCIIpan"
+        version: "4.0"
+        purpose: "HLA-II peptide binding prediction"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.85
+    evidence: "The acquired MS data of each patient was further analyzed using DeepNovo Peptidome workflow for neoantigen identification and immunogenicity prediction ... DeepNovo Peptidome workflow has been implemented in PEAKS Studio and PEAKS Online platform ... The model implementation was done in the TensorFlow framework (version 2.6) ... We also used NetMHCpan to predict the binding of the identified peptides"
+  search_database:
+    value: "Human protein database (used to classify identified peptides as canonical/self vs de novo neoantigens); de novo sequencing does not depend on a protein database for identification"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.6
+    evidence: "91-95% of the peptides could be found in the human protein database, whereas the remaining 5-9% were de novo peptides ... If a peptide came from a human protein, it was considered as a self peptide."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "0.05 Da"
+      peptide_length: "8-14 for HLA-I (peptides with lengths <8 or >14 for HLA-I filtered out)"
+      variable_modifications: "Met(Oxidation)"
+      enzyme: "none / unspecific (immunopeptidomics, HLA peptides; de novo sequencing)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.9
+    evidence: "The precursor tolerance and fragment ion tolerance were set at 20 ppm and 0.05 Da, respectively; Met(Oxidation) was set at variable modification ... those with lengths <8 or >14 (for HLA-I) or >25 (for HLA-II) were filtered out."
+  lab_id:
+    value: "Corresponding authors: Ming Li (David R. Cheriton School of Computer Science, University of Waterloo, Ontario, Canada), Baozhen Shan (Bioinformatics Solutions Inc., Waterloo, Ontario, Canada), Yi Zhang (Biotherapy Center, The First Affiliated Hospital of Zhengzhou University, Zhengzhou, China)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.9
+    evidence: "Corresponding authors. Emails: yizhang@zzu.edu.cn, bshan@bioinfor.com, mli@uwaterloo.ca"
+  study_type:
+    value: immunopeptidomics
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.95
+    evidence: "we present a new MS-based immunopeptidomics study of native tumor tissues from five patients with cervical cancer ... a complete pipeline for neoantigen identification and validation that was based solely on MS immunopeptidomics."
+  number_of_replicates:
+    value:
+      biological: "5 cervical cancer patients (one tumor tissue sample each)"
+      technical: "in vitro ELISpot validation reactions performed three times per antigen stimulation"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.7
+    evidence: "MS-based immunopeptidomics study of native tumor tissues from five patients with cervical cancer ... every reaction of antigen stimulation was performed three times."
+  reported_ids:
+    value:
+      hla_i_peptides: "58,756 unique HLA-I peptides total (7,682-22,220 per patient)"
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.9
+    evidence: "We identified a total of 58,756 unique HLA-I peptides, where the number of peptides per patient varied from 7,682-22,220, mainly due to the available amount of tumor tissues."
+  key_findings:
+    value: "The DeepImmu pipeline (Neo Discovery enrichment kit + DeepNovo Peptidome de novo sequencing + DeepSelf immunogenicity prediction) identified and prioritized candidate neoantigens directly from small native cervical cancer tumor tissues (as low as 18 mg) without genomic data. In vitro validation on patient 1 confirmed four of the synthesized neoantigens as immunogenic by IFN-gamma ELISpot."
+    status: inferred
+    source: "paper:10.21203_RS.3.RS-3520814_V1.pdf"
+    confidence: 0.9
+    evidence: "our DeepImmu pipeline was able to identify and prioritize 100 candidate neoantigens for in vitro T cell validation, and four of them were confirmed to be immunogenic ... we were also able to reduce the amount of sample to biopsy size as low as 18mg."
+status: success

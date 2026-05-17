@@ -1,0 +1,27 @@
+accession: PXD046675
+generated_at: '2026-02-11T15:11:50.514547'
+is_multi_organism: false
+is_multi_instrument: false
+n_groups: 1
+organisms:
+- name: Sus scrofa
+  taxon_id: 9823
+  key: pig
+groups:
+- group_id: pig_trypsin
+  organism_key: pig
+  organism_name: Sus scrofa
+  taxon_id: 9823
+  enzyme: trypsin
+  sample_type: biological
+  source_archive: ''
+  instrument_model: timsTOF Pro
+  n_runs: 6
+  runs:
+  - L120-1_Slot2-13_1_11628.d
+  - L120-2_Slot2-14_1_11629.d
+  - L120-3_Slot2-15_1_11630.d
+  - L240-1_Slot2-16_1_11632.d
+  - L240-2_Slot2-17_1_11633.d
+  - L240-3_Slot2-18_1_11634.d
+unassigned_runs: []

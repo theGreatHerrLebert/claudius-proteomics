@@ -1,0 +1,136 @@
+accession: PXD046323
+extracted_at: "2026-05-17T19:24:35Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s42255-025-01225-w.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "Acclaim PepMap 100 C18 column (Thermo Fisher Scientific); 150-min linear gradient column"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.85
+    evidence: "Peptide separation was carried out with an Acclaim PepMap 100 C18 column (Thermo Fisher Scientific) using a 150-min linear gradient from 3% to 42% of B (84% acetonitrile, 0.1% formic acid) at a flow rate of 250 nl min-1."
+  gradient_length:
+    value: 150
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.9
+    evidence: "Peptide separation was carried out with an Acclaim PepMap 100 C18 column (Thermo Fisher Scientific) using a 150-min linear gradient from 3% to 42% of B (84% acetonitrile, 0.1% formic acid) at a flow rate of 250 nl min-1."
+  lc_system:
+    value: "Ultimate 3000 Nano ultra high-pressure chromatography (UPLC) system with a PepSwift Monolithic Trap 200 um x 5 mm (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.95
+    evidence: "quality control was performed as described using an Ultimate 3000 Nano ultra high-pressure chromatography (UPLC) system with a PepSwift Monolithic Trap 200 um x 5 mm (Thermo Fisher Scientific). Peptides were analysed on high-resolution LC-MS/MS using an Ultimate 3000 Nano UPLC system (Thermo Fisher Scientific) coupled to a timsTOF Pro (Bruker) equipped with a CaptiveSpray source."
+  mobile_phases:
+    value: "Mobile phase B: 84% acetonitrile, 0.1% formic acid (gradient run 3% to 42% B)"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.65
+    evidence: "using a 150-min linear gradient from 3% to 42% of B (84% acetonitrile, 0.1% formic acid) at a flow rate of 250 nl min-1."
+  flow_rate:
+    value: "250 nl/min"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.95
+    evidence: "using a 150-min linear gradient from 3% to 42% of B (84% acetonitrile, 0.1% formic acid) at a flow rate of 250 nl min-1."
+  acquisition_mode:
+    value: "PASEF (timsTOF Pro)"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.55
+    evidence: "Peptides were analysed on high-resolution LC-MS/MS using an Ultimate 3000 Nano UPLC system (Thermo Fisher Scientific) coupled to a timsTOF Pro (Bruker) equipped with a CaptiveSpray source."
+  cell_lines_tissues:
+    value: "Mouse liver tissue (C57BL/6J) treated with 10 mM glycine or vehicle; HepG2 hepatocellular carcinoma cells treated with HCN-releasing agents or in glycine/serine-free medium"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.85
+    evidence: "Mouse liver tissue treated with 10 mM glycine or vehicle. Mouse liver samples (50 mg each) were quickly frozen at -80 C... HepG2 cells treated with 10 mM glycine and serine/glycine-free medium... HepG2 cells treated with HCN-releasing agents."
+  sample_prep:
+    value: "Tissue homogenized in protein homogenizer in PBS, mixed with buffered glycine; lysed in 2x HEN buffer (HEPES, EDTA, neocuproine, IGEPAL, SDS) with protease inhibitor and iodoacetamide; methanol/chloroform precipitation"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.75
+    evidence: "Samples were placed in a six-well plate and incubated (37 C, 5% CO2) for 8 h. Samples were transferred to 5-ml microcentrifuge tubes and 1 ml of 2x HEN was added to each (100 mM HEPES, 2 mM EDTA, 0.2 mM neocuproine, 2% IGEPAL, 4% SDS, pH 7.4) with 2% protease inhibitor and 40 mM iodoacetamide. Samples were lysed using a handheld homogenizer and precipitated using the methanol/chloroform method."
+  digestion_details:
+    value:
+      enzyme: "trypsin (Promega, V5117)"
+      ratio: "1:20 trypsin-to-sample ratio"
+      time: "overnight"
+      temp: "37 C"
+      reduction: "Samples resuspended in 6 M guanidine HCl; no separate DTT reduction step described"
+      alkylation: "40 mM iodoacetamide added during 2x HEN-buffer lysis"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.8
+    evidence: "Dry samples were resuspended using 50 ul 50 mM ABC, 6 M guanidine HCl. Next, 20 ug of protein was diluted 20 times with 50 mM ABC (no guanidine) and trypsin was added with a 1:20 trypsin-to-sample ratio (Promega, V5117). Proteins were digested overnight at 37 C... (100 mM HEPES, 2 mM EDTA, 0.2 mM neocuproine, 2% IGEPAL, 4% SDS, pH 7.4) with 2% protease inhibitor and 40 mM iodoacetamide."
+  fractionation:
+    value:
+      method: "No offline peptide fractionation; desalting only via Oasis HLB 1-cc Vac Cartridges (30 mg sorbent, Waters)"
+      n_fractions: 1
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.6
+    evidence: "The desalting was performed on Oasis HLB 1-cc Vac Cartridges, 30 mg sorbent (Waters, WAT094225). Columns were washed with the elution solvent 60% acetonitrile in 0.1% trifluoroacetic acid (TFA) and then twice with 0.1% TFA."
+  quantification_method:
+    value: "Label-free (peptide intensities normalized with EigenMS R package); chemical Cyano PTM labelling used to detect S-cyanylated cysteines"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.55
+    evidence: "all peptides were normalized using the EigenMS R package, which aims to preserve the original differences between treatment groups while removing the bias imposed by the datasets themselves. The cyanylated peptides are then extracted from the list and normalized to the corresponding protein levels."
+  processing_software:
+    value:
+      - name: "PEAKS ONLINE"
+        version: "12"
+        purpose: "peptide/protein identification, PSM evaluation, FDR filtering"
+      - name: "EigenMS (R package)"
+        version: ""
+        purpose: "peptide intensity normalization"
+      - name: "Perseus"
+        version: ""
+        purpose: "statistical analysis of MS measurements"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.85
+    evidence: "Data were evaluated with PEAKS ONLINE software (version 12)... all peptides were normalized using the EigenMS R package... Statistical tests were performed using Perseus."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "0.05 Da"
+      enzyme: "trypsin (specific tryptic digest)"
+      missed_cleavages: "maximum of three"
+      fixed_modifications: "Carbamidomethylation (+57.021464 Da) on C"
+      variable_modifications: "N-term acetylation (+42.010565 Da), methionine oxidation (+15.994915 Da); Cyano PTM (+24.995249 Da) on cyanylated peptides only"
+      fdr: "PSM and proteins filtered at 1% FDR"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.85
+    evidence: "Data were evaluated with PEAKS ONLINE software (version 12) using 20 ppm for precursor mass tolerance, 0.05 Da for fragment mass tolerance, specific tryptic digest, and a maximum of three missed cleavages. Carbamidomethylation (+57.021464 Da) on C, N-term acetylation (+42.010565 Da), methionine oxidation (+15.994915 Da) and on cyanylated peptides only Cyano PTM (+24.995249 Da) were added as variable modifications. Peptide spectrum match (PSM) and proteins were filtered at an FDR of 1%."
+  lab_id:
+    value: "Corresponding authors: Milos R. Filipovic (Leibniz Institute for Analytical Sciences, Dortmund, Germany; School of Molecular Biosciences, University of Glasgow, UK) and Csaba Szabo (Section of Pharmacology, Department of Oncology, Microbiology and Immunology, University of Fribourg, Switzerland)"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.95
+    evidence: "Correspondence and requests for materials should be addressed to Milos R. Filipovic or Csaba Szabo. e-mail: milos.filipovic@glasgow.ac.uk; csaba.szabo@unifr.ch"
+  study_type:
+    value: "phosphoproteomics"
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.4
+    evidence: "Proteomics and detection of S-cyanylation by LC-MS/MS... The current report shows that hundreds of proteins are physiologically cyanylated in mammalian cells (PTM-focused proteomics study; closest available category)."
+  number_of_replicates:
+    value:
+      biological: "at least three of five biological replicates per group"
+      technical: ""
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.6
+    evidence: "Only peptides present in at least three of five biological replicates were taken in consideration."
+  key_findings:
+    value: "Endogenously generated cyanide post-translationally modifies protein cysteine residues via S-cyanylation; hundreds of proteins are physiologically cyanylated in mammalian cells, and cyanylation increases in response to glycine supplementation."
+    status: inferred
+    source: "paper:10.1038_s42255-025-01225-w.pdf"
+    confidence: 0.85
+    evidence: "The current report shows that hundreds of proteins are physiologically cyanylated in mammalian cells, and that the portion of the proteins affected by this modification could be quite high... Cyanide can modify cysteine residues via protein S-cyanylation, which is detectable basally in cells and mice, and increases in response to glycine."
+status: success

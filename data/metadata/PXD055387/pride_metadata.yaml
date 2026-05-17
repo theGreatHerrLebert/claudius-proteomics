@@ -1,0 +1,75 @@
+accession: PXD055387
+version: '1.0'
+generated_at: '2026-05-17T21:05:31.260067'
+title:
+  value: Establishing an activity-based protein profiling platform to screen in situ
+    kinase inhibitor engagement
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1016/j.mcpro.2025.100961
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD055387
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: null
+    status: missing
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF HT
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: null
+    status: missing
+    hint: Check publication methods section or raw data LC method
+  column_type:
+    value: null
+    status: missing
+    hint: Check publication methods section for column specifications
+  acquisition_mode:
+    value: null
+    status: missing
+    hint: Check if DDA, DIA, PASEF, diaPASEF, PRM, etc.
+  lc_system:
+    value: null
+    status: missing
+    hint: Check raw data chromatography info or publication
+  sample_prep:
+    value: null
+    status: missing
+    hint: Check publication methods for sample preparation protocol
+  tissue: null
+  matrix_tier: null
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: false
+  auto_fields: 5
+  inferred_fields: 0
+  manual_fields: 0
+  missing_fields: 7
+  missing_field_names:
+  - lab_id
+  - gradient_length
+  - column_type
+  - acquisition_mode
+  - lc_system
+  - sample_prep
+  - tissue
+  requires_review: true

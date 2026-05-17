@@ -1,0 +1,160 @@
+accession: PXD058436
+extracted_at: "2026-05-17T19:33:41Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1186_s13059-025-03763-8.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "Peptides were separated along a gradient ranging from 0 to 95% Solvent B (AcN with 0.01% FA) over 60 min with consecutive ramps from 0 to 32% (30 min) and 32 to 40% (15 min), followed by two 5 min ramps to 60% and 95%, respectively."
+  column_type:
+    value: "75 um x 25 cm Aurora Series emitter column (IonOpticks); trap: Acclaim PepMap (Thermo Fisher Scientific)"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.9
+    evidence: "Peptide separation was performed as previously described [18] on Bruker's nanoElute LC system using an acclaim TM PepMap (Thermo Fisher Scientific, Waltham, USA) and a 75 um 25 cm Aurora Series emitter column (IonOpticks, Fitzroy, Australia)."
+  lc_system:
+    value: "Bruker nanoElute"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.97
+    evidence: "Peptide separation was performed as previously described [18] on Bruker's nanoElute LC system"
+  mobile_phases:
+    value:
+      B: "Acetonitrile (AcN) with 0.01% formic acid (FA)"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.7
+    evidence: "a gradient ranging from 0 to 95% Solvent B (AcN with 0.01% FA)"
+  acquisition_mode:
+    value: "DDA-PASEF"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "timsTOF Pro (Bruker Daltonics, Billerica, USA) equipped with a CaptiveSpray ion source using a data-dependent acquisition mode (DDA). PASEF ramps were set to 6"
+  cell_lines_tissues:
+    value: "Benign primary human tissues (23 different primary tissues; N=92 samples) collected post-mortem during routine autopsies"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.85
+    evidence: "we identified 133,163 HLA class I binders and 204,291 HLA class II peptides in the benign dataset across 23 different primary tissues ... collected post-mortem during routine autopsies at the University Hospital Zurich"
+  sample_prep:
+    value: "HLA class I and HLA class II molecules isolated by immunoaffinity chromatography using pan HLA class I-specific W6/32, pan HLA class II-specific Tu 39, and HLA-DR-specific L243 monoclonal antibodies"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "HLA class I and HLA class II molecules were isolated by previously described immunoaffinity chromatography protocols [44] using the pan HLA class I-specific W6/32 [54], pan HLA class II-specific Tu 39 [55], and HLA-DR-specific L243 [56] monoclonal antibodies."
+  fractionation:
+    value:
+      method: "none (immunoaffinity-isolated HLA ligands analyzed directly without offline fractionation)"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.6
+    evidence: "Sixty percent of the sample was injected in three technical replicates loading 5 ul."
+  quantification_method:
+    value: "Label-free quantification (OpenMS FeatureFinder on post-Percolator FDR-filtered list)"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.85
+    evidence: "Feature alignment and quantification was conducted based on the post-Percolator FDR-filtered list using OpenMS' chromatographic retention time aligner and FeatureFinder [33]."
+  processing_software:
+    value:
+      - name: MHCquant2
+        version: "2.6.0"
+        purpose: "Nextflow DSL2 immunopeptidomics identification and quantification pipeline"
+      - name: OpenMS
+        version: "3.1.0"
+        purpose: "Underlying software library / adapters and FeatureFinder quantification"
+      - name: tdf2mzml
+        version: "0.4"
+        purpose: "timsTOF vendor format to mzML conversion"
+      - name: ThermoRawFileParser
+        version: "1.4.3"
+        purpose: "ThermoFisher vendor format to mzML conversion"
+      - name: Comet
+        version: "2023.01 rev. 2"
+        purpose: "Database search engine"
+      - name: Percolator
+        version: "3.5.0"
+        purpose: "Rescoring and false-discovery estimation"
+      - name: MS2Rescore
+        version: "3.0.1"
+        purpose: "Peptide property prediction framework"
+      - name: DeepLC
+        version: "2.2.27"
+        purpose: "Retention time prediction"
+      - name: MS2PIP
+        version: "4.0.0-dev8"
+        purpose: "MS2 fragment intensity prediction (timsTOF2024 model)"
+      - name: FragPipe
+        version: "21.1"
+        purpose: "Benchmark comparison pipeline (MSFragger search)"
+      - name: PEAKS Studio
+        version: "11.5 Build 20231206"
+        purpose: "Benchmark comparison pipeline"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "MHCquant2 (v2.6.0) is implemented in Nextflow DSL2 and mainly comprises tools of the open-source software library OpenMS [29] (v3.1.0) ... tdf2mzml (v0.4) for timsTOF data and ThermoRawFileParser [60] (v1.4.3) ... OpenMS adapters to Comet [31] 2023.01 rev. 2 and Percolator [32] 3.5.0. The peptide property prediction framework MS2Rescore [39] (v3.0.1) was used to leverage DeepLC [20] (v2.2.27) and MS2PIP [37] (v4.0.0-dev8) ... FragPipe (v21.1), PEAKS Studio (v11.5, Build 20,231,206), and MHCquant2 (v2.6.0)"
+  search_database:
+    value:
+      source: "UniProtKB (Swiss-Prot)"
+      species: "Homo sapiens (TaxonID 9606)"
+      version: "downloaded 14.10.20"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "The reference proteome from UniProtKB (Swiss-Prot, downloaded on 14.10.20) of Homo sapiens (TaxonID 9606) was in silico digested without enzymatic restriction."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm"
+      fragment_tolerance: "0.02 Da"
+      enzyme: "none (in silico digested without enzymatic restriction)"
+      peptide_length: "8-14 (HLA class I); 12-30 (HLA class II)"
+      charge_range: "1-4 (HLA class I); 1-5 (HLA class II)"
+      mass_range: "800-2500 Da (HLA class I); 800-5000 Da (HLA class II)"
+      fixed_modifications: "none"
+      variable_modifications: "Methionine oxidation (max 3 modifications for HLA class I, 5 for HLA class II)"
+      fdr_threshold: "1% peptide-level FDR among technical replicate sample groups"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.95
+    evidence: "Database search was performed with a precursor mass tolerance of 20 ppm and a fragment mass tolerance of 0.02 Da. Methionine oxidation was specified as a variable modification, and a maximum of 3 and 5 modifications were allowed for HLA class I and II, respectively. The charge, mass range, and peptide length were set to 1-4, 800-2500 Da, and 8-14 for HLA class I and 1-5, 800-5000 Da, 12-30 for HLA class II ... A peptide-level FDR threshold of 1% among technical replicate sample groups was applied"
+  lab_id:
+    value: "Juliane Walz, Department of Peptide-based Immunotherapy, Institute of Immunology, University and University Hospital Tubingen, Germany"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.9
+    evidence: "*Correspondence: juliane.walz@med.uni-tuebingen ... Department of Peptide-based Immunotherapy, Institute of Immunology, University and University Hospital Tubingen"
+  study_type:
+    value: "method_development (immunopeptidomics pipeline development and benchmarking)"
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.9
+    evidence: "Here, we present MHCquant2, an open-source pipeline that implements OpenMS tools [29] and peptide property predictors (DeepLC, MS2PIP) for scalable and highly sensitive HLA peptide identification and quantification across various MS platforms."
+  number_of_replicates:
+    value:
+      technical: 3
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.85
+    evidence: "Sixty percent of the sample was injected in three technical replicates loading 5 ul."
+  reported_ids:
+    value:
+      hla_class_I_binders: 133163
+      hla_class_II_peptides: 204291
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.85
+    evidence: "Using the improved timsTOF2024 MS2PIP model, we identified 133,163 HLA class I binders and 204,291 HLA class II peptides in the benign dataset across 23 different primary tissues"
+  key_findings:
+    value: "MHCquant2, an open-source nf-core Nextflow pipeline integrating DeepLC and MS2PIP peptide property predictors, boosts HLA class I and II ligand identification by 26.9% and 13.0% over MHCquant1, and outperforms FragPipe and PEAKS on a benign timsTOF immunopeptidomics dataset (133,163 HLA class I binders, 204,291 HLA class II peptides across 23 tissues)."
+    status: inferred
+    source: "paper:10.1186_s13059-025-03763-8.pdf"
+    confidence: 0.9
+    evidence: "MHCquant2 ... uniquely identified HLA class I binders and HLA class II peptides using a 1% false-discovery rate (FDR) by 26.9% and 13.0%, respectively ... A 13.2% and 2.8% increase in unique HLA class I binder identifications were reported by MHCquant2 ... compared to FragPipe ... and PEAKS"
+status: success

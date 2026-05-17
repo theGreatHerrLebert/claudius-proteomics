@@ -1,0 +1,90 @@
+accession: PXD046323
+version: '1.0'
+generated_at: '2026-05-17T21:06:01.709637'
+title:
+  value: Endogenously produced cyanide supports bioenergetics and exerts cytoprotective
+    effects in mammals_HepG2 cells treated with cyanide releasers
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/s42255-025-01225-w
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD046323
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: 'Corresponding authors: Milos R. Filipovic (Leibniz Institute for Analytical
+      Sciences, Dortmund, Germany; School of Molecular Biosciences, University of
+      Glasgow, UK) and Csaba Szabo (Section of Pharmacology, Department of Oncology,
+      Microbiology and Immunology, University of Fribourg, Switzerland)'
+    status: inferred
+    source: paper:10.1038_s42255-025-01225-w.pdf
+    confidence: 0.95
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 150
+    status: inferred
+    source: paper:10.1038_s42255-025-01225-w.pdf
+    confidence: 0.9
+  column_type:
+    value: Acclaim PepMap 100 C18 column (Thermo Fisher Scientific); 150-min linear
+      gradient column
+    status: inferred
+    source: paper:10.1038_s42255-025-01225-w.pdf
+    confidence: 0.85
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.9
+  lc_system:
+    value: Ultimate 3000 Nano ultra high-pressure chromatography (UPLC) system with
+      a PepSwift Monolithic Trap 200 um x 5 mm (Thermo Fisher Scientific)
+    status: inferred
+    source: paper:10.1038_s42255-025-01225-w.pdf
+    confidence: 0.95
+  sample_prep:
+    value: Tissue homogenized in protein homogenizer in PBS, mixed with buffered glycine;
+      lysed in 2x HEN buffer (HEPES, EDTA, neocuproine, IGEPAL, SDS) with protease
+      inhibitor and iodoacetamide; methanol/chloroform precipitation
+    status: inferred
+    source: paper:10.1038_s42255-025-01225-w.pdf
+    confidence: 0.75
+  tissue:
+    value:
+    - Hepg2 cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

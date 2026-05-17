@@ -1,0 +1,123 @@
+accession: PXD037909
+extracted_at: "2026-05-17T19:24:43Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.3389_fphys.2022.982842.pdf
+    source: unpaywall
+fields:
+  column_type:
+    value: "capillary C18 column, 25 cm length, 75 um inner diameter, 1.6 um particle size, 120 A pore size (IonOpticks)"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.97
+    evidence: "200 ng of peptide digest was loaded on a capillary C18 column (25 cm length, 75 um inner diameter, 1.6 um particle size, 120 A pore size; IonOpticks, Fitzroy, VIC, Australia)."
+  lc_system:
+    value: "nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics)"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.98
+    evidence: "LC-MS/MS analysis was carried out using a nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics, Bremen, Germany) coupled to the timsTOF fleX mass spectrometer (Bruker Daltonics), using a CaptiveSpray nanoelectrospray ion source (Bruker Daltonics)."
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.7
+    evidence: "LC-MS/MS analysis was carried out using a nanoElute nanoflow ultrahigh pressure LC system (Bruker Daltonics, Bremen, Germany) coupled to the timsTOF fleX mass spectrometer (Bruker Daltonics)."
+  cell_lines_tissues:
+    value: "Primary human skeletal muscle cells (myotubes) established from satellite cells isolated from musculus vastus lateralis muscle biopsies of 24 adult donors (14 lean, BMI < 25 kg/m2; 10 with obesity, BMI > 30 kg/m2)"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.96
+    evidence: "Human satellite cells were isolated from muscle biopsy samples from musculus vastus lateralis from lean donors and donors with obesity as previously described. ... Cultured myotubes used were established from biopsies from 24 adult donors, both females and males, age 47 +/- 3 years 14 lean donors (body mass index (BMI) < 25 kg/m2) and ten donors with obesity (BMI >30 kg/m2) were included."
+  sample_prep:
+    value: "Myotubes cultured and differentiated in 25 cm2 flasks; on day 7 of differentiation cells were washed with DPBS (Mg2+/Ca2+), washed with DPBS, spun down (1000 rpm, 4C, 5 min), snap frozen in liquid nitrogen and stored at -80C; lysed in 150 uL RIPA buffer with protease inhibitor; followed by protein aggregation, reduction, alkylation and tryptic digestion; resulting peptides desalted and concentrated on a 3M Empore C18 resin disc by the STAGE-TIP method"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.95
+    evidence: "Human skeletal muscle cells were cultured and differentiated in 25 cm2 flasks. On day 7 of the differentiation period, the cells were washed with DPBS containing Mg2+ and Ca2+ before harvested, washed in DPBS, and spun down at 1,000 rpm at 4C for 5 min. The cells were then snap frozen in liquid nitrogen and stored at -80C. The cells were lysed using 150 uL of RIPA buffer containing protease inhibitor followed by protein aggregation, and protein reduction, alkylation, and digestion into peptides with trypsin. Resulting peptides were desalted and concentrated before mass spectrometry by the STAGE-TIP method using a 3M Empore C18 resin disc."
+  digestion_details:
+    value:
+      enzyme: trypsin
+      reduction: "protein reduction (reagent not specified)"
+      alkylation: "protein alkylation (reagent not specified)"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.7
+    evidence: "The cells were lysed using 150 uL of RIPA buffer containing protease inhibitor followed by protein aggregation, and protein reduction, alkylation, and digestion into peptides with trypsin."
+  quantification_method:
+    value: "label-free quantification (LFQ)"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.97
+    evidence: "Resulting MS raw files were submitted to the MaxQuant software version 2.0.1.0 for protein identification and label-free quantification. ... Label-free quantitation was employed with default settings."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: 2.0.1.0
+        purpose: "protein identification and label-free quantification"
+      - name: STRING
+        version: not specified
+        purpose: "Gene Ontology enrichment analysis for biological processes"
+      - name: GraphPad Prism
+        version: 8.0.1
+        purpose: "statistical analysis and graphs"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.95
+    evidence: "Resulting MS raw files were submitted to the MaxQuant software version 2.0.1.0 for protein identification and label-free quantification. ... Gene Ontology enrichment analysis for biological processes was performed using STRING software. ... Statistical analysis and graphs were performed using GraphPad Prism 8.0.1 for Windows."
+  search_database:
+    value:
+      source: UniProt
+      species: human
+      version: "September 2021"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.95
+    evidence: "UniProt database with 'human' entries (September 2021) was used for the database searches. Known contaminants as provided by MaxQuant and identified in samples were excluded from further analysis."
+  search_settings:
+    value:
+      precursor_tolerance: "20 ppm (first search), 6 ppm (main search error)"
+      enzyme: "Trypsin without proline restriction"
+      missed_cleavages: 2
+      fixed_modifications: "Carbamidomethyl (C)"
+      variable_modifications: "Acetyl (protein N-term), Carbamyl (N-term), Oxidation (M)"
+      min_unique_plus_razor_peptides: 1
+      fdr: "0.01 (1%) for peptide and protein identification"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.95
+    evidence: "Carbamidomethyl (C) was set as a fixed modification and acetyl (protein N-term), carbamyl (N-term), and oxidation (M) were set as variable modifications. First search peptide tolerance of 20 ppm and main search error of 6 ppm were used. Trypsin without proline restriction enzyme option was used, and two allowed miscleavages. The minimal unique p razor peptides number was set to 1, and the allowed FDR was 0.01 (1%) for peptide and protein identification."
+  lab_id:
+    value: "Parmeshwar B. Katare (corresponding author), Section for Pharmacology and Pharmaceutical Biosciences, Department of Pharmacy, University of Oslo, Blindern, Norway"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.95
+    evidence: "Parmeshwar B. Katare ... *CORRESPONDENCE Parmeshwar B. Katare, p.b.katare@farmasi.uio.no ... 1Section for Pharmacology and Pharmaceutical Biosciences, Department of Pharmacy, University of Oslo, Blindern, Norway"
+  study_type:
+    value: drug_treatment
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.55
+    evidence: "Furthermore, we have studied the effect of fatty acid pretreatment on energy metabolism in myotubes from these donor groups. ... 100 uM of palmitic acid (PA) or 100 uM eicosapentaenoic acid (EPA) was added during the last 24 h of cell culturing."
+  number_of_replicates:
+    value:
+      biological: "8 donors per group used for proteomic analysis (lean and obese)"
+      technical: "not specified for proteomics"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.85
+    evidence: "On day 7 of differentiation the myotubes from eight different donors in each group were harvested for proteomic analysis."
+  reported_ids:
+    value:
+      proteins: "more than 3700 proteins detected; 172 significantly upregulated and 199 significantly downregulated in myotubes from donors with obesity vs lean"
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.9
+    evidence: "The analysis detected more than 3700 proteins, of which 172 were significantly upregulated and 199 were significantly downregulated in myotubes from donors with obesity compared to myotubes from lean donors."
+  key_findings:
+    value: "Quantitative label-free proteomics of primary human myotubes showed that glycolytic, apoptotic, hypoxia and cellular stress pathways were upregulated whereas the pentose phosphate and lipid biosynthetic pathways were downregulated in cells from donors with obesity compared to lean donors. Combined with substrate oxidation assays, myotubes from individuals with obesity showed increased fatty acid, glucose and amino acid uptake, while EPA pretreatment enhanced glucose metabolism and metabolic flexibility."
+    status: inferred
+    source: "paper:10.3389_fphys.2022.982842.pdf"
+    confidence: 0.9
+    evidence: "Gene Ontology enrichment analysis showed that glycolytic, apoptotic, and hypoxia pathways were upregulated, whereas the pentose phosphate pathway was downregulated in myotubes from donors with obesity compared to myotubes from lean donors. ... In conclusion, these results suggest that myotubes from individuals with obesity showed increased fatty acid, glucose, and amino acid uptake compared to cells from lean donors."
+status: success

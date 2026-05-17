@@ -1,0 +1,161 @@
+accession: PXD060460
+extracted_at: "2026-05-17T19:34:09Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_s41598-025-96325-8.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: 60
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.95
+    evidence: "a solvent gradient from 0 to 35% B in 60 min"
+  column_type:
+    value: "25 cm reversed-phase C18 column, 75 um inner diameter, 1.6 um bead size, 120 A pore size (Ion Optics)"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.97
+    evidence: "Peptides were separated on a 25 cm reversed-phase C18 column (1.6 μm bead size, 120 Å pore size, 75 μm inner diameter, Ion Optics)"
+  lc_system:
+    value: "Bruker nanoElute UHPLC coupled to a timsTOF fleX mass spectrometer via a CaptiveSpray ion source"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.97
+    evidence: "LC-MS/MS analysis of both EV and serum samples was done on a nanoElute UHPLC coupled to a timsTOFfleX mass spectrometer (Bruker Daltonics, Bremen, Germany) via a CaptiveSpray ionsource"
+  mobile_phases:
+    value:
+      A: "0.1% formic acid in water"
+      B: "100% acetonitrile in 0.1% formic acid"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.97
+    evidence: "Solvent B was 100% acetonitrile in 0.1% formic acid and solvent A 0.1% formic acid in water"
+  flow_rate:
+    value: "0.3 ul/min"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.97
+    evidence: "with a flow rate of 0.3 µl/min"
+  acquisition_mode:
+    value: "DDA-PASEF"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.95
+    evidence: "The mass spectrometer was operated in data-dependent Parallel Accumulation-Serial Fragmentation (PASEF) mode"
+  ce_strategy:
+    value: "Collision energy ramped stepwise as a function of ion mobility"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.9
+    evidence: "Collisional energy was ramped stepwise as a function of ion mobility"
+  cell_lines_tissues:
+    value: "Blood plasma-derived extracellular vesicles (EVs) and total serum from newly diagnosed, treatment-naive rheumatoid arthritis patients (N=32) and age/gender/BMI-matched healthy controls (N=20)"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.95
+    evidence: "We characterized the protein profiles of EVs from blood plasma from newly diagnosed, treatment naïve RA patients (N = 32) and compared them to healthy controls (N = 20)"
+  sample_prep:
+    value: "Plasma EVs enriched by size exclusion chromatography (qEV original 70 nm column, Izon Science), SEC fractions 7-9 pooled. EVs lysed with 1% ProteaseMax Surfactant in 50 mM NH4HCO3, vortexed and heated at 95 C for 20 min; protein concentration by BCA assay. Serum samples (5 ul) precipitated with 70% acetonitrile onto MagReSyn Amine magnetic beads. Peptides desalted by STAGE-TIP with C18 resin disk prior to MS."
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.9
+    evidence: "EVs were enriched utilizing size exclusion chromatography (SEC) by applying 500 µl plasma to the qEV original 70 nm column (Izon Science, Oxford, UK). SEC fraction 7–9 revealed the highest amounts of EVs ... EVs were lysed by adding 1% ProteaseMax Surfactant (Promega, Madison Wisconsin, United States) in 50 mM NH HCO followed by vortexing and heating at 95 °C for 20 min. Protein concentrations were measured by BCA assays."
+  digestion_details:
+    value:
+      enzyme: "Trypsin (Promega), without proline restriction"
+      reduction: "0.5 M DTT to a final concentration of 10 mM, 56 C for 30 min"
+      alkylation: "550 mM IAA to a final concentration of 15 mM, room temperature in the dark for 1 hour"
+      time: "Overnight"
+      temperature: "37 C"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.92
+    evidence: "The proteins were reduced by addition of 0.5 M DTT to a final concentration of 10 mM and incubation at 56 °C for 30 min. Then, to alkylate proteins, 3.2 µl of 550 mM IAA was added to a final concentration of 15 mM and samples were incubated at RT in the dark for one hour. Samples were diluted ... and trypsin (Promega) was added to the samples followed by overnight incubation at 37 °C"
+  quantification_method:
+    value: "Label-free quantification (LFQ)"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.97
+    evidence: "Protein identification and label-free quantification was done using MaxQuant version 2.0.1.0. ... Label-free quantitation (LFQ) was employed with default settings."
+  processing_software:
+    value:
+      - name: MaxQuant
+        version: "2.0.1.0"
+        purpose: "Protein identification and label-free quantification"
+      - name: Perseus
+        version: "2.0.7.0"
+        purpose: "Data filtering, statistical analysis, differential expression"
+      - name: PerseusR
+        version: ""
+        purpose: "ComBat MS batch correction"
+      - name: FunRich
+        version: "3.1.3"
+        purpose: "Venn diagram functional enrichment analysis"
+      - name: DAVID
+        version: ""
+        purpose: "Gene ontology analysis"
+      - name: "Ingenuity Pathway Analysis (IPA, Qiagen)"
+        version: ""
+        purpose: "Pathway analysis"
+      - name: R
+        version: "4.2.2"
+        purpose: "Statistical analysis of demographic and NTA data"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.95
+    evidence: "Protein identification and label-free quantification was done using MaxQuant version 2.0.1.0. ... Data filtering and statistical analysis was done using Perseus software version 2.0.7.0"
+  search_database:
+    value: "UniProt database, Human entries, 2022"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.93
+    evidence: "UniProt database with 'Human' entries (2022) was used for the database searches"
+  search_settings:
+    value:
+      first_search_peptide_tolerance: "20 ppm"
+      main_search_tolerance: "4.5 ppm"
+      enzyme: "Trypsin without proline restriction"
+      missed_cleavages: 2
+      fixed_modifications: "Carbamidomethyl"
+      variable_modifications: "Acetyl (carbamyl) and Oxidation"
+      fdr: "0.01 (1%) for peptide and protein identification"
+      min_unique_razor_peptides: 1
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.93
+    evidence: "Carbamidomethyl was set as a fixed modification and acetyl carbamyl and oxidation were set as variable modifications. First search peptide tolerance of 20 ppm and main search error 4.5 ppm were used. Trypsin without proline restriction enzyme option was used, with two allowed miscleavages. The minimal unique + razor peptides number was set to 1, and the allowed false discovery rate (FDR) was 0.01 (1%) for peptide and protein identification."
+  lab_id:
+    value: "Anne Rydland / Benedicte A. Lie (corresponding authors), Department of Medical Genetics, University of Oslo and Oslo University Hospital, Oslo, Norway"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.92
+    evidence: "Correspondence and requests for materials should be addressed to A.R. or B.A.L. ... Department of Medical Genetics, University of Oslo and Oslo University Hospital, Postboks 4956 Nydalen, OUS HF Ullevål sykehus, 0424 Oslo, Norway"
+  study_type:
+    value: biomarker
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.9
+    evidence: "their molecular cargo are biomarker candidates ... the strongest RA associated EV proteins were inflammatory molecules, like SAA1 and S100A9, already suggested as biomarkers in RA"
+  number_of_replicates:
+    value:
+      biological: "32 RA patients and 20 healthy controls (3 omitted as outliers)"
+      technical: "NTA measured in triplicates; MS technical replicates not stated"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.85
+    evidence: "newly diagnosed, treatment naïve RA patients (N = 32) and compared them to healthy controls (N = 20) ... Based on principal component analysis three samples were considered as outliers and omitted from further analysis"
+  reported_ids:
+    value:
+      proteins: "682 EV proteins reliably quantified; 26 upregulated and 31 downregulated in RA"
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.93
+    evidence: "A total of 682 EV proteins were reliably quantified ... 26 proteins were significantly upregulated and 31 downregulated in RA patients"
+  key_findings:
+    value: "Plasma EVs from newly diagnosed, treatment-naive RA patients showed distinctly different protein profiles versus healthy controls, with cargo altered towards inflammatory processes. The strongest RA-associated EV proteins (SAA1, S100A9) are inflammatory molecules and were generally not correlated with total serum protein levels."
+    status: inferred
+    source: "paper:10.1038_s41598-025-96325-8.pdf"
+    confidence: 0.92
+    evidence: "Our study suggests that cell-cell communication via EVs is markedly upregulated in active RA, with alterations in EV protein cargo predicted to be involved in inflammatory processes ... the protein levels detected in the EVs did generally not correlate with total serum protein levels"
+status: success

@@ -1,0 +1,94 @@
+accession: PXD044455
+version: '1.0'
+generated_at: '2026-05-17T21:07:28.949588'
+title:
+  value: AP-MS with VAR2CSA and oncofetal chondroitin sulfate antibodies
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/S41467-024-51781-0
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD044455
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: 'Ali Salanti, Centre for Translational Medicine and Parasitology, Department
+      of Immunology and Microbiology, Faculty of Health and Medical Sciences, University
+      of Copenhagen, Denmark (co-corresponding authors: Elena Ethel Vidal-Calvo, University
+      of Copenhagen; Mads Daugaard, University of British Columbia)'
+    status: inferred
+    source: paper:10.1038_S41467-024-51781-0.pdf
+    confidence: 0.9
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF Pro 2
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 5
+    status: inferred
+    source: pride_api.projectDescription
+    confidence: 0.8
+  column_type:
+    value: 15 cm, 150 um ID column packed with C18 1.9 um beads
+    status: inferred
+    source: paper:10.1038_S41467-024-51781-0.pdf
+    confidence: 0.95
+  acquisition_mode:
+    value: PASEF
+    status: inferred
+    source: paper:10.1038_S41467-024-51781-0.pdf
+    confidence: 0.95
+  lc_system:
+    value: Evosep ONE HPLC
+    status: inferred
+    source: paper:10.1038_S41467-024-51781-0.pdf
+    confidence: 0.95
+  sample_prep:
+    value: 'CSPG pull-downs: Sera-Mag SpeedBeads streptavidin particles conjugated
+      with SpyC2 and either biotinylated rVAR2 or biotinylated anti-CS scFv2 (control
+      beads with SpyC2 alone); incubated with cancer cell supernatants or human colon
+      biopsy homogenate; colon homogenate samples treated with chABC for 1 h at 37
+      C; beads washed in PBS without Ca/Mg then ultrapure water and stored at -80
+      C until mass spectrometry processing'
+    status: inferred
+    source: paper:10.1038_S41467-024-51781-0.pdf
+    confidence: 0.85
+  tissue:
+    value:
+    - Colonic adenocarcinoma cell line
+    - Colon
+    - Prostate cancer cell line
+    - Osteosarcoma cell line
+    - Choriocarcinoma cell line
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: cell_line
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true

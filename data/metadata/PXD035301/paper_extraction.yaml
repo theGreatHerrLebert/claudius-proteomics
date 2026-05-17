@@ -1,0 +1,163 @@
+accession: PXD035301
+extracted_at: "2026-05-17T19:24:47Z"
+model: claude-code-subagent
+pdf_sources:
+  - filename: 10.1038_S42003-023-04439-4.pdf
+    source: unpaywall
+fields:
+  gradient_length:
+    value: [45, 90]
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "Two gradients with a linear increase starting from 2 to 37% of acetonitrile containing 0.1% formic acid over either 90 min or 45 min were used in these experiments."
+  column_type:
+    value: "Aurora column 25 cm x 75 um ID, reverse-phase C18 (IonOpticks, Australia)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "Approximately 400 ng of peptides or glycopeptides were separated on an Aurora column 25 cm x 75 um ID, reverse-phase column (IonOptics, Australia) at a flow rate of 400 nL/min in an oven compartment heated to 50 degC."
+  lc_system:
+    value: "NanoElute system (Bruker)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "The pre-enriched tryptic peptides and Fbs1-GYR enriched samples were submitted to MS/MS analysis using a NanoElute system (Bruker) coupled online to a hybrid TIMS-quadrupole TOF mass spectrometer (timsTOF Pro, Bruker)"
+  mobile_phases:
+    value: "Linear gradient from 2 to 37% acetonitrile containing 0.1% formic acid; column equilibrated with water containing 0.1% formic acid"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.85
+    evidence: "Two gradients with a linear increase starting from 2 to 37% of acetonitrile containing 0.1% formic acid over either 90 min or 45 min were used in these experiments. The column was equilibrated using 5 volumes of water containing 0.1% formic acid."
+  flow_rate:
+    value: "400 nL/min"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.98
+    evidence: "separated on an Aurora column 25 cm x 75 um ID, reverse-phase column (IonOptics, Australia) at a flow rate of 400 nL/min"
+  column_temp:
+    value: "50 degC"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.98
+    evidence: "at a flow rate of 400 nL/min in an oven compartment heated to 50 degC"
+  acquisition_mode:
+    value: "DDA-PASEF"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "the mass spectrometer was operated in data-dependent PASEF mode with 1 survey TIMS-MS/6 PASEF MS/MS and 1 survey TIMS-MS/10 PASEF MS/MS scans per acquisition cycle, respectively."
+  ce_strategy:
+    value: "Collision energy stepping (stepped CID): each precursor fragmented with two different energies and collision cell tuning to maximize coverage of both glycan and peptide moieties of glycopeptides."
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.85
+    evidence: "For a simultaneous acquisition of MS spectra at lower and higher collision energies (collision energy stepping CID) is the ideal approach for selectively yielding fragment ions covering both the glycan and the peptide moieties of glycopeptides, a basic stepping mode with optimized fragmentation and fragment transferring conditions were applied for the tandem MS acquisitions. Thus, each precursor was fragmented with two different energies and collision cell tuning to obtain maximum information."
+  cell_lines_tissues:
+    value: "HCT116 (human colorectal cancer cell line) and DKO1 (isogenic DNMT1/DNMT3b double knockout, non-tumorigenic)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.98
+    evidence: "HCT116 and its isogenic DNMT1 and DNMT3b double knockout cell line (DKO1) were obtained from Bert Vogelstein's lab. HCT116 was maintained in McCoy5A supplemented with 10% fetal bovine serum and 1% PenStrep, and DKO1 was maintained in the same medium of HCT116 with additional 20 ug/ml Genticin."
+  sample_prep:
+    value: "HCT116 and DKO1 cells serum-starved 2 days; whole-cell lysates prepared by FASP; tryptic peptides enriched for N-glycopeptides using Fbs1-GYR lectin protocol."
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.9
+    evidence: "HCT116 and DKO1 cells were serum-starved for two days in order to reduce N-glycomolecule contamination from bovine serum. Tryptic peptides from the serum-starved cells were prepared using the filter-aided sample preparation (FASP) method as described previously"
+  digestion_details:
+    value:
+      enzyme: "Trypsin (Trypsin-Ultra, NEB), fully specific"
+      reduction: "100 mM DTT, denatured and reduced at 95 degC for 3 min"
+      alkylation: "iodoacetamide (IAA)"
+      lysis_buffer: "1% SDS, 100 mM Tris HCl pH 7.5"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.85
+    evidence: "After 100 mM DTT was added, the cell lysates were then denatured and reduced at 95 degC for 3 min. ... After SDS was removed, free thiol groups were alkylated by iodoacetamide (IAA), and tryptic peptides were generated using Trypsin-Ultra (P8101S, NEB) following the protocol described previously"
+  fractionation:
+    value: "None (single-shot LC-MS/MS, no fractionation; one-step Fbs1-GYR enrichment)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.8
+    evidence: "Unlike other enrichment methods such as HILIC in which additional fractionation steps are required, Fbs1-GYR offers a simple one-step and efficient enrichment of N-glycopeptides from complex samples such as cell lysates."
+  quantification_method:
+    value: "Label-free (spectral counting of N-glycopeptide spectrum matches, N-glyco PSM)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "Label-free quantification by counting N-glycopeptide spectrum match (N-glyco PSM) is used to quantify and identify the changes in the N-glycoproteomes between HCT116 and DKO1 cells."
+  processing_software:
+    value:
+      - name: Byonic
+        version: "embedded in PMI-Byos (Protein Metrics Inc., Cupertino, CA)"
+        purpose: "N-glycopeptide spectrum search and identification"
+      - name: "PivotTable (Microsoft Excel)"
+        purpose: "Organize and compare N-glycoproteomes"
+      - name: "Generic GO Term Mapper"
+        purpose: "Gene ontology analysis"
+      - name: Oncovar
+        purpose: "Cancer driver score evaluation"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.9
+    evidence: "N-glycopeptide spectra were searched using Bruker raw data (.d) on Byonic (embedded in PMI-Byos, Protein Metrics Inc., Cupertino, CA) ... PivotTable from Microsoft Excel was used to organize and compare the N-glycoproteomes."
+  search_database:
+    value:
+      source: Uniprot
+      species: "Homo sapiens"
+      database: "Uniprot Human Database (UP000003640)"
+      glycan_database: "human N-glycan database with 132 N-glycan structures (provided by Byonic)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "N-glycopeptide spectra were searched using Bruker raw data (.d) on Byonic ... against Uniprot Human Database (UP000003640) and a human N-glycan database containing 132 N-glycan structures provided by Byonic."
+  search_settings:
+    value:
+      precursor_tolerance: "25 ppm"
+      fragment_tolerance: "0.05 Da"
+      enzyme: "Trypsin, fully specific"
+      fixed_modifications: "carbamidomethylation (cysteine)"
+      variable_modifications: "N-terminal protein acetylation, methionine oxidation, pyro-Glu"
+      fdr: "1%"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.9
+    evidence: "Search parameters were set as precursor tolerance to 25 ppm and 0.05 Da for fragments, fully specific Trypsin digestion, carbamidomethylation as a fixed modification, N-terminal protein acetylation, methionine oxidation and pyro-Glu as variable modifications and cysteine. ... All searches considered only fully tryptic peptides and FDR was adjusted to 1%."
+  lab_id:
+    value: "James C. Samuelson / Minyong Chen, New England Biolabs, 240 County Road, Ipswich, MA 01938, USA"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.95
+    evidence: "Correspondence and requests for materials should be addressed to Minyong Chen or James C. Samuelson. New England Biolabs, 240 County Road, Ipswich, MA 01938, USA."
+  study_type:
+    value: "interactomics"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.55
+    evidence: "Here, we mapped and compared the site-specific N-glycoproteomes of colon cancer HCT116 cells and isogenic non-tumorigenic DNMT1/3b double knockout (DKO1) cells using Fbs1-GYR N-glycopeptide enrichment technology and trapped ion mobility spectrometry."
+  number_of_replicates:
+    value:
+      biological: 3
+      technical: "6 MS/MS runs per cell line (combination of 45 min and 90 min LC gradients)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.85
+    evidence: "For N-glycoproteomic studies, three biological passages (cells with three different passages) for each cell line (HCT116 or DKO1) were used. For Western blots to analyze the protein abundance, both relative quantifications of the glycosylated and de-glycosylated proteins were included in the statistical analysis (n = 6 for each cell line)."
+  reported_ids:
+    value:
+      psms: "45219 N-glyco PSM (HCT116, six runs); 50987 N-glyco PSM (DKO1, six runs)"
+      peptides: "2854 unique intact N-glycopeptides (HCT116); 3387 (DKO1)"
+      glycosites: "848 N-glycosites (HCT116); 956 (DKO1)"
+      proteins: "444 N-glycoproteins (HCT116); 507 (DKO1)"
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.9
+    evidence: "Our N-glycoproteomes identified 848 N-glycosites and 2854 unique intact N-glycopeptides from 444 N-glycoproteins in HCT116 cells, and 956 N-glycosites and 3387 intact N-glycopeptides from 507 N-glycoproteins in DKO1 cells (Fig. 2a)."
+  key_findings:
+    value: "Comparative site-specific N-glycoproteome analysis of colon cancer HCT116 and isogenic non-tumorigenic DKO1 cells revealed aberrant N-glycosylation in cancer, with HCT116 showing hypersialylation and a striking hyper-mannose-6-phosphate (M6P) modification. Altered N-glycosylation of the M6P receptors CI-MPR and CD-MPR is proposed to contribute to the hyper-M6P phenotype, providing insights into the M6P pathway and potential cancer biomarkers."
+    status: inferred
+    source: "paper:10.1038_S42003-023-04439-4.pdf"
+    confidence: 0.9
+    evidence: "This comparative site-specific N-glycoproteome analysis provides a pool of potential N-glycosylation-related cancer biomarkers, but also gives insights into the M6P pathway in cancer."
+status: success

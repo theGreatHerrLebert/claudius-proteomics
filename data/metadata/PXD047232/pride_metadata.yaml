@@ -1,0 +1,83 @@
+accession: PXD047232
+version: '1.0'
+generated_at: '2026-05-17T21:01:30.779185'
+title:
+  value: The NSP3 protein of SARS-CoV-2 binds fragile X mental retardation proteins
+    to disrupt UBAP2L binding
+  status: auto
+  source: pride_api.title
+publication_doi:
+  value: 10.1038/S44319-023-00043-Z
+  status: auto
+  source: pride_api.references[0].doi
+is_multi_organism: false
+fields:
+  dataset_id:
+    value: PXD047232
+    status: auto
+    source: pride_api.accession
+  lab_id:
+    value: Dimitriya H Garvanska et al; SARS-CoV-2 work conducted at University of
+      Texas Medical Branch (UTMB), Galveston
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+    confidence: 0.5
+  organism:
+    value: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms[0].name
+  organisms_all:
+    value:
+    - name: Homo sapiens (human)
+    status: auto
+    source: pride_api.organisms
+  instrument:
+    value: timsTOF SCP
+    status: auto
+    source: pride_api.instruments[0].name
+  gradient_length:
+    value: 60
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+  column_type:
+    value: 50 cm in-house packed HPLC-column, 75-um inner diameter, packed with 1.9-um
+      ReproSil-Pur C18-AQ silica beads (Dr. Maisch GmbH)
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+  acquisition_mode:
+    value: ddaPASEF
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+  lc_system:
+    value: EASY-nLC-1200 system (Thermo Fisher Scientific)
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+  sample_prep:
+    value: Affinity purification mass spectrometry (AP-MS) via GFP-Trap; partial on-bead
+      digestion; peptides desalted on SDB-RPS StageTips; dried and dissolved in 2%
+      ACN / 0.1% TFA
+    status: inferred
+    source: paper:10.1038_S44319-023-00043-Z.pdf
+    confidence: 0.95
+  tissue:
+    value:
+    - Epithelial cell
+    status: auto
+    source: pride_api.organismParts
+  matrix_tier:
+    value: solid_tissue
+    status: inferred
+    source: derived:organismParts
+    confidence: 0.6
+files:
+  num_files: null
+  file_types: null
+  total_size_gb: null
+validation:
+  complete: true
+  auto_fields: 6
+  inferred_fields: 6
+  manual_fields: 0
+  missing_fields: 0
+  missing_field_names: []
+  requires_review: true
