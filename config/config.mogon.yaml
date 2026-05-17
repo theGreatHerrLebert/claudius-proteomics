@@ -258,11 +258,13 @@ containers:
 # Downloads OA PDFs via Unpaywall and uses Claude API to extract LC-MS parameters
 paper_extraction:
   enabled: true
-  unpaywall_email: "your-email@university.edu"  # Required by Unpaywall TOS
-  model: "claude-sonnet-4-20250514"  # Cost-efficient for structured extraction
+  model: "claude-sonnet-4-6"  # used by the off-cluster local extractor
   max_pdf_chars: 80000
   skip_if_exists: true
-  # API key via ANTHROPIC_API_KEY env var (never in config)
+  # Mogon NHR has no Anthropic API access: paper extraction runs off-cluster
+  # (scripts/extract_papers_batch.py); paper_extraction.yaml files are shipped
+  # in and merged here. Key via ANTHROPIC_API_KEY env, email via UNPAYWALL_EMAIL
+  # (both off-cluster, never committed).
 
 # Test mode: use subset of data for quick validation
 test_mode:
