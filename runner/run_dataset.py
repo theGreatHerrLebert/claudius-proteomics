@@ -115,6 +115,7 @@ def run_dataset(
     local_data_path: Optional[Path] = None,
     package: bool = False,
     package_version: str = "1.0",
+    engines: Optional[List[str]] = None,
 ) -> bool:
     """
     Run the San José pipeline for a single dataset.
@@ -198,6 +199,7 @@ def run_dataset(
                 num_threads=num_threads,
                 local_data_path=local_data_path,
                 package_version=package_version,
+                engines=engines,
             )
             step_summaries.append(summary)
 
@@ -263,6 +265,7 @@ def _run_step(
     num_threads: int,
     local_data_path: Optional[Path] = None,
     package_version: str = "1.0",
+    engines: Optional[List[str]] = None,
 ) -> StepSummary:
     """Run a single pipeline step."""
 
@@ -283,6 +286,7 @@ def _run_step(
             output_base_dir=output_base_dir,
             num_threads=num_threads,
             max_files=state.max_files if state.test_mode else 0,
+            engines=engines,
         )
 
     elif step_num == 3:
@@ -380,6 +384,13 @@ Examples:
         help="Specific steps to run (1-5)",
     )
     parser.add_argument(
+        "--engines",
+        nargs="+",
+        choices=["fragpipe", "diann", "sage"],
+        help="Search engines for step 2 (default: all three). "
+             "E.g. --engines sage fragpipe to defer DIA-NN.",
+    )
+    parser.add_argument(
         "--threads",
         type=int,
         default=16,
@@ -455,6 +466,7 @@ Examples:
         local_data_path=args.local_data,
         package=args.package,
         package_version=args.package_version,
+        engines=args.engines,
     )
 
     sys.exit(0 if success else 1)
