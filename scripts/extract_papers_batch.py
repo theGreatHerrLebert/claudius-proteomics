@@ -26,6 +26,7 @@ Then ship the results to Mogon, e.g.:
 """
 import argparse
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -80,6 +81,18 @@ def main() -> int:
         print(f"\n[{i}/{len(accessions)}] {acc}")
         meta_dir = args.metadata_root / acc
         meta_dir.mkdir(parents=True, exist_ok=True)
+
+        # Pick up any manually-downloaded PDFs from the committed paper inbox
+        # (paper_inbox/{acc}/) into the dataset's working papers/ folder.
+        inbox = Path("paper_inbox") / acc
+        if inbox.is_dir():
+            papers_dir = meta_dir / "papers"
+            papers_dir.mkdir(parents=True, exist_ok=True)
+            for pdf in list(inbox.glob("*.pdf")) + list(inbox.glob("*.PDF")):
+                dest = papers_dir / pdf.name
+                if not dest.exists():
+                    shutil.copy2(pdf, dest)
+                    print(f"  picked up manual PDF: {pdf.name}")
 
         # Re-process datasets whose prior extraction was unsuccessful
         # (no_pdf / no_text / no_api_key / llm_failed): only a 'success' result

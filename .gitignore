@@ -266,3 +266,8 @@ resources/fasta/search_db/*.fasta
 
 # Notebooks and local analysis outputs
 notebook/
+
+# Manual paper inbox — commit the folder structure + SOURCE.md links,
+# never the downloaded PDFs themselves.
+paper_inbox/**/*.pdf
+paper_inbox/**/*.PDF
