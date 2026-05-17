@@ -114,7 +114,11 @@ def load_raw_precursors(
             # Join PASEF to frames to get RT
             pasef = pasef.merge(frames, on='frame_id', how='left')
 
-            # Calculate mobility from scan range
+            # Geometric MIDPOINT of the PASEF isolation-scan window — NOT an
+            # intensity apex. This yields the coarse 'raw_mobility' column, which
+            # is biased toward the window centre and must NOT be used as a
+            # measured 1/K0. The real ion-mobility measurement is the 'mobility'
+            # column from extract_precursors.py (scan-marginal intensity apex).
             scan_center = ((pasef['scan_begin'] + pasef['scan_end']) / 2).astype(np.int32)
 
             # Convert scans to mobility

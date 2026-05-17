@@ -303,7 +303,9 @@ class ExtractedPrecursor:
             "isolation_width": self.isolation_width,
             "precursor_intensity": self.precursor_intensity,
             "rt_seconds": self.rt_seconds,
-            "mobility": self.mobility,
+            # A failed IM extraction returns 0.0; store as None (-> NaN) so it is
+            # never mistaken for a real ~0 1/K0 measurement in downstream stats.
+            "mobility": self.mobility if (self.mobility and self.mobility > 0) else None,
             "collision_energy": self.collision_energy,  # Average CE across PASEF events
             "n_fragments_merged": self.n_fragments_merged,
             "n_peaks": self.n_peaks,
