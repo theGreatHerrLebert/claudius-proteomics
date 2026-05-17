@@ -1,0 +1,43 @@
+Bootstrap: docker
+From: debian:12
+
+%labels
+    Author CLAUDIUS-PROTEOMICS
+    Description Runtime container for DIA-NN. The DIA-NN install is bind-mounted at runtime (academic license, not bundled).
+
+%help
+    Runtime environment for DIA-NN on hosts with an older glibc (e.g. Mogon NHR,
+    AlmaLinux 8 / glibc 2.28). DIA-NN 2.3.x requires glibc >= 2.32.
+
+    The DIA-NN install directory is bind-mounted at runtime, not copied in.
+
+    Usage:
+        apptainer exec --bind /lustre,/fshpc diann.sif \
+            /path/to/diann-2.3.2/diann-linux --version
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update && apt-get install -y \
+        locales \
+        libgomp1 \
+        wget \
+        ca-certificates \
+        && rm -rf /var/lib/apt/lists/*
+
+    sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+        locale-gen
+
+    # .NET runtime: DIA-NN bundles a .NET RawWrapper for Thermo .raw input.
+    wget -q https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb \
+        -O /tmp/packages-microsoft-prod.deb && \
+        dpkg -i /tmp/packages-microsoft-prod.deb && \
+        rm /tmp/packages-microsoft-prod.deb
+    apt-get update && apt-get install -y dotnet-sdk-8.0 && \
+        rm -rf /var/lib/apt/lists/*
+
+%environment
+    export LC_ALL=en_US.UTF-8
+    export LANG=en_US.UTF-8
+
+%runscript
+    exec "$@"
