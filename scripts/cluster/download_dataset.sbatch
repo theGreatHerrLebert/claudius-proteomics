@@ -44,6 +44,31 @@ echo "Target:  $ROOT/data/raw/$ACC"
 echo "Python:  $(which python) $(python --version 2>&1)"
 echo "========================================================================"
 
+# --- Provenance (see docs/RUN_LEDGER.md) ---
+PROV_DIR="$ROOT/data/provenance/$ACC"
+mkdir -p "$PROV_DIR"
+GIT_COMMIT=$(git -C "$PROJ" rev-parse HEAD 2>/dev/null || echo unknown)
+GIT_DIRTY=$(git -C "$PROJ" status --porcelain 2>/dev/null | grep -q . && echo true || echo false)
+PROV_FILE="$PROV_DIR/download-${SLURM_ARRAY_JOB_ID:-local}_${SLURM_ARRAY_TASK_ID:-0}.json"
+cat > "$PROV_FILE" <<JSON
+{
+  "kind": "download",
+  "accession": "$ACC",
+  "slurm": {
+    "array_job_id": "${SLURM_ARRAY_JOB_ID:-}",
+    "array_task_id": "${SLURM_ARRAY_TASK_ID:-}",
+    "job_id": "${SLURM_JOB_ID:-}",
+    "partition": "${SLURM_JOB_PARTITION:-}",
+    "nodelist": "${SLURM_JOB_NODELIST:-}"
+  },
+  "code": { "git_commit": "$GIT_COMMIT", "working_tree_dirty": $GIT_DIRTY },
+  "tool": "scripts/download_pride.py",
+  "host": "$(hostname)",
+  "started_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+JSON
+echo "Provenance: $PROV_FILE"
+
 python scripts/download_pride.py \
     --accession "$ACC" \
     --output "$ROOT/data/raw/$ACC" \

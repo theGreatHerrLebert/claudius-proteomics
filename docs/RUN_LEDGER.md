@@ -1,0 +1,83 @@
+# Run Ledger
+
+Provenance record of how datasets were **downloaded** and **processed** on Mogon
+NHR — so any result can be traced back to the exact code, config, SLURM job, and
+engine versions that produced it.
+
+## How provenance is captured
+
+Every SLURM job writes a machine-readable record into
+`data/provenance/{accession}/` on Mogon:
+
+- `run-{job_id}.json` — runner jobs (`run_dataset.sbatch`)
+- `download-{array_job}_{task}.json` — download jobs (`download_dataset.sbatch`)
+
+Each record captures the SLURM job spec, git commit + working-tree-dirty flag,
+`config.mogon.yaml` sha256, engine versions, the exact argument line, host, and
+UTC timestamp. Those JSON files live with the data on Mogon (gitignored); **this
+ledger is the human-readable history**, committed to the repo.
+
+Auto-capture was added 2026-05-17. Runs that predate it are backfilled by hand
+below — flagged accordingly, since no `run-*.json` exists for them.
+
+## Environment
+
+- **Cluster:** Mogon NHR (`mogonki`), JGU Mainz — workspace
+  `/lustre/project/ki-proanagi/dateschn/`
+- **Engines:** Sage 0.15.0-beta.2 (build commit `0639176`); DIA-NN (Apptainer,
+  `debian:12` base); FragPipe (Apptainer, `ubuntu:22.04` + JDK 17)
+- **Config:** `config/config.mogon.yaml`
+
+---
+
+## Processing runs
+
+### PXD019086 — Meier 2021 CCS benchmark (test-mode pipeline validation)
+
+| Job | Date | sbatch / resources | Args | Result |
+|-----|------|--------------------|------|--------|
+| 254924 (+ earlier May-16 attempts) | 2026-05-16 | `run_dataset.sbatch`, ki-parallel 32c/120G/12h | `PXD019086 --test-mode --max-files 1 --local-data … --resume` | ❌ FAILED Step 4 — zero-group bug, pre-fix |
+| 258076 | 2026-05-17 | `run_dataset.sbatch`, ki-parallel 32c/120G/12h | `PXD019086 --test-mode --max-files 1 --local-data …/raw/PXD019086 --resume` | ❌ FAILED Step 5 — zero-group twin bug |
+| **258191** | 2026-05-17 | `run_dataset.sbatch`, ki-parallel 32c/120G/12h | `PXD019086 --test-mode --max-files 1 --local-data …/raw/PXD019086 --resume` | ✅ **SUCCESS** — full 6-step pipeline; 214,824 precursors |
+
+- **Code:** all runs used working-tree state (pre-auto-capture). The zero-group
+  Step 4/5 fixes are in commit `c44872f`; successful run **258191 used code
+  equivalent to `c44872f`**.
+- **Engines:** Sage + DIA-NN + FragPipe all three searched.
+- **Scope:** test-mode, **1 `.d` file only** — a pipeline validation, not a full
+  dataset run.
+
+---
+
+## Download runs
+
+### PXD019086 raw data
+Fetched ~2026-05-16 via `scripts/cluster/fetch_pride.sbatch` (remotezip member
+fetch) — 1 `.d` file (`20190504_TIMS1_FlMe_SA_HeLa_frac01_A10_1_93.d`, 5.16 GB).
+
+### Array 258175 — Tier 2-5 priority datasets (23)
+| Field | Value |
+|-------|-------|
+| Date | 2026-05-17 |
+| sbatch | `download_dataset.sbatch --array=0-22%6`, ki-smallcpu 2c/4G |
+| Accessions | `docs/DATASET_PRIORITY_LIST.md` Tiers 2-5 (organism/instrument diversity); `scripts/cluster/download_accessions.txt` lines 1-23 |
+| Tool | `scripts/download_pride.py` |
+| Note | Ran **before** the `.d`-only raw-file filter was added — may have pulled some non-`.d` (Thermo `.raw`) files. |
+
+### Array 258430 — human DDA/PASEF expansion (150)
+| Field | Value |
+|-------|-------|
+| Date | 2026-05-17 |
+| sbatch | `download_dataset.sbatch --array=23-172%6`, ki-smallcpu 2c/4G |
+| Accessions | design-coverage ranking of the 572-dataset human DDA/PASEF pool (`data/discovery/human_dda_ranked.csv`); `download_accessions.txt` lines 24-173 |
+| Tool | `scripts/download_pride.py` with `.d`-only raw-file filter |
+| Note | The `.d`-only filter landed mid-run — early in-flight tasks predate it; pending tasks picked it up. |
+
+---
+
+## Discovery
+
+The PRIDE catalog was rebuilt 2026-05-17 via `scripts/discover_pride.py
+--refresh --csv` → `data/discovery/timstof_catalog.csv` (2,011 timsTOF
+datasets). Dataset-selection artifacts: `human_dda_ranked.csv`,
+`human_dda_expansion.csv`.

@@ -35,6 +35,38 @@ echo "Python: $(which python) $(python --version 2>&1)"
 echo "Args:   $*"
 echo "========================================================================"
 
+# --- Provenance: record exactly how this run was executed (see docs/RUN_LEDGER.md) ---
+ACC="${1:-unknown}"
+PROV_DIR="$ROOT/data/provenance/$ACC"
+mkdir -p "$PROV_DIR"
+PROV_FILE="$PROV_DIR/run-${SLURM_JOB_ID:-local}.json"
+GIT_COMMIT=$(git -C "$PROJ" rev-parse HEAD 2>/dev/null || echo unknown)
+GIT_DIRTY=$(git -C "$PROJ" status --porcelain 2>/dev/null | grep -q . && echo true || echo false)
+CONFIG_SHA=$(sha256sum "$PROJ/config/config.mogon.yaml" 2>/dev/null | cut -d' ' -f1 || echo unknown)
+SAGE_VERSION=$("$ROOT/engines/sage/sage" --version 2>/dev/null || echo unknown)
+cat > "$PROV_FILE" <<JSON
+{
+  "kind": "runner",
+  "accession": "$ACC",
+  "runner_args": "$*",
+  "slurm": {
+    "job_id": "${SLURM_JOB_ID:-}",
+    "job_name": "${SLURM_JOB_NAME:-}",
+    "partition": "${SLURM_JOB_PARTITION:-}",
+    "account": "${SLURM_JOB_ACCOUNT:-}",
+    "cpus_per_task": "${SLURM_CPUS_PER_TASK:-}",
+    "mem_per_node_mb": "${SLURM_MEM_PER_NODE:-}",
+    "nodelist": "${SLURM_JOB_NODELIST:-}"
+  },
+  "code": { "git_commit": "$GIT_COMMIT", "working_tree_dirty": $GIT_DIRTY },
+  "config": { "path": "config/config.mogon.yaml", "sha256": "$CONFIG_SHA" },
+  "engines": { "sage": "$SAGE_VERSION" },
+  "host": "$(hostname)",
+  "started_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+JSON
+echo "Provenance: $PROV_FILE"
+
 python runner/run_dataset.py "$@" \
     --config config/config.mogon.yaml \
     --output-dir "$ROOT/data" \

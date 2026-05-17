@@ -220,6 +220,7 @@ data/checkpoints/*
 data/metadata/*
 data/datasets/*
 data/packages/*
+data/provenance/*
 !data/*/.gitkeep
 
 # Database (large, but keep structure)
