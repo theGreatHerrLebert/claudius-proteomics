@@ -487,6 +487,27 @@ def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Pat
         except FileNotFoundError:
             pass
 
+    # Resolve organism from the dataset's pride_metadata.yaml — match its
+    # taxon ids against config organisms. Covers datasets not hand-listed in
+    # config.dataset_metadata (i.e. everything beyond the original few).
+    pride_yaml = output_base_dir / "metadata" / accession / "pride_metadata.yaml"
+    if pride_yaml.exists():
+        try:
+            import yaml
+            data = yaml.safe_load(pride_yaml.read_text()) or {}
+            orgs = (data.get("fields", {}).get("organisms_all") or {}).get("value") or []
+            taxa = [o.get("taxon_id") for o in orgs
+                    if isinstance(o, dict) and o.get("taxon_id")]
+            for taxon in taxa:
+                for key, oc in config.get("organisms", {}).items():
+                    if isinstance(oc, dict) and oc.get("taxon_id") == taxon:
+                        try:
+                            return _get_fasta_for_organism(key, config, output_base_dir)
+                        except FileNotFoundError:
+                            pass
+        except Exception as e:
+            print(f"  Could not resolve organism from pride_metadata.yaml: {e}")
+
     # Fallback to default FASTA
     default_fasta = config.get("fasta", {}).get("default")
     if default_fasta:
