@@ -49,6 +49,40 @@ dataset_metadata:
     acquisition_mode: "PASEF"  # DDA-PASEF
     mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
 
+  # --- Immunopeptidomics / HLA datasets -------------------------------------
+  # Non-tryptic: the hla mod_profile applies a nonspecific enzyme and a
+  # 7-25mer length window (see mod_profiles.hla). Flagged manually so the
+  # right profile is used even without a paper PDF; mod_profile_resolver also
+  # detects these from classI/classII/HLA/MHC tokens in the .d file names.
+  PXD046370:
+    description: "HLA class I neoantigen immunopeptidomics"
+    organism: "human"
+    mod_profile: "hla"
+  PXD047053:
+    description: "HLA class I immunopeptidomics, newly-diagnosed multiple myeloma"
+    organism: "human"
+    mod_profile: "hla"
+  PXD051880:
+    description: "MHC immunopeptidomics, human renal cell carcinoma (Feola lab)"
+    organism: "human"
+    mod_profile: "hla"
+  PXD055547:
+    description: "MHC class I immunopeptidomics, HeLa"
+    organism: "human"
+    mod_profile: "hla"
+  PXD058436:
+    description: "HLA class I + class II immunopeptidomics, human donor tissues (brain/tongue)"
+    organism: "human"
+    mod_profile: "hla"
+  PXD064980:
+    description: "HLA immunopeptidomics, human donor samples"
+    organism: "human"
+    mod_profile: "hla"
+  PXD074155:
+    description: "HLA class II immunopeptidomics, Infliximab-treated samples"
+    organism: "human"
+    mod_profile: "hla"
+
 # Download settings for PRIDE data
 download:
   protocol: "ftp"  # ftp | aspera (aspera requires ascp client)

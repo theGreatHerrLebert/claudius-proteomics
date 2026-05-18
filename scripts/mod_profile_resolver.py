@@ -8,9 +8,15 @@ from paper/PRIDE metadata. Allows manual override via config.
 Resolution order:
 1. Manual override in config["dataset_metadata"][accession]["mod_profile"]
 2. Auto-detect from paper_extraction.yaml (study_type, keywords)
-3. Default: "standard"
+3. Auto-detect from .d file names (classI/classII/HLA/MHC tokens)
+4. Auto-detect from pride_metadata.yaml (title, sample prep)
+5. Default: "standard"
+
+Steps 3-4 are PDF-independent — they catch HLA immunopeptidomics datasets
+even when no paper was found, which is the common case in bulk reprocessing.
 """
 
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -27,11 +33,21 @@ _STUDY_TYPE_PROFILES = {
     "immunopeptidomics": "hla",
 }
 
+# Immunopeptidomics tokens in .d run/file names. Matched against whole tokens
+# (filename split on non-alphanumerics) so "classic" etc. cannot false-trigger.
+# The class indicator (roman numeral or digit) is optional.
+_HLA_TOKEN_RE = re.compile(
+    r"^(?:hla|mhc)(?:[12]|i{1,2})?$"   # hla, mhc, hla2, mhci, hlaii, mhcii, ...
+    r"|^class(?:i{1,2}|[12])$"         # classi, classii, class1, class2
+    r"|^immunopep"                     # immunopeptidome(s) / immunopeptidomics
+)
+
 
 def resolve_mod_profile(
     accession: str,
     config: Dict[str, Any],
     metadata_dir: Path,
+    run_names: Optional[List[str]] = None,
 ) -> Tuple[str, str, Optional[Dict[str, Any]]]:
     """Resolve modification profile for a dataset.
 
@@ -39,12 +55,14 @@ def resolve_mod_profile(
         accession: PRIDE accession
         config: Pipeline configuration dict
         metadata_dir: Path to metadata directory for this dataset
+        run_names: .d run/file names for this dataset, used as a PDF-independent
+          signal for HLA immunopeptidomics detection
 
     Returns:
         (profile_name, source, paper_search_settings)
         - profile_name: "standard", "phospho", or "hla"
         - source: how the profile was determined ("manual", "auto:study_type",
-          "auto:keywords", "default")
+          "auto:keyword", "auto:filename", "auto:pride_metadata", "default")
         - paper_search_settings: extracted search_settings dict from paper, or None
     """
     paper_settings = _load_paper_search_settings(metadata_dir)
@@ -66,8 +84,65 @@ def resolve_mod_profile(
         if profile:
             return profile, source, paper_settings
 
-    # 3. Default
+    # 3. Auto-detect from .d file names — strong, PDF-independent HLA signal
+    profile, source = _detect_from_filenames(run_names)
+    if profile:
+        return profile, source, paper_settings
+
+    # 4. Auto-detect from PRIDE submission metadata (title + sample prep)
+    profile, source = _detect_from_pride_metadata(metadata_dir)
+    if profile:
+        return profile, source, paper_settings
+
+    # 5. Default
     return "standard", "default", paper_settings
+
+
+def _detect_from_filenames(
+    run_names: Optional[List[str]],
+) -> Tuple[Optional[str], str]:
+    """Detect an HLA immunopeptidomics dataset from .d run/file names.
+
+    Immunopeptidomics runs almost always carry classI/classII/HLA/MHC tokens
+    in their file names. This works even when no paper PDF is available.
+    """
+    for name in run_names or []:
+        for token in re.split(r"[^a-z0-9]+", str(name).lower()):
+            if token and _HLA_TOKEN_RE.match(token):
+                return "hla", f"auto:filename={token}"
+    return None, ""
+
+
+def _detect_from_pride_metadata(metadata_dir: Path) -> Tuple[Optional[str], str]:
+    """Detect profile from PRIDE submission metadata (title + sample prep).
+
+    pride_metadata.yaml is populated from the PRIDE API and is available even
+    when no paper PDF was found, so it is a useful independent fallback.
+    """
+    path = Path(metadata_dir) / "pride_metadata.yaml"
+    if not path.exists():
+        return None, ""
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+    except Exception:
+        return None, ""
+
+    texts: List[str] = []
+    title = data.get("title", {})
+    if isinstance(title, dict) and isinstance(title.get("value"), str):
+        texts.append(title["value"].lower())
+    sample_prep = data.get("fields", {}).get("sample_prep", {})
+    if isinstance(sample_prep, dict) and isinstance(sample_prep.get("value"), str):
+        texts.append(sample_prep["value"].lower())
+    combined = " ".join(texts)
+
+    for kw in _HLA_KEYWORDS:
+        if kw in combined:
+            return "hla", f"auto:pride_metadata={kw}"
+    if "phospho" in combined:
+        return "phospho", "auto:pride_metadata=phospho"
+    return None, ""
 
 
 def _load_paper_extraction(metadata_dir: Path) -> Optional[Dict[str, Any]]:
