@@ -54,25 +54,32 @@ def update_workflow(
     updated_lines = []
     found_db_path = False
 
-    # FDR-related settings to override for San José (report ALL results)
+    # FDR-related settings to override for San José (report ALL results).
+    #
+    # phi-report.filter is the literal `philosopher filter` command line.
+    # Setting --psm/--pep/--ion to 1 makes Philosopher report ALL PSMs.
+    #
+    # The --prot value, however, is NOT honored: FragPipe's CmdPhilosopherFilter
+    # hardcodes `--prot 0.01` (regex-replacing whatever we pass) whenever
+    # IonQuant runs — see CmdPhilosopherFilter.configure(), gated on
+    # isRunIonQuant. With --sequential, that 1% protein FDR cascades down and
+    # silently FDR-filters the PSM table (~500k -> ~40k observed on PXD046777).
+    # So we also disable label-free quant / IonQuant below: that flips
+    # isRunIonQuant to false, the --prot override is skipped, and our --prot 1
+    # is used verbatim. San José does its own raw 4D extraction downstream and
+    # never consumes IonQuant's MS1 quant, so this loses nothing.
+    #
+    # NOTE: keys must exist in the base workflow to take effect — FragPipe
+    # silently ignores unknown keys. Every key below is present in the stock
+    # LFQ-MBR workflow.
     fdr_overrides = {
         'msfragger.report-fdr': '1.0',
         'percolator.min-prob': '0.0',
-        'percolator.protein-level-fdr-cutoff': '1.0',
-        'percolator.peptide-level-fdr-cutoff': '1.0',
-        'percolator.psm-level-fdr-cutoff': '1.0',
-        'philosopher.peptide-level-fdr-cutoff': '1.0',
-        'philosopher.protein-level-fdr-cutoff': '1.0',
-        'philosopher.psm-level-fdr-cutoff': '1.0',
-        'filter.pep-fdr': '1.0',
-        'filter.prot-fdr': '1.0',
-        'filter.psm-fdr': '1.0',
         'ptmprophet.fdr': '1.0',
-        # phi-report.filter is the literal `philosopher filter` command line —
-        # FragPipe uses this string verbatim, so the filter.*-fdr keys above are
-        # ignored unless this is also rewritten. Set every FDR/probability
-        # threshold so Philosopher reports ALL PSMs (San José full-union mode).
         'phi-report.filter': '--sequential --picked --psm 1 --pep 1 --ion 1 --prot 1 --pepProb 0 --protProb 0',
+        # Disable IonQuant/LFQ so FragPipe does not force `--prot 0.01`.
+        'quantitation.run-label-free-quant': 'false',
+        'ionquant.run-ionquant': 'false',
     }
 
     applied_overrides = set()
