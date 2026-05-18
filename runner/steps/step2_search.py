@@ -75,6 +75,17 @@ def run_step2_search(
     metadata_dir = output_base_dir / "metadata" / accession
 
     try:
+        # Pre-flight: validate raw .d folders and quarantine unreadable ones,
+        # so one corrupt file cannot abort the whole dataset's search
+        # (MSFragger hard-fails on the first .d it cannot open).
+        from scripts.validate_d import quarantine_bad_d
+        qresult = quarantine_bad_d(raw_dir)
+        if qresult["quarantined"]:
+            print(f"  Quarantined {len(qresult['quarantined'])} unreadable .d "
+                  f"folder(s): "
+                  + ", ".join(q["name"] for q in qresult["quarantined"]))
+        print(f"  Valid .d folders: {qresult['valid']}/{qresult['checked']}")
+
         # Try to load sample groups from step 1
         sg_path = metadata_dir / "sample_groups.yaml"
         if sg_path.exists():
