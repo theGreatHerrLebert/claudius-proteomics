@@ -615,8 +615,11 @@ def resolve_sample_groups(
     try:
         from scripts.mod_profile_resolver import resolve_mod_profile, compare_profile_vs_paper
 
+        # All .d run names — a PDF-independent signal for HLA detection
+        run_names = [r for g in manifest.groups for r in g.runs]
+        run_names += list(manifest.unassigned_runs)
         profile_name, source, paper_settings = resolve_mod_profile(
-            accession, config, metadata_dir,
+            accession, config, metadata_dir, run_names=run_names,
         )
         mod_profiles = config.get("mod_profiles", {})
         profile_config = mod_profiles.get(profile_name, {})
