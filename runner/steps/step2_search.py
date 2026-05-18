@@ -424,6 +424,21 @@ def _get_fasta_for_organism(
         if symlink_fasta.exists():
             source_fasta = symlink_fasta
 
+    # 4. Still no FASTA on disk — download the proteome from UniProt if the
+    #    organism has a proteome_id configured. The downloaded target FASTA is
+    #    cached at resources/fasta/{organism}.fasta so later runs reuse it.
+    if source_fasta is None and isinstance(organisms.get(organism_key), dict):
+        proteome_id = organisms[organism_key].get("proteome_id")
+        if proteome_id:
+            target_fasta = (
+                Path(__file__).parent.parent.parent
+                / "resources" / "fasta" / f"{organism_key}.fasta"
+            )
+            try:
+                source_fasta = _download_uniprot_proteome(proteome_id, target_fasta)
+            except RuntimeError as e:
+                print(f"      {e}")
+
     if source_fasta is not None:
         print(f"      Generating decoy FASTA from {source_fasta.name}...")
         _generate_decoy_fasta(source_fasta, organism_decoy)
@@ -431,8 +446,9 @@ def _get_fasta_for_organism(
 
     raise FileNotFoundError(
         f"No FASTA database found for organism '{organism_key}'. "
-        f"Configure it in config.yaml under organisms.{organism_key}.local_fasta "
-        f"or place {organism_key}_decoys.fasta in resources/fasta/search_db/"
+        f"Set organisms.{organism_key}.proteome_id (UniProt) or .local_fasta in "
+        f"the config, or place {organism_key}_decoys.fasta in "
+        f"resources/fasta/search_db/."
     )
 
 
@@ -441,11 +457,16 @@ def _generate_decoy_fasta(source_fasta: Path, output_fasta: Path) -> None:
     Generate a target+decoy FASTA from a target-only FASTA.
 
     Appends reversed sequences with 'rev_' header prefix, matching the
-    Snakemake add_decoys rule format.
+    Snakemake add_decoys rule format. Writes via a per-process temp file and
+    atomically renames into place, so concurrent same-organism jobs cannot
+    observe a half-written database.
     """
-    output_fasta.parent.mkdir(parents=True, exist_ok=True)
+    import os
 
-    with open(source_fasta) as f_in, open(output_fasta, "w") as f_out:
+    output_fasta.parent.mkdir(parents=True, exist_ok=True)
+    tmp_fasta = output_fasta.parent / f"{output_fasta.name}.{os.getpid()}.tmp"
+
+    with open(source_fasta) as f_in, open(tmp_fasta, "w") as f_out:
         sequences = []
         current_header = None
         current_seq = []
@@ -472,8 +493,49 @@ def _generate_decoy_fasta(source_fasta: Path, output_fasta: Path) -> None:
             for i in range(0, len(reversed_seq), 80):
                 f_out.write(f"{reversed_seq[i:i+80]}\n")
 
+    tmp_fasta.replace(output_fasta)
     n_target = len(sequences)
     print(f"      Generated {output_fasta.name}: {n_target} targets + {n_target} decoys")
+
+
+def _download_uniprot_proteome(proteome_id: str, dest: Path) -> Path:
+    """
+    Download a UniProt reference proteome FASTA by proteome ID.
+
+    Fetches the target-only FASTA from the UniProt REST stream endpoint (same
+    URL convention as rules/fasta.smk) and caches it at ``dest`` so later runs
+    reuse it. Returns ``dest`` on success; raises RuntimeError if the download
+    fails or the response is not a FASTA file.
+    """
+    import os
+    import urllib.request
+
+    url = (
+        "https://rest.uniprot.org/uniprotkb/stream"
+        f"?format=fasta&query=(proteome:{proteome_id})"
+    )
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    part = dest.parent / f"{dest.name}.{os.getpid()}.part"
+    print(f"      Downloading proteome {proteome_id} from UniProt...")
+    try:
+        with urllib.request.urlopen(url, timeout=600) as resp:
+            part.write_bytes(resp.read())
+    except Exception as e:
+        part.unlink(missing_ok=True)
+        raise RuntimeError(f"UniProt download failed for {proteome_id}: {e}") from e
+
+    # Guard against HTML error pages / empty responses.
+    with open(part, errors="replace") as f:
+        if not f.readline().startswith(">"):
+            part.unlink(missing_ok=True)
+            raise RuntimeError(
+                f"UniProt download for {proteome_id} is not a FASTA file"
+            )
+        n_seqs = 1 + sum(1 for line in f if line.startswith(">"))
+
+    part.replace(dest)
+    print(f"      Downloaded {dest.name}: {n_seqs} proteins")
+    return dest
 
 
 # Organism scientific-name (substring) -> config organism key. Scientific
