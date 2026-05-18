@@ -261,14 +261,17 @@ logs/
 # FASTA resources (downloaded/linked at runtime)
 resources/fasta/*.fasta
 resources/fasta/search_db/*.fasta
+resources/fasta/search_db/*.pepindex
 !resources/fasta/.gitkeep
 !resources/fasta/search_db/.gitkeep
 
-# IDE settings
+# IDE / tool settings
 .idea/
+.claude/
 
-# Backup directories
+# Backup directories and files
 *.bak/
+*.bak
 
 # Notebooks and local analysis outputs
 notebook/
