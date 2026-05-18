@@ -107,6 +107,22 @@ organisms:
     taxon_id: 10141
     proteome_id: "UP000005447"
     local_fasta: null
+  rat:
+    taxon_id: 10116
+    proteome_id: "UP000002494"
+    local_fasta: null
+  arabidopsis:
+    taxon_id: 3702
+    proteome_id: "UP000006548"
+    local_fasta: null
+  zebrafish:
+    taxon_id: 7955
+    proteome_id: "UP000000437"
+    local_fasta: null
+  bovine:
+    taxon_id: 9913
+    proteome_id: "UP000009136"
+    local_fasta: null
 
 # Contaminants database (appended to all FASTA files)
 contaminants:
