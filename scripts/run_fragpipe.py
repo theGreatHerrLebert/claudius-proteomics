@@ -68,6 +68,11 @@ def update_workflow(
         'filter.prot-fdr': '1.0',
         'filter.psm-fdr': '1.0',
         'ptmprophet.fdr': '1.0',
+        # phi-report.filter is the literal `philosopher filter` command line —
+        # FragPipe uses this string verbatim, so the filter.*-fdr keys above are
+        # ignored unless this is also rewritten. Set every FDR/probability
+        # threshold so Philosopher reports ALL PSMs (San José full-union mode).
+        'phi-report.filter': '--sequential --picked --psm 1 --pep 1 --ion 1 --prot 1 --pepProb 0 --protProb 0',
     }
 
     applied_overrides = set()
