@@ -465,6 +465,35 @@ def _generate_decoy_fasta(source_fasta: Path, output_fasta: Path) -> None:
     print(f"      Generated {output_fasta.name}: {n_target} targets + {n_target} decoys")
 
 
+# Organism scientific-name (substring) -> config organism key. Scientific
+# names are used so "Human immunodeficiency virus" does not match "human".
+_ORGANISM_NAME_KEYS = {
+    "homo sapiens": "human",
+    "mus musculus": "mouse",
+    "rattus": "rat",
+    "sus scrofa": "pig",
+    "saccharomyces": "yeast",
+    "escherichia coli": "ecoli",
+    "drosophila": "drosophila",
+    "caenorhabditis": "c_elegans",
+    "arabidopsis": "arabidopsis",
+    "danio rerio": "zebrafish",
+    "bos taurus": "bovine",
+    "ovis aries": "sheep",
+    "chlamydomonas": "chlamydomonas",
+    "cavia porcellus": "guinea_pig",
+}
+
+
+def _organism_key_from_name(name: str) -> Optional[str]:
+    """Map a PRIDE organism name (e.g. 'Homo sapiens (human)') to a config key."""
+    low = (name or "").lower()
+    for needle, key in _ORGANISM_NAME_KEYS.items():
+        if needle in low:
+            return key
+    return None
+
+
 def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Path) -> Path:
     """Get FASTA database path for accession (legacy single-organism lookup)."""
     # Check for accession-specific FASTA in resources/fasta/search_db
@@ -487,24 +516,31 @@ def _get_fasta_path(accession: str, config: Dict[str, Any], output_base_dir: Pat
         except FileNotFoundError:
             pass
 
-    # Resolve organism from the dataset's pride_metadata.yaml — match its
-    # taxon ids against config organisms. Covers datasets not hand-listed in
-    # config.dataset_metadata (i.e. everything beyond the original few).
+    # Resolve organism from the dataset's pride_metadata.yaml by matching the
+    # organism scientific names against config organisms. Covers datasets not
+    # hand-listed in config.dataset_metadata (everything beyond the original
+    # few). For multi-organism datasets the first name that maps to a config
+    # organism wins.
     pride_yaml = output_base_dir / "metadata" / accession / "pride_metadata.yaml"
     if pride_yaml.exists():
         try:
             import yaml
             data = yaml.safe_load(pride_yaml.read_text()) or {}
-            orgs = (data.get("fields", {}).get("organisms_all") or {}).get("value") or []
-            taxa = [o.get("taxon_id") for o in orgs
-                    if isinstance(o, dict) and o.get("taxon_id")]
-            for taxon in taxa:
-                for key, oc in config.get("organisms", {}).items():
-                    if isinstance(oc, dict) and oc.get("taxon_id") == taxon:
-                        try:
-                            return _get_fasta_for_organism(key, config, output_base_dir)
-                        except FileNotFoundError:
-                            pass
+            fields = data.get("fields", {})
+            names = []
+            singular = (fields.get("organism") or {}).get("value")
+            if singular:
+                names.append(singular)
+            for entry in (fields.get("organisms_all") or {}).get("value") or []:
+                if isinstance(entry, dict) and entry.get("name"):
+                    names.append(entry["name"])
+            for name in names:
+                key = _organism_key_from_name(name)
+                if key and key in config.get("organisms", {}):
+                    try:
+                        return _get_fasta_for_organism(key, config, output_base_dir)
+                    except FileNotFoundError:
+                        pass
         except Exception as e:
             print(f"  Could not resolve organism from pride_metadata.yaml: {e}")
 
