@@ -59,13 +59,22 @@ class FragPipeJob(EngineJob):
 
         runner_script = Path(__file__).parent.parent.parent / "scripts" / "run_fragpipe.py"
 
+        # Cap threads at the configured value (default 64). MSFragger loads
+        # Bruker .d files in parallel and the timsdata native library is
+        # contention-prone; too many threads triggers JNA native-load failures
+        # ("Timsdata could not open the file") partway through a dataset.
+        fp_threads = fragpipe_config.get("threads") or num_threads
+
         cmd = [
             sys.executable, str(runner_script),
             "--fragpipe", str(fragpipe_path),
             "--input", str(raw_dir),
             "--output", str(output_dir),
             "--fasta", str(fasta_path),
-            "--threads", str(num_threads),
+            "--threads", str(fp_threads),
+            # Stable per-dataset temp dir so JNA extracts/loads the timsdata
+            # native lib from one place rather than racing in the node /tmp.
+            "--temp-dir", str(processed_dir / "fragpipe_tmp"),
         ]
 
         # Pass explicit file list if provided
