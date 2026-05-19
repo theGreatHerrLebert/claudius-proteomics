@@ -545,7 +545,7 @@ def extract_precursors(
         if logger:
             logger.info(f"    Using IM calibration ({len(calibration)} scans) for accurate extraction")
         rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
-            dataset.data_path, False, calibration.tolist()
+            dataset.data_path, False, calibration.tolist(), dataset.binary_path
         )
     else:
         rust_dataset = dataset.get_py_ptr()
@@ -859,7 +859,7 @@ def extract_precursors_batched(
         if logger:
             logger.info(f"  Using IM calibration ({len(calibration)} scans)")
         rust_dataset = py_dda.PyTimsDatasetDDA.with_calibration(
-            dataset.data_path, False, calibration.tolist()
+            dataset.data_path, False, calibration.tolist(), dataset.binary_path
         )
     else:
         rust_dataset = dataset.get_py_ptr()
