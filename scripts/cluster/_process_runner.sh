@@ -4,11 +4,23 @@
 #
 # Runs the San José 6-step runner with Sage + FragPipe (DIA-NN deferred — see
 # the search-engine-phasing decision). Writes a provenance record per job.
+#
+# QC gate: when run as a SLURM array task, after each dataset it checks the
+# most recent completions; if they show a systemic failure it halts the rest
+# of the array (see scripts/cluster/qc_gate.py).
 set -uo pipefail
 
 ACC="${1:?accession required}"
 ROOT=/lustre/project/ki-proanagi/dateschn
 PROJ="$ROOT/claudius-proteomics"
+
+# QC-gate halt sentinel, scoped to this SLURM array job so a new batch starts
+# clean. If a prior task in this array tripped the gate, skip immediately.
+HALT_SENTINEL="$ROOT/logs/BATCH_QC_HALT.${SLURM_ARRAY_JOB_ID:-none}"
+if [ -n "${SLURM_ARRAY_JOB_ID:-}" ] && [ -f "$HALT_SENTINEL" ]; then
+    echo "QC gate: batch ${SLURM_ARRAY_JOB_ID} halted (see $HALT_SENTINEL) — skipping $ACC"
+    exit 0
+fi
 
 export APPTAINER_CACHEDIR="$ROOT/.apptainer/cache"
 export APPTAINER_TMPDIR="$ROOT/.apptainer/tmp"
@@ -34,6 +46,9 @@ GIT_COMMIT=$(git -C "$PROJ" rev-parse HEAD 2>/dev/null || echo unknown)
 GIT_DIRTY=$(git -C "$PROJ" status --porcelain 2>/dev/null | grep -q . && echo true || echo false)
 CONFIG_SHA=$(sha256sum "$PROJ/config/config.mogon.yaml" 2>/dev/null | cut -d' ' -f1 || echo unknown)
 SAGE_VERSION=$("$ROOT/engines/sage/sage" --version 2>/dev/null || echo unknown)
+# sha256 of the compiled imspy_connector extension — the version string alone
+# does not change between rebuilds, so the .so hash is what pins the backend.
+IMSPY_SO_SHA=$(python -c "import imspy_connector, glob, os, hashlib; d=os.path.dirname(imspy_connector.__file__); fs=sorted(glob.glob(os.path.join(d,'*.so'))); print(hashlib.sha256(open(fs[0],'rb').read()).hexdigest() if fs else 'unknown')" 2>/dev/null || echo unknown)
 cat > "$PROV_FILE" <<JSON
 {
   "kind": "runner",
@@ -49,7 +64,7 @@ cat > "$PROV_FILE" <<JSON
   },
   "code": { "git_commit": "$GIT_COMMIT", "working_tree_dirty": $GIT_DIRTY },
   "config": { "path": "config/config.mogon.yaml", "sha256": "$CONFIG_SHA" },
-  "engines_versions": { "sage": "$SAGE_VERSION" },
+  "engines_versions": { "sage": "$SAGE_VERSION", "imspy_connector_so_sha256": "$IMSPY_SO_SHA" },
   "host": "$(hostname)",
   "started_at_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
@@ -63,3 +78,15 @@ python runner/run_dataset.py "$ACC" \
     --threads "${SLURM_CPUS_PER_TASK:-16}" \
     --local-data "$ROOT/data/raw/$ACC" \
     --resume
+RUN_RC=$?
+
+# --- QC gate: halt the array if recent completions show a systemic failure ---
+if [ -n "${SLURM_ARRAY_JOB_ID:-}" ]; then
+    if ! python "$PROJ/scripts/cluster/qc_gate.py" --batch-check --data-dir "$ROOT/data"; then
+        echo "QC gate: halting batch ${SLURM_ARRAY_JOB_ID} — recent datasets failed QC"
+        touch "$HALT_SENTINEL"
+        scancel --state=PENDING "$SLURM_ARRAY_JOB_ID" 2>/dev/null || true
+    fi
+fi
+
+exit "$RUN_RC"
