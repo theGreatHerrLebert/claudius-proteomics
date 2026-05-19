@@ -21,7 +21,12 @@ import json
 import os
 import sys
 
-COSIM_MIN = 0.5   # isotope_cosim_median below this == catastrophic
+COSIM_MIN = 0.5   # isotope_cosim_median below this == catastrophic m/z failure
+HQ_MIN = 5.0      # pct_high_quality below this == degraded extraction.
+                  # Needed because a boundary-m/z dataset can still show a
+                  # misleadingly-moderate isotope_cosim (~0.8) computed from
+                  # tiny, wrong-shaped envelopes — pct_high_quality (0-2% when
+                  # affected, 12-28% when healthy) is what actually catches it.
 HALT_AFTER = 3    # consecutive recent failures that halt a batch
 
 
@@ -29,9 +34,27 @@ def _cosim(manifest):
     return manifest.get("quality_summary", {}).get("isotope_cosim_median")
 
 
+def _hq(manifest):
+    return manifest.get("quality_summary", {}).get("pct_high_quality")
+
+
+def _verdict(manifest):
+    """Return (passes: bool, summary: str)."""
+    c, h = _cosim(manifest), _hq(manifest)
+    cok = c is not None and c >= COSIM_MIN
+    hok = h is not None and h >= HQ_MIN
+    fails = []
+    if not cok:
+        fails.append(f"isotope_cosim_median={c} < {COSIM_MIN}")
+    if not hok:
+        fails.append(f"pct_high_quality={h} < {HQ_MIN}")
+    summary = (f"isotope_cosim_median={c} pct_high_quality={h}"
+               + ("" if (cok and hok) else "  [" + "; ".join(fails) + "]"))
+    return (cok and hok), summary
+
+
 def _passes(manifest):
-    c = _cosim(manifest)
-    return c is not None and c >= COSIM_MIN
+    return _verdict(manifest)[0]
 
 
 def main():
@@ -58,12 +81,13 @@ def main():
             with open(mp) as f:
                 m = json.load(f)
             acc = m.get("accession", os.path.basename(os.path.dirname(mp)))
-            verdicts.append((acc, _cosim(m), _passes(m)))
-        for acc, c, ok in verdicts:
-            print(f"  {acc}: isotope_cosim_median={c}  {'PASS' if ok else 'FAIL'}")
-        if all(not ok for _, _, ok in verdicts):
+            ok, summary = _verdict(m)
+            verdicts.append(ok)
+            print(f"  {acc}: {summary}  {'PASS' if ok else 'FAIL'}")
+        if all(not ok for ok in verdicts):
             print(f"qc_gate: HALT — last {HALT_AFTER} datasets all failed QC "
-                  f"(isotope_cosim_median < {COSIM_MIN}); likely a systemic bug")
+                  f"(isotope_cosim_median < {COSIM_MIN} or pct_high_quality < "
+                  f"{HQ_MIN}); likely a systemic bug")
             return 1
         print("qc_gate: batch OK")
         return 0
@@ -76,9 +100,8 @@ def main():
         return 2
     with open(path) as f:
         m = json.load(f)
-    ok = _passes(m)
-    print(f"qc_gate: {args.accession} isotope_cosim_median={_cosim(m)}  "
-          f"{'PASS' if ok else 'FAIL'}")
+    ok, summary = _verdict(m)
+    print(f"qc_gate: {args.accession} {summary}  {'PASS' if ok else 'FAIL'}")
     return 0 if ok else 1
 
 

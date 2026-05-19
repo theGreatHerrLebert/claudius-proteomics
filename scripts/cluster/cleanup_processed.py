@@ -19,6 +19,7 @@ import shutil
 import sys
 
 COSIM_MIN = 0.5   # keep in sync with qc_gate.py
+HQ_MIN = 5.0      # keep in sync with qc_gate.py
 
 
 def _qc_ok(manifest_path):
@@ -27,12 +28,16 @@ def _qc_ok(manifest_path):
         return False, False, "not merged"
     with open(manifest_path) as f:
         m = json.load(f)
-    c = m.get("quality_summary", {}).get("isotope_cosim_median")
-    if c is None:
-        return True, False, "merged but manifest has no isotope_cosim_median"
-    if c < COSIM_MIN:
-        return True, False, f"QC fail (isotope_cosim_median={c}) — may need re-extraction"
-    return True, True, f"merged + QC pass (isotope_cosim_median={c})"
+    q = m.get("quality_summary", {})
+    c = q.get("isotope_cosim_median")
+    h = q.get("pct_high_quality")
+    if c is None or h is None:
+        return True, False, "merged but manifest missing QC fields"
+    if c < COSIM_MIN or h < HQ_MIN:
+        return True, False, (f"QC fail (isotope_cosim_median={c}, "
+                             f"pct_high_quality={h}) — may need re-extraction")
+    return True, True, (f"merged + QC pass (isotope_cosim_median={c}, "
+                        f"pct_high_quality={h})")
 
 
 def main():
