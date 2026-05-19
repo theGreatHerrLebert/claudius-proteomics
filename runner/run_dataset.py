@@ -103,6 +103,26 @@ def _validate_step_outputs(step_num: int, accession: str, output_base_dir: Path)
         )
 
 
+def _check_bruker_sdk():
+    """Check the Bruker SDK shared library is available.
+
+    Step 4's m/z calibration derives its coefficients from the SDK
+    (rustdf `derive_mz_calibration`). Without the SDK, imspy silently falls
+    back to a 2-point boundary m/z model that can have multi-Da error on some
+    datasets and zero out isotope envelopes — so this is a pre-flight gate.
+
+    Returns (available: bool, detail: str).
+    """
+    try:
+        import opentims_bruker_bridge as obb
+        for so_path in obb.get_so_paths():
+            if Path(so_path).exists():
+                return True, so_path
+        return False, "opentims_bruker_bridge located no usable .so"
+    except Exception as e:  # any import/lookup failure == no usable SDK
+        return False, f"opentims_bruker_bridge unavailable: {e}"
+
+
 def run_dataset(
     accession: str,
     config: Dict[str, Any],
@@ -116,6 +136,7 @@ def run_dataset(
     package: bool = False,
     package_version: str = "1.0",
     engines: Optional[List[str]] = None,
+    allow_no_sdk: bool = False,
 ) -> bool:
     """
     Run the San José pipeline for a single dataset.
@@ -169,6 +190,24 @@ def run_dataset(
     print(f"  Max files: {max_files if test_mode else 'unlimited'}")
     print(f"  Threads: {num_threads}")
     print(f"  Steps to run: {steps_to_run}")
+
+    # Pre-flight: step 4 m/z calibration needs the Bruker SDK. Without it the
+    # extraction silently uses a boundary m/z model (multi-Da error on some
+    # datasets) — fail fast here rather than produce corrupt data.
+    if 4 in steps_to_run:
+        sdk_ok, sdk_detail = _check_bruker_sdk()
+        if sdk_ok:
+            print(f"  Bruker SDK: {sdk_detail}")
+        elif allow_no_sdk:
+            print(f"\n  ⚠ WARNING: Bruker SDK not available — step 4 will use the "
+                  f"boundary m/z model (multi-Da error possible). Proceeding "
+                  f"because --allow-no-sdk was set.\n    {sdk_detail}")
+        else:
+            print(f"\n  ✗ PRE-FLIGHT FAILED: Bruker SDK not available — step 4 "
+                  f"extraction would silently fall back to a boundary m/z model "
+                  f"(multi-Da error, zeroed isotope envelopes).\n    {sdk_detail}\n"
+                  f"  Install/expose the SDK, or pass --allow-no-sdk to override.")
+            return False
 
     # Run steps
     success = True
@@ -391,6 +430,13 @@ Examples:
              "E.g. --engines sage fragpipe to defer DIA-NN.",
     )
     parser.add_argument(
+        "--allow-no-sdk",
+        action="store_true",
+        help="Allow step 4 extraction without the Bruker SDK. Off by default: "
+             "without the SDK the m/z calibration falls back to a boundary "
+             "model with multi-Da error on some datasets.",
+    )
+    parser.add_argument(
         "--threads",
         type=int,
         default=16,
@@ -467,6 +513,7 @@ Examples:
         package=args.package,
         package_version=args.package_version,
         engines=args.engines,
+        allow_no_sdk=args.allow_no_sdk,
     )
 
     sys.exit(0 if success else 1)
