@@ -937,6 +937,36 @@ def download_pride(
     if n_reassembled > 0:
         print(f"   Reassembled {n_reassembled} .d folders from flat TDF files")
 
+    # Step 4c: Merge raw .d metadata into pride_metadata.yaml.
+    # Without this, instrument (and gradient_length/acquisition_mode/lc_system)
+    # stay at whatever PRIDE's API reported. That's wrong when a deposit lists
+    # multiple instruments and instruments[0] isn't the one actually processed
+    # — see the PXD073076 batch from the May 2026 campaign. The merge writes
+    # status=auto for these fields, which blocks the later paper-extraction
+    # step (whitelisted to 6 fields and required to respect auto/manual) from
+    # overwriting them with paper-inferred values. Precedence: raw .d > paper
+    # extraction > PRIDE API.
+    pride_meta_file = metadata_dir / "pride_metadata.yaml"
+    if pride_meta_file.exists():
+        print(f"\n4c. Merging raw .d metadata into pride_metadata.yaml...")
+        try:
+            from extract_raw_metadata import (
+                extract_from_all_raw_files,
+                merge_metadata,
+            )
+            raw_meta = extract_from_all_raw_files(output_dir)
+            if raw_meta:
+                pride_meta = DatasetMetadata.from_yaml(pride_meta_file)
+                merged = merge_metadata(pride_meta, raw_meta)
+                merged.to_yaml(pride_meta_file)
+                instr = (raw_meta.get("instrument") or {}).get("value")
+                if instr:
+                    print(f"   Instrument from .d: {instr}")
+            else:
+                print(f"   No .d folders to merge from.")
+        except Exception as e:
+            print(f"   Warning: raw metadata merge failed: {e}")
+
     # Step 5: Create download complete flag
     flag_file = output_dir / ".download_complete"
     flag_file.write_text(f"Downloaded at: {time.strftime('%Y-%m-%dT%H:%M:%S')}\n")
