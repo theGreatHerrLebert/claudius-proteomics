@@ -1,10 +1,13 @@
-# Design v2 — Per-Peptide Peak-Shape Predictor to Configure timsim
+# Design v3 — Per-Peptide Peak-Shape Predictor to Configure timsim
 
-> v2 incorporates an independent Codex review + verification of the timsim
-> source. Key change from v1: we predict a **single per-peptide analytic shape**
-> (not a sampled distribution), because the timsim code shows the shape
-> parameters *deterministically generate the integrated signal*. The EMG-refit,
-> EMG-R² masking, and gradient-validation upgrades from the review are kept.
+> v3 (post-validation). v2 incorporated an independent Codex review + verified the
+> timsim source: predict a **single per-peptide analytic shape** (not a sampled
+> distribution), because timsim's params *deterministically generate the integrated
+> signal*. v3 folds in the **corpus-scale validation results** (102 datasets):
+> EMG-refit confirms σ is a clean label but **λ is unidentifiable** at timsTOF MS1
+> sampling (predict σ, sample λ); and the **linear σ∝gradient law is REJECTED**
+> (corr 0.57 / slope 0.49, σ/G worsens dispersion, LODO barely beats baseline) —
+> σ is predicted **absolute** from sequence, gradient is at most a weak feature.
 
 ## Goal
 
@@ -113,15 +116,24 @@ MOGON-NHR (currently IP-blocked). The prototype runs on the 4 local datasets.
      synthetic-XIC recovery shows it is identifiable.
    - RT **apex stays Chronologer**; we add shape only.
 
-3. **Gradient handling.** RT σ scales with gradient (timsim already assumes this;
-   our 4-dataset corr=0.973 is *consistent but weak* — n=4, and the `p99(rt)`
-   proxy tracks ID density, not the programmed gradient). Plan: predict a
-   **gradient-normalized σ** and let timsim rescale (it already knows the
-   gradient via `calculate_rt_defaults`). But **treat the linear law as a
-   hypothesis**: source the real LC gradient from the programmed method (ideally
-   *local slope* at the peptide's RT, not total duration), and **leave-one-
-   dataset-out test** before trusting cross-gradient extrapolation. Do **not**
-   ship `p99(rt_seconds)` as production gradient metadata.
+3. **Gradient handling — the linear-normalization plan is REJECTED (validated at
+   n=102).** v2 proposed predicting a *gradient-normalized* σ (`σ/G`) on the
+   strength of a 4-dataset corr=0.973. Running the leave-one-dataset-out
+   validation across the synced corpus (**102 datasets / 2112 runs**,
+   `scripts/validate_gradient_law.py`) overturns that:
+   - **corr(G, σ) = 0.57** (not 0.97) — real but weak.
+   - **log-log slope = 0.49** — σ scales ~**√G**, *not* linearly. Dividing by `G`
+     over-corrects.
+   - **CV(σ)=0.42 → CV(σ/G)=0.50** — linear normalization *increases* dispersion
+     (the n=4 0.37→0.18 was a small-sample artifact).
+   - **LODO: gradient-law 0.281 vs no-gradient baseline 0.295 (1.05×)** — gradient
+     barely beats predicting a constant out-of-sample.
+   → **Do not linear-normalize σ by gradient.** Predict σ **directly from sequence**;
+   treat gradient as *one weak feature* (learned, flexible form — not a hard `σ/G`
+   normalizer). Most σ variance is not gradient-driven.
+   *(Caveat: G = `p99(rt_seconds)` proxy — a real programmed-gradient value might
+   correlate better; still unavailable. But slope 0.49 / corr 0.57 looks like a
+   genuine weak sub-linear relationship, not just proxy noise.)*
 
 4. **Single per-peptide shape, not a sampled distribution.** Justified by the
    timsim integrated-signal mechanism above. Regress the central shape (L1).
@@ -143,15 +155,12 @@ Traced in `simulate_frame_distributions_emg.py`. The function takes `sigmas`,
   **absolute** values. `calculate_rt_defaults` may still compute bounds (228) but
   they are **dead/unused** in this path — no scaling is applied to our σ.
 
-**→ Injection contract (single gradient application):** feed predicted shapes via
-**`from_existing=True`, `sigmas=σ_abs`, `lambdas=λ_abs`**. timsim applies **zero**
-gradient scaling on this path, so **we** convert normalized → absolute exactly
-once at injection:
-
-```
-σ_abs(target run) = σ_norm · f(G_target)/f(G_ref)     # f linear ⇒ · G_target/G_ref
-λ_abs(target run) = λ_norm · f(G_ref)/f(G_target)     # tail timescale 1/λ scales like σ
-```
+**→ Injection contract:** feed predicted shapes via **`from_existing=True`,
+`sigmas=σ_abs`, `lambdas=λ_abs`** — **absolute** values (σ in seconds for the
+target run). timsim applies **zero** gradient scaling on this path, which is what
+we want: the model predicts σ directly (gradient enters as a weak input feature,
+*not* a `σ/G` normalizer — see decision 3, validated at n=102). No separate
+rescale step, so no double-application by construction.
 
 This is the clean answer to the double-application worry: the *default* path
 would (a) **sample** rather than use our point value and (b) re-apply
@@ -164,8 +173,9 @@ at two gradient lengths** to assert σ is applied exactly once.
 **Conditioning & units (spec, per review):**
 - Predict shape **per (peptide, charge)**, not sequence-only — labels are
   per-precursor and shape varies with charge. Charge is already a head input.
-- `σ_norm` is dimensionless (`σ_seconds / f(G)`); `G` from the **programmed LC
-  method** (local slope preferred), not `p99(rt)`.
+- σ is predicted in **absolute seconds** (no `σ/G` normalization — rejected at
+  n=102). Gradient length, if used, is a weak input feature, ideally from the
+  **programmed LC method**, not `p99(rt)`.
 - **IM σ is absolute** (1/K0 units) → `inv_mobility_gru_predictor_std` directly;
   document the contrast with timsim's current "2%-relative / scaled-to-0.009"
   default so the unit handoff is explicit.
@@ -176,11 +186,11 @@ at two gradient lengths** to assert σ is applied exactly once.
 
 - **IM head**: no structural change — add `im_sigma` target + `im_r2` mask in
   `sage_dataset.py`/collate; add masked L1 term in `losses.py`.
-- **RT head** (`heads/scalar.py`): extend to emit `sigma_norm` (and later
-  `lambda_norm`), shape only.
-- **Dataset**: new joined loader (`precursor_store` ⋈ `precursor_index`),
-  q-filtered, EMG-R²-masked, gradient-normalized RT targets.
-- **Losses**: `+ masked_L1(im_std, im_sigma)` `+ masked_L1(rt_sigma_norm, emg_sigma)`.
+- **RT head** (`heads/scalar.py`): emit `sigma` (absolute seconds; `log σ`
+  param), shape only. Implemented as `RTSigmaHead` (softplus → σ>0).
+- **Dataset**: new joined loader (`precursor_store`/`raw_features` ⋈
+  `precursor_index`), q-filtered, EMG-R²-masked, **absolute** σ RT targets.
+- **Losses**: `+ masked_L1(im_std, im_sigma)` `+ masked_L1(rt_sigma, emg_sigma)`.
 - **Prototype** on the 4 POC datasets; gate full corpus on MOGON access.
 
 ## Validation plan (before trusting the head / investing in re-extraction)
@@ -195,9 +205,11 @@ at two gradient lengths** to assert σ is applied exactly once.
   per-run) variance of the shape labels — quantifies how much a sequence model
   can explain vs irreducible per-observation noise.
 - **Baselines**: sequence-only vs charge/run-aware vs peptide random-effects.
-- **Gradient law**: leave-one-dataset-out extrapolation of normalized σ (n=4 is
-  a failure test, not proof of a general law). **Unit-test the injection** at two
-  gradient lengths to assert σ is scaled exactly once.
+- ~~**Gradient law**: LODO extrapolation of normalized σ~~ — **DONE (n=102):
+  linear σ∝G REJECTED** (corr 0.57, slope 0.49≈√G, σ/G worsens CV, LODO 1.05× over
+  baseline). σ predicted absolute; gradient is a weak feature, not a normalizer
+  (decision 3). No injection rescale needed → the "scaled exactly once" unit test
+  is moot.
 - **Leakage-safe splits**: hold out **peptide sequences AND raw files** (random
   precursor splits leak repeated peptides and overstate generalization).
 - **Fit uncertainty**: bootstrap/Hessian uncertainty on `(σ, λ)`; weight by it.
@@ -213,11 +225,11 @@ at two gradient lengths** to assert σ is applied exactly once.
 
 1. **EMG refit vs moment-conversion** — *resolved*: refit (conversion not
    defensible until `sigma/skew` semantics confirmed).
-2. **Normalize-and-rescale vs gradient-conditioning** — *injection resolved*:
-   inject absolute σ via the `from_existing` path, applying the gradient factor
-   exactly once on our side (timsim does not rescale there — see Interface
-   contract). The *law itself* (linear `f(G)`) is still a hypothesis: validate
-   with real gradient metadata + LODO; n=4 is not conclusive.
+2. **Normalize-and-rescale vs gradient-conditioning** — *resolved (n=102)*:
+   **neither** — linear `σ/G` normalization is rejected (it worsens out-of-sample
+   error vs a constant). Inject **absolute** σ via `from_existing`; predict σ from
+   sequence with gradient as a weak feature. Only residual open: whether a *real*
+   programmed-gradient value (vs the `p99(rt)` proxy) recovers more signal.
 3. **Shared vs per-observation shape** — *resolved*: single per-peptide shape
    (timsim consumes one analytic profile); spread τ deferred.
 4. **4-dataset prototype** — sufficient for plumbing + identifiability studies,
