@@ -60,6 +60,8 @@ TIER1_SCHEMA = pa.schema([
     ("mz", _F), ("rt_seconds", _F), ("mobility", _F),
     ("sage_rt", _F), ("sage_mobility", _F), ("fragpipe_rt", _F),
     ("fragpipe_mobility", _F),
+    ("rt_aligned", _F),   # Sage cross-run-aligned RT (~[0,1]); +3pp RT Pearson vs raw
+
     ("collision_energies_v", pa.list_(_F)), ("collision_energy_mean_v", _F),
     ("ms1_rt_apex", _F), ("ms1_rt_fwhm", _F), ("ms1_rt_sigma", _F),
     ("ms1_rt_skew", _F), ("ms1_rt_r2", _F), ("ms1_rt_snr", _F),
@@ -256,6 +258,25 @@ def build(acc: str, data_root: Path, out_dir: Path,
     rf = _read_concat(rf_hits)
     alignment_gate(pidx, rf)
 
+    # Sage cross-run-aligned RT (validated +3pp RT Pearson vs raw rt_seconds):
+    # {sage_psm_id: aligned_rt} from results.sage.parquet (rank-1 targets q<=q_max).
+    aligned = {}
+    for rp in sorted(proc.rglob("results.sage.parquet")):
+        try:
+            cols = [c for c in ["psm_id", "aligned_rt", "spectrum_q", "rank", "is_decoy"]
+                    if c in pq.read_schema(rp).names]
+            rt = pq.read_table(rp, columns=cols)
+            if {"spectrum_q", "rank", "is_decoy"} <= set(cols):
+                import pyarrow.compute as _pc
+                rt = rt.filter(_pc.and_(_pc.and_(_pc.equal(rt["is_decoy"], False),
+                                                 _pc.equal(rt["rank"], 1)),
+                                        _pc.less_equal(rt["spectrum_q"], q_max)))
+            for pid, a in zip(rt["psm_id"].to_pylist(), rt["aligned_rt"].to_pylist()):
+                if pid is not None:
+                    aligned[int(pid)] = a
+        except Exception:
+            pass
+
     pidx_cols = set(pidx.schema.names)
     have_sage = "sage_qvalue" in pidx_cols
     have_fp = "fragpipe_qvalue" in pidx_cols
@@ -305,7 +326,7 @@ def build(acc: str, data_root: Path, out_dir: Path,
         try:
             for offset, prow, rrow, sage_pass, fp_pass in items:
                 rec = assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass,
-                               have_sage, have_fp)
+                               have_sage, have_fp, aligned)
                 # projection blob read for SNR + per-event CE
                 if fh is not None and offset is not None and rrow.get("blob_size"):
                     try:
@@ -398,7 +419,8 @@ def _derive_reliability(rec):
                      and (rec.get("fragpipe_qvalue") or 1) <= Q_MAX)
 
 
-def assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass, have_sage, have_fp):
+def assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass, have_sage, have_fp,
+             aligned=None):
     # canonical assignment: Sage-preferred-else-FragPipe (§4.0)
     use_sage = sage_pass
     if use_sage:
@@ -437,6 +459,8 @@ def assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass, have_sage, have_fp):
         "sage_rt": prow.get("sage_rt"), "sage_mobility": prow.get("sage_mobility"),
         "fragpipe_rt": prow.get("fragpipe_rt"),
         "fragpipe_mobility": prow.get("fragpipe_mobility"),
+        "rt_aligned": ((aligned.get(int(prow["sage_psm_id"]))
+                        if aligned and prow.get("sage_psm_id") is not None else None)),
         # width labels (RT s; IM 1/K0)
         "ms1_rt_apex": rrow.get("ms1_rt_apex"), "ms1_rt_fwhm": rrow.get("ms1_rt_fwhm"),
         "ms1_rt_sigma": rrow.get("ms1_rt_sigma"), "ms1_rt_skew": rrow.get("ms1_rt_skew"),
