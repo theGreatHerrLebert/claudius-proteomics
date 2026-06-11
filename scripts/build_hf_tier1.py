@@ -248,12 +248,18 @@ def build(acc: str, data_root: Path, out_dir: Path,
           q_max: float, fail_frac_max: float, limit: int = 0) -> dict:
     proc = data_root / "processed" / acc
     extr = data_root / "extracted" / acc
-    # per-group/HLA datasets keep precursor_index + raw_features in subdirs and
-    # may split across several files -> gather ALL and concat (not just [0]).
-    pidx_hits = sorted({p for p in [proc / "precursor_index.parquet",
-                                    *proc.rglob("precursor_index.parquet")]
-                        if p.exists()})
-    rf_hits = sorted(set(extr.rglob("raw_features.parquet")))
+    def _pick(top, base, name):
+        """Prefer the single top-level merged file; else concat per-group subdir
+        copies. Per-group/HLA datasets keep a copy in a group subdir AND a
+        top-level merge — grabbing both (old rglob) double-counted every row and
+        tripped the 1:1 gate. Top-level is the canonical merge; subdir copies are
+        the inputs only when no top-level merge exists (genuine multi-group)."""
+        if top.exists():
+            return [top]
+        return sorted(base.rglob(name))
+
+    pidx_hits = _pick(proc / "precursor_index.parquet", proc, "precursor_index.parquet")
+    rf_hits = _pick(extr / "raw_features.parquet", extr, "raw_features.parquet")
     if not pidx_hits or not rf_hits:
         raise SystemExit(f"missing inputs for {acc} "
                          f"(pidx={len(pidx_hits)} rf={len(rf_hits)})")
