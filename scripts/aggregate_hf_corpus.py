@@ -111,20 +111,24 @@ def build_stats(man_glob, keys):
 
 
 def main():
-    out_root = BASE / "hf_corpus" / CORPUS_VERSION
-    t1 = aggregate("tier1", TIER1_SCHEMA, str(BASE / "hf_tier1" / "*.parquet"),
-                   out_root / "tier1")
-    t3 = aggregate("tier3", TIER3_SCHEMA, str(BASE / "hf_tier3" / "*.parquet"),
-                   out_root / "tier3")
-    s1 = build_stats(str(BASE / "hf_tier1" / "*.manifest.json"),
-                     ["n_passed_floor", "n_written"])
-    s3 = build_stats(str(BASE / "hf_tier3" / "*.manifest.json"),
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--version", default=CORPUS_VERSION)
+    ap.add_argument("--tier1-dir", default="hf_tier1")
+    ap.add_argument("--tier3-dir", default="hf_tier3")
+    args = ap.parse_args()
+    t1d, t3d = BASE / args.tier1_dir, BASE / args.tier3_dir
+    out_root = BASE / "hf_corpus" / args.version
+    t1 = aggregate("tier1", TIER1_SCHEMA, str(t1d / "*.parquet"), out_root / "tier1")
+    t3 = aggregate("tier3", TIER3_SCHEMA, str(t3d / "*.parquet"), out_root / "tier3")
+    s1 = build_stats(str(t1d / "*.manifest.json"), ["n_passed_floor", "n_written"])
+    s3 = build_stats(str(t3d / "*.manifest.json"),
                      ["n_passed_floor", "n_matched_precursors", "n_fragment_rows"])
     manifest = {
-        "corpus_version": CORPUS_VERSION, "built_unix": int(time.time()),
+        "corpus_version": args.version, "built_unix": int(time.time()),
         "split": {"method": "peptide_hash(sequence_normalized)",
                   "seed": SPLIT_SEED, "fracs": {"train": 0.8, "val": VAL_FRAC, "test": TEST_FRAC},
-                  "note": "no peptide leakage; group/dataset-level split deferred to v0.2"},
+                  "note": "no peptide leakage; group/dataset-level split deferred to a future version"},
         "tier1": t1, "tier3": t3,
         "tier1_build_stats": s1, "tier3_build_stats": s3,
         "filter": {"q_max": 0.01, "rank": 1, "target_only": True,
