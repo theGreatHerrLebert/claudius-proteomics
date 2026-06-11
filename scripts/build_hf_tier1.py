@@ -195,6 +195,15 @@ def _norm_raw(s):
     return s[:-2] if isinstance(s, str) and s.endswith(".d") else s
 
 
+def _clean_modseq(s):
+    """Strip empty terminal-mod placeholders (`[]-PEP-[]` / `[]PEP[]` -> `PEP`)
+    that Sage/FragPipe emit when a terminus is unmodified. Real `[UNIMOD:N]`
+    mods (and their `]-` terminal hyphen) are untouched — only literal `[]`."""
+    if not isinstance(s, str):
+        return s
+    return s.replace("[]-", "").replace("-[]", "").replace("[]", "")
+
+
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -430,6 +439,7 @@ def assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass, have_sage, have_fp,
         seq = prow.get("fragpipe_peptide"); modseq = prow.get("fragpipe_modified")
         prot = prow.get("fragpipe_protein"); charge = prow.get("fragpipe_charge")
     charge = int(charge) if charge is not None else prow.get("charge")
+    seq, modseq = _clean_modseq(seq), _clean_modseq(modseq)   # strip [] placeholders
     # #SIMPLIFY: peptidoform agreement on sequence_normalized + charge (unmod)
     sn = prow.get("sequence_normalized")
     both_pass = sage_pass and fp_pass
