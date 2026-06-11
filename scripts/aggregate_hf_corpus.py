@@ -88,8 +88,13 @@ def build_stats(man_glob, keys):
     out = {"n_manifests": 0, "quarantined": []}
     agg = {k: 0 for k in keys}
     skips, fails = {}, {}
+    out["bad_manifests"] = []
     for m in sorted(glob.glob(man_glob)):
-        d = json.load(open(m))
+        try:
+            d = json.load(open(m))
+        except Exception:
+            out["bad_manifests"].append(Path(m).name)   # empty/malformed -> skip, don't crash
+            continue
         out["n_manifests"] += 1
         for k in keys:
             agg[k] += d.get(k, 0) or 0

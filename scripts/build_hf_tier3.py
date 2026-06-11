@@ -99,6 +99,14 @@ def read_frag(fh, offset, size, file_size):
 _VALID_SEQ = re.compile(r"^([ARNDCQEGHILKMFPSTWYVU]|\[UNIMOD:\d+\])+$")
 
 
+def _clean_modseq(s):
+    """Strip empty terminal-mod placeholders (`[]-PEP-[]` -> `PEP`) from the
+    STORED sequence fields; real `[UNIMOD:N]` mods untouched."""
+    if not isinstance(s, str):
+        return s
+    return s.replace("[]-", "").replace("-[]", "").replace("[]", "")
+
+
 def clean_imspy_seq(seq):
     if not seq:
         return None
@@ -284,8 +292,8 @@ def build(acc, data_root, out_dir, matcher, mods, q_max, fail_frac_max, limit=0)
                         "accession": acc, "raw_file": raw_file,
                         "precursor_id": prow["precursor_id"], "sage_psm_id": sage_pid,
                         "assignment": assignment, "canonical_engine": canon,
-                        "sequence": prow.get(canon + "_peptide"),
-                        "modified_sequence": raw_seq,
+                        "sequence": _clean_modseq(prow.get(canon + "_peptide")),
+                        "modified_sequence": _clean_modseq(raw_seq),
                         "sequence_normalized": prow.get("sequence_normalized"),
                         "precursor_charge": int(charge),
                         "n_engines": n_eng, "peptidoform_conflict": pep_conf,
