@@ -190,9 +190,12 @@ def build(acc, data_root, out_dir, matcher, mods, q_max, fail_frac_max, limit=0)
                                    fragpipe_to_imspy_sequence)
     proc = data_root / "processed" / acc
     extr = data_root / "extracted" / acc
-    pidx_hits = sorted({p for p in [proc / "precursor_index.parquet",
-                                    *proc.rglob("precursor_index.parquet")] if p.exists()})
-    rf_hits = sorted(set(extr.rglob("raw_features.parquet")))
+    def _pick(top, base, name):
+        # prefer the single top-level merge; else per-group subdir copies
+        # (per-group datasets have both -> concatenating double-counts).
+        return [top] if top.exists() else sorted(base.rglob(name))
+    pidx_hits = _pick(proc / "precursor_index.parquet", proc, "precursor_index.parquet")
+    rf_hits = _pick(extr / "raw_features.parquet", extr, "raw_features.parquet")
     if not pidx_hits or not rf_hits:
         raise SystemExit(f"missing inputs for {acc}")
     pidx = _read_concat(pidx_hits).to_pylist()
