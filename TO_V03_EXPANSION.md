@@ -1,6 +1,6 @@
 # TO: HF corpus v0.3 expansion — PTM/HLA gap-fillers
 
-**Status:** plan, 2026-06-12. Follows the v0.2 publish
+**Status:** plan v2, 2026-06-12 (Codex-reviewed, `TO_V03_EXPANSION.codex-review.md` — 6 catches folded in: lactyl id 2114, register acyl masses, no localization claim, MC 3-4, FragPipe-HLA bug, title-vs-protocol). Follows the v0.2 publish
 (`theGreatHerrLebert/timstof-dda-pasef-cc0`). Targeted, CC0-only expansion of
 the *thin* workflows — deepen, don't brute-force ([[curated-cohort-strategy]]).
 
@@ -27,10 +27,25 @@ diversity in one stroke. The phospho/acetyl/ubiq/methyl reuse existing profiles.
 
 ## 2. NEW acyl mod_profiles (add to `config/config.mogon.yaml` `mod_profiles:`)
 
-Each dataset is enriched for ONE acyl type. Masses are canonical
-(monoisotopic, on K); Sage searches on mass+residue (the unimod_id is metadata).
-Crotonyl id 1363 verified via sagepy; succinyl/malonyl/lactyl use canonical
-UniMod ids — confirm against the lab UniMod build before the run.
+Each dataset is enriched for ONE acyl type. Masses are canonical (monoisotopic,
+on K). **Correct UniMod ids (Codex-verified): Lactyl 2114, Succinyl 64,
+Crotonyl 1363, Malonyl 747.** ⚠️ "Sage searches mass+residue so the id is just
+metadata" is **only true inside Sage** — it is unsafe corpus-wide:
+`runner/engines/sage_job.py` discards the id, and sequence canonicalization
+(`scripts/sequence_utils.py`) infers UniMod from a coarse integer-mass table
+that **currently lacks all four acyl masses**, so Sage/FragPipe output would
+keep raw `[+72.021129]` (or encode inconsistently) and DIA-NN consumes the id.
+→ **§2.1 is a hard prerequisite, not optional.**
+
+### 2.1 PREREQUISITE — register the acyl masses before any search
+
+Add exact (mass, residue) → UniMod mappings for all four acyl mods to the
+canonicalization table in `scripts/sequence_utils.py` (and any DIA-NN id map),
+with a round-trip test (`[+72.021129]K → [UNIMOD:2114]K`). Without this the
+`modified_sequence` / `sequence_normalized` columns are wrong for the whole
+acyl cohort — and the tier3 fragment matcher's mass→UNIMOD converter (already
+small, `[[imspy-fragment-ion-extension]]`) must know them too, or acyl peptides
+get skipped at Tier-3.
 
 ```yaml
   acyl_lactyl:
@@ -39,8 +54,8 @@ UniMod ids — confirm against the lab UniMod build before the run.
       - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
     variable_modifications:
       - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
-      - {unimod_id: 1926, name: "Lactyl", mass: 72.021129, residues: ["K"]}
-    max_variable_mods: 3
+      - {unimod_id: 2114, name: "Lactyl", mass: 72.021129, residues: ["K"]}  # 2114 = L-lactyl (1926 is a methylglyoxal artefact — Codex)
+    max_variable_mods: 4   # 4 (not 3) so multi-acyl peptides aren't truncated (Codex)
   acyl_succinyl:
     description: "K-succinylation (Ksucc) enrichment"
     fixed_modifications:
@@ -48,7 +63,7 @@ UniMod ids — confirm against the lab UniMod build before the run.
     variable_modifications:
       - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
       - {unimod_id: 64, name: "Succinyl", mass: 100.016044, residues: ["K"]}
-    max_variable_mods: 3
+    max_variable_mods: 4   # 4 (not 3) so multi-acyl peptides aren't truncated (Codex)
   acyl_crotonyl:
     description: "K-crotonylation (Kcr) enrichment"
     fixed_modifications:
@@ -56,7 +71,7 @@ UniMod ids — confirm against the lab UniMod build before the run.
     variable_modifications:
       - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
       - {unimod_id: 1363, name: "Crotonyl", mass: 68.026215, residues: ["K"]}
-    max_variable_mods: 3
+    max_variable_mods: 4   # 4 (not 3) so multi-acyl peptides aren't truncated (Codex)
   acyl_malonyl:
     description: "K-malonylation (Kmal) enrichment"
     fixed_modifications:
@@ -64,7 +79,7 @@ UniMod ids — confirm against the lab UniMod build before the run.
     variable_modifications:
       - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
       - {unimod_id: 747, name: "Malonyl", mass: 86.000394, residues: ["K"]}
-    max_variable_mods: 3
+    max_variable_mods: 4   # 4 (not 3) so multi-acyl peptides aren't truncated (Codex)
 ```
 
 Per-dataset assignment of the four acyl types comes from the title (the
@@ -73,17 +88,28 @@ discovery already tagged `acyl`; sub-type is in the title: "lactyl"/"succinyl"/
 
 ## 3. Glyco (7) — decide per dataset
 
-Per `TO_CORPUS_DESIGN` §2.1: deglyco/PNGase-F → `N:0.9840` deamidation marker +
-N-X-S/T motif filter; intact glycopeptide → needs glycan-mass search (the
-modification encoder only handles glycans with a UniMod id). **Recommend: admit
-only deglyco evidence in v0.3; defer intact glyco.**
+Per `TO_CORPUS_DESIGN` §2.1: deglyco/PNGase-F → `Deamidated(N)` marker
+(UniMod:7, +0.984016, **N only — not unrestricted N/Q**) + `N-X-S/T, X≠P` motif
+filter, AND require evidence of actual **PNGase-F treatment + glyco enrichment**
+(ideally ¹⁸O) — chemical deamidation alone passes the motif filter, so the
+marker is not glyco proof (Codex). **Recommend: admit only verified-deglyco
+evidence in v0.3; defer intact glyco** (the encoder only handles UniMod-id'd
+glycans).
 
 ## 4. Pipeline (reuses the existing machinery)
 
 Per candidate, the standard flow (gated on MOGON):
 1. **Download** `.d` from PRIDE (`scripts/download_pride.py`).
 2. **Search** Sage + FragPipe with the workflow's `mod_profile`
-   (`runner/steps/step2_search.py`); HLA → no-enzyme.
+   (`runner/steps/step2_search.py`). **Acyl: missed_cleavages 3–4** (not 2) —
+   acyl-K blocks tryptic cleavage and consumes the MC allowance; pilot the
+   yield/cost per acyl type. (Semi-tryptic only if the original study used it —
+   blocked K alone doesn't create a non-tryptic terminus.) ⚠️ **HLA dual-engine
+   is currently broken on the FragPipe side**: `fragpipe_workflow: Nonspecific-HLA`
+   in `config.mogon.yaml` is **never consumed** — `run_fragpipe.py` always runs
+   `LFQ-MBR` (tryptic), and only the enzyme *name* (not MC/terminus) is passed.
+   FIX `run_fragpipe.py` to consume the workflow, **or** treat HLA as Sage-only
+   in v0.3 (drop the dual-engine claim for HLA).
 3. **Extract** `raw_features` + blobs (the tier1/tier3 inputs).
 4. **Audit** against `TO_CORPUS_DESIGN` gates (volume ≥10k, mod-localization
    ≥floor, CE `[0,1]`, dual-engine agreement where both ran).
@@ -94,13 +120,27 @@ Per candidate, the standard flow (gated on MOGON):
 
 ## 5. Risks / gates
 
-- **Mod-localization quality** is the make-or-break for acyl (low-stoichiometry
-  PTMs) — enforce the `delta_best ≥ floor` audit gate (`TO_CORPUS_DESIGN` §4.6);
-  drop datasets where site ID is unreliable (degrades the intensity signal).
+- **Site localization is NOT established by the `delta_best` gate** (Codex):
+  that's a top-vs-next *peptide-score* gap, not a positional-isomer test, and
+  the canonical parsers don't retain PTMProphet site probabilities. So either
+  add real localization evidence (PTMProphet / site-determining ions + a
+  PTM-specific PSM FDR), or **label acyl records as modification-bearing but
+  NOT confidently site-localized** in the corpus (honest, and fine for intensity
+  training). Don't claim localized acyl-K.
+- ⚠️ **Title-only classification has false positives** (Codex examples:
+  PXD036950 "glycolytic"≠glyco; PXD053580 Chlamydomonas≠HLA; PXD057704 "MHCC"
+  cell-line≠MHC; PXD041207 "acylated segment" w/o subtype; **PXD040481 is
+  malonyl but my tagger called it acetyl**). → **Confirm workflow + acyl subtype
+  from the PRIDE protocol/sample-metadata (not the title), generate a per-dataset
+  manifest, and human-review it before submission.**
+- **Pilot ONE dataset per acyl type end-to-end first** (search → extract →
+  tier1/tier3 → check canonical `modified_sequence` + PTM yield) before
+  launching all 115. Confirms §2.1 encoding + the MC setting actually work.
+- Malonyl has a documented **CO₂ neutral loss** — may reduce localization
+  sensitivity if the score ignores it.
 - **Compression-type-1** / readability checks as usual (`[[sage-compression-type1]]`).
-- **Cluster-bound**: 115 datasets × (download + dual-engine search + extract) is
-  a real campaign; prioritize the **24 acyl + 9 HLA** first (highest diversity
-  gain), then phospho/acetyl/ubiq/methyl.
+- **Cluster-bound**: prioritize the verified **acyl + HLA** subset first
+  (highest diversity gain), then phospho/acetyl/ubiq/methyl.
 - **Sage build** with the new mods needs the [[sage-build-memory-optimization]]
   fork; verify the acyl masses don't blow the fragment index for K-heavy search.
 
