@@ -26,7 +26,7 @@ Grain: `(raw_file, precursor_id)`.
 | `sage_psm_id` | float64 | Sage PSM id (null if FragPipe-only) |
 | `sequence` | str | plain amino-acid sequence |
 | `modified_sequence` | str | canonical engine's modified sequence (ProForma-style `[UNIMOD:N]`) |
-| `sequence_normalized` | str | unmodified, lower-case — the cross-engine + split key |
+| `sequence_normalized` | str | unmodified, UPPER-case canonical form — the cross-engine merge key (`n_engines`) + the train/val/test split key; collapses engine/localization variants that `sequence` keeps distinct |
 | `charge` | int64 | precursor charge |
 | `protein` | str | protein accession(s) |
 

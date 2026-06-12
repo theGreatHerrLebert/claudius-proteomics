@@ -33,6 +33,15 @@ SPLIT_SEED = 0
 VAL_FRAC, TEST_FRAC = 0.10, 0.10
 
 
+def _clean_sn(s):
+    """Strip empty terminal-mod placeholders (`[]-PEP-[]` -> `PEP`) that
+    sequence_normalized carries from precursor_index — and split on the clean
+    key so the published column and the split agree."""
+    if not isinstance(s, str):
+        return s
+    return s.replace("[]-", "").replace("-[]", "").replace("[]", "")
+
+
 def split_for(seq):
     if not seq:
         return "train"
@@ -62,7 +71,9 @@ def aggregate(name, schema, in_glob, out_dir, batch_rows=200_000):
         rows = 0
         for rb in pq.ParquetFile(fp).iter_batches(batch_size=batch_rows):
             t = pa.Table.from_batches([rb]).select(names).cast(schema)
-            seqs = t.column("sequence_normalized").to_pylist()
+            seqs = [_clean_sn(s) for s in t.column("sequence_normalized").to_pylist()]
+            ci = t.schema.get_field_index("sequence_normalized")
+            t = t.set_column(ci, "sequence_normalized", pa.array(seqs, pa.string()))
             splits = [split_for(s) for s in seqs]
             t = t.append_column("split", pa.array(splits, pa.string()))
             rows += t.num_rows

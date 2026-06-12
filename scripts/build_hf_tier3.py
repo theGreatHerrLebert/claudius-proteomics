@@ -297,7 +297,7 @@ def build(acc, data_root, out_dir, matcher, mods, q_max, fail_frac_max, limit=0)
                         "assignment": assignment, "canonical_engine": canon,
                         "sequence": _clean_modseq(prow.get(canon + "_peptide")),
                         "modified_sequence": _clean_modseq(raw_seq),
-                        "sequence_normalized": prow.get("sequence_normalized"),
+                        "sequence_normalized": _clean_modseq(prow.get("sequence_normalized")),
                         "precursor_charge": int(charge),
                         "n_engines": n_eng, "peptidoform_conflict": pep_conf,
                         "match_method": MATCH_METHOD,

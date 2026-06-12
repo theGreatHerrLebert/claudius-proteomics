@@ -447,7 +447,7 @@ def assemble(acc, raw_file, prow, rrow, sage_pass, fp_pass, have_sage, have_fp,
     charge = int(charge) if charge is not None else prow.get("charge")
     seq, modseq = _clean_modseq(seq), _clean_modseq(modseq)   # strip [] placeholders
     # #SIMPLIFY: peptidoform agreement on sequence_normalized + charge (unmod)
-    sn = prow.get("sequence_normalized")
+    sn = _clean_modseq(prow.get("sequence_normalized"))   # strip []-..-[] placeholders
     both_pass = sage_pass and fp_pass
     conflict = bool(both_pass and prow.get("sage_charge") != prow.get("fragpipe_charge"))
     n_eng = 1 + int(both_pass and not conflict)
