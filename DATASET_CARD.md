@@ -109,17 +109,19 @@ PXD) splitting is deferred to a later version. The `split` column is in every ro
 ## Validation — a model trained on this corpus
 
 Training a unified peptide-property model **directly on these parquets** (from a
-cross-instrument pretrained checkpoint) reaches, on the held-out test split:
+cross-instrument pretrained checkpoint, all 58 datasets) reaches, on the
+held-out test split:
 
 | Head | Metric |
 |---|---|
-| MS2 b/y intensity | spectral angle ~0.73–0.76 |
-| Ion mobility (CCS) | normalized MAE ~0.018–0.024 |
-| Retention time | Pearson ~0.88–0.90 (using `rt_aligned`) |
-| Charge | accuracy ~0.80–0.82 |
+| MS2 b/y intensity | spectral angle **0.744** |
+| Ion mobility (CCS) | normalized MAE **0.0184** |
+| Retention time | Pearson **0.876** (native `rt_aligned`) |
+| Charge | accuracy **0.809** |
 
 The model **fine-tunes to timsTOF-ready in a few epochs** from pretraining — the
-corpus carries trainable signal across all four heads. (Using raw `rt_seconds`
+corpus carries trainable signal across all four heads, at parity with an
+equivalent model trained from the raw Sage outputs. (Using raw `rt_seconds`
 instead of `rt_aligned` costs ~3 pp RT Pearson — prefer `rt_aligned`.)
 
 ## Usage
