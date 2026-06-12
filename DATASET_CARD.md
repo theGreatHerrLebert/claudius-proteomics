@@ -59,12 +59,14 @@ To our knowledge the first public timsTOF DDA-PASEF PSM resource that ships:
 **58 datasets**, 100% **CC0** (PRIDE-verified, per-dataset evidence + retrieval
 dates retained), **timsTOF family** instruments (Pro / Pro2 / HT / SCP / fleX /
 Ultra), DDA / PASEF acquisition. Tryptic, HLA / immunopeptidomics, and several
-PTM-enriched workflows. (Exact per-split row counts: see `manifest.json`.)
+PTM-enriched workflows.
 
-| | rows (order of magnitude) |
-|---|---|
-| Tier 1 — precursors | ~30 M+ |
-| Tier 3 — b/y fragments | ~500 M |
+| Tier | rows | train / validation / test |
+|---|---:|---|
+| **Tier 1** — precursors | **33,717,207** | 27,128,597 / 3,205,642 / 3,382,968 |
+| **Tier 3** — b/y fragments | **504,097,214** | 404,005,449 / 48,374,948 / 51,716,817 |
+
+(Per-dataset counts + provenance: `manifest.json`.)
 
 ## Tiers
 
