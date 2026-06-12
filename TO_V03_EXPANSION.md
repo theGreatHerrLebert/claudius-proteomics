@@ -150,3 +150,32 @@ The 24 acyl (4 sub-types, multi-organism) + 9 HLA = 33 datasets — the biggest
 per-dataset diversity gain. Run these first as v0.3-wave-1; phospho/acetyl/ubiq/
 methyl/glyco as wave-2. Full candidate list:
 `corpus_expansion_cc0_2026-06-12.tsv`.
+
+## 7. Existing-HLA reprocess (the FragPipe no-enzyme bug side-effect)
+
+The `fragpipe_job.py` fix (now passes `--workflow Nonspecific-HLA`) means every
+HLA dataset previously FragPipe-searched ran **tryptic LFQ-MBR** on no-enzyme
+HLA peptides — so their FragPipe IDs / `n_engines==2` / fragpipe_* columns are
+unreliable. **Verified 2026-06-12: `Nonspecific-HLA.workflow` ships** in
+FragPipe 24.0 (`engines/fragpipe-run/workflows/`), so the fix resolves.
+
+**Affected in the v0.2 corpus (mod_profile=hla): PXD026463, PXD038273** (only 2 —
+the other recovered per-group datasets PXD035301/PXD050342 are phospho/acetyl,
+not HLA). Broader already-processed HLA pool that benefits if pulled into v0.3:
+PXD042316, PXD058376, PXD046370, PXD051880 (+ the 9 new HLA candidates process
+fresh = already correct).
+
+Reprocess (folds into the v0.3 rebuild):
+1. **Audit first**: for the 2 in-corpus HLA, report current `n_engines==2` rate
+   + FragPipe HLA peptide-length distribution. Expect FragPipe contributed
+   little (tryptic on ~9-mer no-enzyme peptides) → low blast radius, but confirm.
+2. **Re-run FragPipe** (`Nonspecific-HLA`, now wired) on PXD026463 + PXD038273
+   (+ any HLA added to v0.3). Per-dataset check: **Cam(C) only if the sample was
+   alkylated** — many HLA preps are not (`TO_CORPUS_DESIGN` §2.1; FragPipe ships
+   a `Nonspecific-HLA-C57` variant for the alkylated case).
+3. **Re-merge** dual-engine (step5) → corrected `precursor_index` (real HLA
+   `n_engines`/agreement).
+4. **Rebuild** tier1+tier3 (v0.2 builders) → re-aggregate to v0.3.
+
+Net: v0.3 HLA = 2 corrected + (optionally) 4 already-processed re-FragPipe'd + 9
+new = up to ~15 properly no-enzyme dual-engine HLA datasets.
