@@ -64,6 +64,12 @@ MASS_TO_UNIMOD: Dict[int, Tuple[int, str]] = {
     # TMT labels (approximate)
     229: (737, "TMT6plex"),           # TMT6plex + 229.1629
     304: (2016, "TMTpro"),            # TMTpro + 304.2071
+
+    # Lysine acylations (v0.3 expansion) — distinct integers, no collisions
+    68: (1363, "Crotonyl"),           # K + 68.026215
+    72: (2114, "Lactyl"),             # K + 72.021129  (2114 = L-lactyl; NOT 1926, which is a methylglyoxal artefact)
+    86: (747, "Malonyl"),             # K + 86.000394
+    100: (64, "Succinyl"),            # K + 100.016044
 }
 
 # Absolute mass to UNIMOD (for FragPipe format)
@@ -73,6 +79,12 @@ ABSOLUTE_MASS_TO_UNIMOD: Dict[int, Tuple[int, str]] = {
 
     # Oxidized Methionine: 131.040 (M) + 15.995 = 147.035
     147: (35, "Oxidation"),
+
+    # Lysine acylations (K residue 128.09496 + delta) for the FragPipe absolute format
+    196: (1363, "Crotonyl"),          # K 128.095 + 68.026 = 196.121
+    200: (2114, "Lactyl"),            # K 128.095 + 72.021 = 200.116
+    214: (747, "Malonyl"),            # K 128.095 + 86.000 = 214.095
+    228: (64, "Succinyl"),            # K 128.095 + 100.016 = 228.111
 }
 
 

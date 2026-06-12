@@ -49,6 +49,11 @@ MASS_TO_UNIMOD = {
     -17.026548: 28,  # Gln->pyro-Glu (Q) - variant
     -18.010565: 27,  # Glu->pyro-Glu (E)
     79.966331: 21,   # Phospho (STY)
+    # Lysine acylations (v0.3 expansion) — else acyl fragments get skipped at Tier-3
+    68.026215: 1363,   # Crotonyl (K)
+    72.021129: 2114,   # Lactyl (K)  (2114 = L-lactyl)
+    86.000394: 747,    # Malonyl (K)
+    100.016044: 64,    # Succinyl (K)
 }
 
 
