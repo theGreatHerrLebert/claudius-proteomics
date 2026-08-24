@@ -87,9 +87,22 @@ class FragPipeJob(EngineJob):
         if enzyme_config and "fragpipe_name" in enzyme_config:
             cmd.extend(["--enzyme", enzyme_config["fragpipe_name"]])
 
+        # Pass the FragPipe base workflow if the mod profile specifies one
+        # (e.g. HLA -> "Nonspecific-HLA"). WITHOUT this, run_fragpipe.py always
+        # used its default LFQ-MBR (tryptic) workflow even for no-enzyme HLA
+        # datasets — so dual-engine HLA was never actually no-enzyme on the
+        # FragPipe side. (run_fragpipe.py resolves the name to workflows/<name>
+        # .workflow and errors clearly if the file isn't shipped with FragPipe.)
+        if mod_config and mod_config.get("fragpipe_workflow"):
+            cmd.extend(["--workflow", mod_config["fragpipe_workflow"]])
+
         # Pass modification profile as JSON if provided
         if mod_config:
             cmd.extend(["--mod-config-json", json.dumps(mod_config)])
+
+        # Per-dataset MSBooster skip (raw-filename-space datasets, mzML NPE).
+        if mod_config and mod_config.get("skip_msbooster"):
+            cmd.append("--skip-msbooster")
 
         return cmd
 
