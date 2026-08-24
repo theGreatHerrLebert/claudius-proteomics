@@ -43,6 +43,14 @@ now quantified, not hedged: **100% of runs had `working_tree_dirty: true`**
 match the current config (drift). Figure 2 is a **run-level** claim; code-pinning
 is the stated, measured gap. §4.1, §5, §8, A9 updated below.
 
+**v4.2 update (A6/A10 gate built, 2026-08-24):** the figure-5 conformance gate is
+now **built + demonstrated** (`scripts/analysis/conformance_gate.py`) — it exits 2
+and **blocks on non-conformance**, emitting an EVIDENT TrustReport
+(Verified/Judged/Absent). Shown failing divergent FragPipe configs *pre-search*
+(PXD059168 Lactyl absent; PXD058376 HLA→tryptic) and passing the conforming Sage
+config. This closes Codex's fig-5 circularity concern: EVIDENT now *prevents*
+something, it does not just label a past finding. §7, §8, A6/A10 updated.
+
 ---
 
 ## A. Revised abstract (editable — draft for submission)
@@ -340,11 +348,16 @@ before printing.
    oracle); **cu-ims inset** (simulator truth + CPU/CUDA bit-parity); proteon
    (declared tolerances); EVIDENT (manifest as oracle).
 5. **The conformance gate, run prospectively** ⭐ — **not** a label on our own
-   finding. Show the gate as a deterministic check: *resolved profile → rendered
-   config → PASS/FAIL, with the failing FragPipe config caught before the search
-   would run*, reported as a TrustReport (Verified = the config table; Judged =
-   the mechanism; Absent = the O5 invocation path). This is the prospective
-   demonstration that makes EVIDENT operational rather than circular.
+   finding. A deterministic check: *resolved profile → rendered config → PASS/FAIL,
+   the failing config caught before the search runs*, reported as a TrustReport
+   (Verified = criterion results read from the artifact; Judged = the mechanism;
+   Absent = the O5 invocation path). **✅ Built + demonstrated**
+   (`scripts/analysis/conformance_gate.py`): **exits 2 (blocks) on
+   non-conformance** — shown failing FragPipe/PXD059168 (Lactyl absent) and
+   FragPipe/PXD058376 (HLA rendered tryptic) while passing the conforming Sage
+   config; emits `A6_trustreport_example.json` (typed Verified/Judged/Absent,
+   engine version + rendered-config sha256, deterministic). This makes EVIDENT
+   operational rather than circular.
 
 **Device:** tag every poster claim Verified / Judged / Absent.
 
@@ -358,9 +371,11 @@ before printing.
 - The A2 result links rendered config to runs (A9 ✅); the residual is
   **code-pinning — 100% of runs had a dirty working tree**, so the exact code is
   not bit-reconstructable (itself the §5 metric-#2 finding).
-- **EVIDENT's orchestrator is sketched**; the fig-5 gate must be actually built
-  and shown failing prospectively (A6/A10) or the panel is downgraded to "proposed
-  checking pattern."
+- The fig-5 conformance gate is **built and demonstrated** (A6/A10 ✅,
+  `conformance_gate.py`, exit-2-on-non-conformance). It emits EVIDENT-schema
+  TrustReports directly; the **full EVIDENT engine integration** (manifest → the
+  typed-trust Rust crate → orchestrator) **remains future work** — the crate is
+  scaffolded, the orchestrator sketched.
 - cu-ims is behind SOTA; its parity matrix is partly prospective.
 
 ---
@@ -403,9 +418,12 @@ v1→v3 removals preserved. New in **v4** (from Codex review):
 - **A2** — ✅ full conformance sweep, both engines (committed `065cc82`).
 - **A8** — ✅ paired analysis (128 datasets; 25/128 divergent, asymmetric). Fold
   into `A2_CONFORMANCE_RESULTS.md` + `a2_conformance.py` (`--paired`).
-- **A6/A10** — build the conformance **gate** and show it failing a FragPipe
-  config *before* a search (figure 5's prospective demo). Without it, fig 5 is a
-  reporting device, not evidence EVIDENT prevents anything.
+- **A6/A10** — ✅ done: `scripts/analysis/conformance_gate.py` — deterministic
+  pre-search gate, exit 2 on non-conformance, emits an EVIDENT TrustReport
+  (Verified/Judged/Absent). Demonstrated failing FragPipe/PXD059168 (Lactyl
+  absent) + FragPipe/PXD058376 (HLA→tryptic), passing Sage/PXD059168. Example
+  report: `A6_trustreport_example.json`. Remaining: wire into `_process_runner.sh`
+  between config-render and search; integrate the full typed-trust crate (future).
 - **A9** — ✅ done: `scripts/analysis/a9_provenance_supplement.py` +
   `A9_provenance_supplement.tsv` (150 rows) — per-(accession,group) hashed chain
   profile→rendered config→engine versions→run→commit, with conformance verdicts.

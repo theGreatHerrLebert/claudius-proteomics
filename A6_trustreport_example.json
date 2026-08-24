@@ -1,0 +1,161 @@
+{
+  "claim": {
+    "id": "conformance/PXD059168/fragpipe",
+    "text": "Rendered fragpipe config for PXD059168 conforms to mod_profile 'acyl_lactyl'",
+    "kind": "Reproducibility"
+  },
+  "subject": {
+    "accession": "PXD059168",
+    "engine": "fragpipe",
+    "engine_version": "FragPipe 24.0/MSFragger 4.4",
+    "rendered_config": "a2_workflows/PXD059168/mouse_trypsin/fragpipe_output/fragpipe.workflow",
+    "rendered_sha256": "fb6dea8acfeae76a"
+  },
+  "criteria": [
+    {
+      "id": "enzyme",
+      "name": "search enzyme",
+      "tolerance": {
+        "metric": "equals",
+        "against": "mod_profile.enzyme",
+        "prose": "enzyme == trypsin"
+      },
+      "result": {
+        "value": "Pass",
+        "derivation": {
+          "kind": "Verified",
+          "observed": "trypsin",
+          "method": {
+            "tool": "conformance_gate.py",
+            "reads": "fragpipe.workflow"
+          },
+          "ran_by": {
+            "kind": "Automated",
+            "name": "conformance_gate"
+          },
+          "at": "2026-07-23T18:24:37Z"
+        }
+      }
+    },
+    {
+      "id": "termini",
+      "name": "enzyme termini",
+      "tolerance": {
+        "metric": "equals",
+        "against": "mod_profile.termini",
+        "prose": "num_enzyme_termini == 2"
+      },
+      "result": {
+        "value": "Pass",
+        "derivation": {
+          "kind": "Verified",
+          "observed": "2",
+          "method": {
+            "tool": "conformance_gate.py",
+            "reads": "fragpipe.workflow"
+          },
+          "ran_by": {
+            "kind": "Automated",
+            "name": "conformance_gate"
+          },
+          "at": "2026-07-23T18:24:37Z"
+        }
+      }
+    },
+    {
+      "id": "digest",
+      "name": "digest length window",
+      "tolerance": {
+        "metric": "equals",
+        "against": "mod_profile.digest",
+        "prose": "digest 7-50"
+      },
+      "result": {
+        "value": "Pass",
+        "derivation": {
+          "kind": "Verified",
+          "observed": "7-50",
+          "method": {
+            "tool": "conformance_gate.py",
+            "reads": "fragpipe.workflow"
+          },
+          "ran_by": {
+            "kind": "Automated",
+            "name": "conformance_gate"
+          },
+          "at": "2026-07-23T18:24:37Z"
+        }
+      }
+    },
+    {
+      "id": "ptm:Lactyl",
+      "name": "variable mod Lactyl (72.0211) on K",
+      "tolerance": {
+        "metric": "equals",
+        "against": "mod_profile.ptm:Lactyl",
+        "prose": "Lactyl 72.0211 on K enabled"
+      },
+      "result": {
+        "value": "Fail",
+        "derivation": {
+          "kind": "Verified",
+          "observed": "absent/disabled",
+          "method": {
+            "tool": "conformance_gate.py",
+            "reads": "fragpipe.workflow"
+          },
+          "ran_by": {
+            "kind": "Automated",
+            "name": "conformance_gate"
+          },
+          "at": "2026-07-23T18:24:37Z"
+        }
+      }
+    }
+  ],
+  "judged": [
+    {
+      "text": "Mechanism: the profile's variable_modifications are not rendered into the FragPipe table.var-mods (only the LFQ-MBR default is enabled); the same profile does reach Sage.",
+      "derivation": {
+        "kind": "Judged",
+        "by": {
+          "kind": "Model",
+          "name": "conformance_gate/author"
+        },
+        "rationale": "Non-reproducible interpretation of why the rendered config diverges from the profile; not asserted as fact.",
+        "confidence": "Moderate"
+      }
+    }
+  ],
+  "absent": [
+    {
+      "sought": "which invocation path selected this base workflow / enzyme",
+      "searched": [
+        "scripts/run_fragpipe.py",
+        "scripts/cluster/process/"
+      ],
+      "derivation": {
+        "kind": "Absent",
+        "searched_by": {
+          "kind": "Automated",
+          "name": "conformance_gate"
+        }
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "description": "1 criterion(s) fail: ptm:Lactyl",
+      "would_satisfy": [
+        "render the profile's mods/enzyme into the engine config"
+      ],
+      "author_actionable": true
+    }
+  ],
+  "status": "Contested",
+  "gate": {
+    "verdict": "FAIL",
+    "exit_code": 2,
+    "prevents": "a search that omits the profile-specified PTM/enzyme, which would feed a mis-identified layer into the reference corpus"
+  }
+}
