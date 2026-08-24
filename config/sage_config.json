@@ -24,7 +24,10 @@
         },
         "max_variable_mods": 3,
         "decoy_tag": "rev_",
-        "generate_decoys": true
+        "generate_decoys": true,
+        "prefilter": true,
+        "prefilter_chunk_size": 0,
+        "prefilter_low_memory": false
     },
     "quant": {
         "lfq": true,

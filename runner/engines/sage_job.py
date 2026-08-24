@@ -129,6 +129,11 @@ class SageJob(EngineJob):
             enzyme["max_len"] = mod_config.get("max_peptide_length", 50)
             db["enzyme"] = enzyme
 
+            # Profile-level Sage database.* overrides (e.g. HLA nonspecific
+            # needs prefilter_low_memory=true to keep the merge step under RAM)
+            for k, v in (mod_config.get("sage_overrides") or {}).items():
+                db[k] = v
+
         config_path = output_dir / "sage_config.json"
         with open(config_path, "w") as f:
             json.dump(sage_cfg, f, indent=2)
