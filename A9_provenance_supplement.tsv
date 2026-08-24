@@ -1,0 +1,151 @@
+accession	group	profile	fragpipe_ver	msfragger_ver	fp_workflow_sha256	fp_conforms	sage_ver	sage_config_sha256	sage_conforms	git_commit	working_tree_dirty	run_config_sha256	config_matches_current	job_id	started_utc
+PXD012981	(single)	(none)	24.0	4.4	e58d971d3a0631ea	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	e5693a47734f	True	9dc76f645a8767e0	False	260721	2026-05-19T10:03:08Z
+PXD016870	(single)	(none)	24.0	4.4	79a3a5abef7c50ea	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261166	2026-05-20T22:51:21Z
+PXD019086	(single)	(none)	24.0	4.4	cb87b47e392f0a9d	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261683	2026-05-20T21:08:00Z
+PXD020861	(single)	phospho					sage 0.15.0-beta.2	0011426e4c16e2b9	True	5cd0f62adc48	True	f49a191fc2a7da62	False	262711	2026-05-22T10:08:57Z
+PXD021789	(single)	phospho	24.0	4.4	87f742524afb7c70	False	sage 0.15.0-beta.2	0011426e4c16e2b9	True	e5693a47734f	True	9dc76f645a8767e0	False	260793	2026-05-19T11:39:11Z
+PXD026463	mouse_trypsin	hla	24.0	4.4	010191f1364817b3	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271275	2026-05-28T07:06:00Z
+PXD026533	mouse_trypsin	ubiquitin	24.0	4.4	f21b4560c05aba46	False	sage 0.15.0-beta.2	0aa8e3d3580f9134	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	270776	2026-05-27T23:29:47Z
+PXD029648	human_trypsin	hla	24.0	4.4	5bf8433788b39459	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271436	2026-05-28T12:07:25Z
+PXD029698	mouse_trypsin	acyl_crotonyl	24.0	4.4	a8ba891919d50aeb	False		f83e8d3d9ea8c6b4	True	cfa0d6df250f	True	fe8419a526e36356	False	325737	2026-06-14T17:35:04Z
+PXD031371	(single)	ubiq	24.0	4.4	fd318f82510e2f89	False	sage 0.15.0-beta.2	e6e5d7de753fe851	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261142	2026-05-19T20:38:28Z
+PXD031993	(single)	(none)	24.0	4.4	e135118ec69f05fa	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261165	2026-05-20T00:55:12Z
+PXD032159	(single)	(none)	24.0	4.4	6c61aeb1bd5c3cb1	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261648	2026-05-20T18:01:35Z
+PXD033508	(single)	(none)	24.0	4.4	4bcc997a52f9cd20	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	261691	2026-05-21T00:55:10Z
+PXD035301	human_trypsin	phospho	24.0	4.4	8d09dce0dad970e1	False	sage 0.15.0-beta.2	0011426e4c16e2b9	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270262	2026-05-27T11:06:16Z
+PXD035977	(single)	(none)	24.0	4.4	9ffe4a4a8acc762d	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	262508	2026-05-21T20:14:17Z
+PXD037501	(single)	phospho	24.0	4.4	594dd6b53c317152	False	sage 0.15.0-beta.2	0011426e4c16e2b9	True	5cd0f62adc48	True	9dc76f645a8767e0	False	262539	2026-05-22T02:47:41Z
+PXD037861	(single)	(none)	24.0	4.4	b091b337ba71b464	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	262540	2026-05-22T03:13:36Z
+PXD037909	(single)	(none)	24.0	4.4	4aa26a939ec74013	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	709a5b18400fd3f6	False	265051	2026-05-26T08:54:55Z
+PXD038273	human_trypsin	hla	24.0	4.4	a23fa0b5d2222a64	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271411	2026-05-28T10:52:13Z
+PXD038916	(single)	(none)	24.0	4.4	03b1062042df6060	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	709a5b18400fd3f6	False	265052	2026-05-26T08:54:47Z
+PXD039627	(single)	(none)	24.0	4.4	b6ce61a599a880ce	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	9dc76f645a8767e0	False	262595	2026-05-22T08:30:13Z
+PXD039787	(single)	(none)	24.0	4.4	ee18ace78ff2d11e	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	262723	2026-05-22T10:56:56Z
+PXD040514	mouse_trypsin	acyl_lactyl	24.0	4.4	717d3bd2a551598d	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	473554	2026-07-23T08:46:21Z
+PXD040716	(single)	(none)	24.0	4.4	747d7833845ed8e6	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263162	2026-05-22T11:36:48Z
+PXD040718	(single)	(none)	24.0	4.4	1365f10a76c53481	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263641	2026-05-22T13:02:38Z
+PXD040813	(single)	(none)	24.0	4.4	19ed589e72f729de	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263711	2026-05-22T14:50:28Z
+PXD041154	(single)	(none)	24.0	4.4	0039bd7ee6652ffd	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263731	2026-05-22T15:13:29Z
+PXD042023	(single)	(none)	24.0	4.4	a8a3e297979487c0	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263732	2026-05-22T15:13:40Z
+PXD042171	mouse_trypsin	acyl_lactyl	24.0	4.4	fadd83fd7142eba5	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	473555	2026-07-23T08:46:47Z
+PXD042316	human_trypsin	hla	24.0	4.4	78defd195c4f7dc4	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	2671f39d7edb3cdc	False	270808	2026-05-27T17:51:14Z
+PXD042416	Kmod_Acetyl	multi_ptm	24.0	4.4	c9634969c608ef5c	False		b5abda04273c31d2	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Biotin	multi_ptm	24.0	4.4	2550af25f7f098ab	False		058f63e5cc7340ea	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Butyryl	multi_ptm	24.0	4.4	4165dfefaa7a3d22	False		937d7aac0d504c04	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Crotonyl	multi_ptm	24.0	4.4	c755c03187eed9e0	False		0ec804d0e80a4e28	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Dimethyl	multi_ptm	24.0	4.4	a21f1de1b339b77f	False		1b644b980f926cdf	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Formyl	multi_ptm	24.0	4.4	fff216e3ec3af0c6	False		8b98b46528a1886a	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Glutaryl	multi_ptm	24.0	4.4	f1ed2ad3c3225129	False		bb4ffb90b226feea	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Hydroxyisobut	multi_ptm	24.0	4.4	7feb146ec8fb174b	False		a4e0da2164258221	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Malonyl	multi_ptm	24.0	4.4	0cdf492291319d0d	False		2261386e9fed001e	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Methyl	multi_ptm	24.0	4.4	e6afb32c17782785	False		01b8f935bd95cc8c	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Propionyl	multi_ptm	24.0	4.4	65efea0a56e263e0	False		9d6aded35d73673c	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Succinyl	multi_ptm	24.0	4.4	cf4e59f65ff84158	False		bd2e4cd3b63e1af7	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Trimethyl	multi_ptm	24.0	4.4	540155174443cce8	False		d8d11668f8f81778	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_Ubiquitin_GG	multi_ptm	24.0	4.4	be7743c82c05e021	False		998f057ac29297b2	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Kmod_unmod	multi_ptm	24.0	4.4	5d109a771be81ba8	False		111456ac306c485d	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	Pmod_Hydroxyproline	multi_ptm						ef8142b051e6145c	False	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD042416	human_trypsin	multi_ptm						3d53e9bdd33ec68a	True	cfa0d6df250f	True	97b1833da35cdd10	False	279463	2026-05-29T08:58:48Z
+PXD043456	(single)	(none)	24.0	4.4	7006a33405c86738	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263784	2026-05-22T20:28:31Z
+PXD044326	(single)	(none)	24.0	4.4	8b23614c557bbecd	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263788	2026-05-22T20:48:34Z
+PXD044455	(single)	(none)	24.0	4.4	37715963b5374c51	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263799	2026-05-22T21:43:14Z
+PXD046370	human_trypsin	hla	24.0	4.4	f925442391696f92	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271276	2026-05-28T07:06:00Z
+PXD046535	human_trypsin	hla	24.0	4.4	18a519239628e3aa	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271274	2026-05-28T20:18:19Z
+PXD046631	mouse_trypsin	acyl_lactyl	24.0	4.4	d0d48698ee04c7a3	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	569994	2026-08-24T08:15:59Z
+PXD046755	human_trypsin	phospho	24.0	4.4	6d35681b69b39c29	False	sage 0.15.0-beta.2	c8f7db9695791d09	True	cfa0d6df250f	True	2671f39d7edb3cdc	False	270809	2026-05-27T17:51:10Z
+PXD046777	(single)	(none)	24.0	4.4	e031267da6d0687a	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263824	2026-05-23T10:07:27Z
+PXD046958	mouse_trypsin_timstof_ht	ubiquitin	24.0	4.4	f55f00803936a85e	False	sage 0.15.0-beta.2	0aa8e3d3580f9134	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271148	2026-05-27T23:17:26Z
+PXD046958	mouse_trypsin_timstof_pro	ubiquitin	24.0	4.4	2d835ff119f56095	False	sage 0.15.0-beta.2	0aa8e3d3580f9134	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271148	2026-05-27T23:17:26Z
+PXD047232	(single)	(none)	24.0	4.4	60e610dd945ef5f5	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263825	2026-05-23T10:08:00Z
+PXD047258	(single)	(none)	24.0	4.4	32600ff1a2c37255	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263830	2026-05-23T11:01:22Z
+PXD047535	human_trypsin	acyl_lactyl	24.0	4.4	e9ac4d69ad3a65fd	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	473568	2026-07-23T08:51:57Z
+PXD047581	(single)	(none)	24.0	4.4	36ec1fad74df585f	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263844	2026-05-23T12:02:13Z
+PXD047857	(single)	(none)	24.0	4.4	b5bf76f1d01a8251	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270264	2026-05-27T11:13:16Z
+PXD048158	mouse_trypsin	acyl_succinyl	24.0	4.4	ed14dc6a25884f67	False		7ef82298502a48b2	True	cfa0d6df250f	True	fe8419a526e36356	False	344247	2026-06-19T13:09:25Z
+PXD049178	(single)	(none)	24.0	4.4	eeb86c52fba20067	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263850	2026-05-23T17:13:37Z
+PXD049208	(single)	(none)	24.0	4.4	b5f9978659070206	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263859	2026-05-23T19:30:54Z
+PXD050274	(single)	(none)	24.0	4.4	8f0ed76d106b8abf	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263867	2026-05-23T21:37:59Z
+PXD050319	human_trypsin	ubiquitin	24.0	4.4	0edc2614cafd06fb	False	sage 0.15.0-beta.2	0aa8e3d3580f9134	True	cfa0d6df250f	True	4fd098a6dda8f815	False	270770	2026-05-27T17:37:49Z
+PXD050342	human_trypsin	acetyl	24.0	4.4	df84ae141f087a27	True	sage 0.15.0-beta.2	cc3e781114901386	True	cfa0d6df250f	True	4fd098a6dda8f815	False	270769	2026-05-27T17:37:49Z
+PXD050530	(single)	(none)	24.0	4.4	029b10ba113e6fee	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263872	2026-05-24T03:35:59Z
+PXD050655	(single)	(none)	24.0	4.4	7c6d06bf7bd94e19	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	4fd098a6dda8f815	False	270806	2026-05-27T17:43:33Z
+PXD050743	(single)	(none)	24.0	4.4	8eaa52eee8382435	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263874	2026-05-24T04:26:50Z
+PXD050818	(single)	(none)	24.0	4.4	0a7f324557d72e5c	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271340	2026-05-28T08:55:24Z
+PXD050906	(single)	acyl_lactyl	24.0	4.4	3286e176643bf212	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	ecac0724393e5bda	False	322885	2026-06-12T19:28:01Z
+PXD051790	(single)	(none)	24.0	4.4	729e6c31df4ee75a	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	265050	2026-05-28T13:50:22Z
+PXD051880	human_trypsin	hla	24.0	4.4	806f90c77d9fd4db	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271384	2026-05-28T10:02:57Z
+PXD052661	(single)	(none)	24.0	4.4	6204121a91e6f3dc	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263927	2026-05-24T12:21:21Z
+PXD052772	human_trypsin	acyl_lactyl					sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	474275	2026-07-23T12:22:17Z
+PXD053029	human_trypsin	acyl_lactyl	24.0	4.4	fa2e72e4dc6554a1	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	474730	2026-07-23T13:27:22Z
+PXD053030	(single)	(none)	24.0	4.4	3dcdd94443fec5c9	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	263928	2026-05-24T13:22:01Z
+PXD053276	mouse_trypsin	acyl_lactyl	24.0	4.4	4ebf593b04d5bb92	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	474813	2026-07-23T13:38:29Z
+PXD053346	(single)	(none)	24.0	4.4	e2f5e96c1c7aff58	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264036	2026-05-24T15:07:27Z
+PXD053748	(single)	(none)	24.0	4.4	98d5c1c55861a8cb	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264190	2026-05-24T17:40:18Z
+PXD053881	(single)	(none)	24.0	4.4	c75952bfa9893551	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264208	2026-05-24T19:02:17Z
+PXD054120	(single)	(none)	24.0	4.4	aee7ea52bf725931	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264239	2026-05-24T19:38:00Z
+PXD054248	human_trypsin_timstof_ht	hla	24.0	4.4	cae8c7b4f1f4cf22	False	sage 0.15.0-beta.2	9dbc86d37117e781	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264369	2026-05-24T22:15:15Z
+PXD054248	human_trypsin_timstof_pro	hla					sage 0.15.0-beta.2	9dbc86d37117e781	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264369	2026-05-24T22:15:15Z
+PXD055279	(single)	(none)	24.0	4.4	4e3fc16cde418516	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264396	2026-05-25T00:30:56Z
+PXD055387	human_trypsin	phospho	24.0	4.4	8b14fe2ec867e312	False	sage 0.15.0-beta.2	e1edbe42c9a583d4	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270263	2026-05-27T11:06:15Z
+PXD055547	human_trypsin	hla	24.0	4.4	c283ca3daf2a1d48	False	sage 0.15.0-beta.2	9dbc86d37117e781	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264398	2026-05-25T00:51:45Z
+PXD055840	(single)	(none)	24.0	4.4	4810792d9763b65b	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264399	2026-05-25T04:23:39Z
+PXD056013	(single)	(none)	24.0	4.4	c353eee753f2c34c	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264400	2026-05-25T05:45:01Z
+PXD056645	(single)	(none)	24.0	4.4	41952037d53c86ca	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264402	2026-05-25T06:01:23Z
+PXD056651	(single)	(none)	24.0	4.4	26ca35f297779585	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264404	2026-05-25T06:52:23Z
+PXD057266	(single)	(none)	24.0	4.4	af38c53503b7461e	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264408	2026-05-25T07:31:58Z
+PXD057602	human_trypsin	ubiquitin	24.0	4.4	fb497571ee11b2ff	False	sage 0.15.0-beta.2	0aa8e3d3580f9134	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271147	2026-05-27T23:15:59Z
+PXD058023	mouse_trypsin	acyl_lactyl	24.0	4.4	3c1bed0e1907cf03	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	474885	2026-07-23T13:51:54Z
+PXD058033	(single)	(none)	24.0	4.4	aa8f2f78239c9b69	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264410	2026-05-25T08:36:45Z
+PXD058036	(single)	(none)	24.0	4.4	d1744cbf5659961e	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264432	2026-05-25T09:42:06Z
+PXD058084	(single)	(none)	24.0	4.4	ad643974ed7bdb89	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264437	2026-05-25T10:27:05Z
+PXD058376	human_trypsin	hla	24.0	4.4	f39fb92820f713bf	False	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270561	2026-05-27T16:10:35Z
+PXD058436	human_trypsin	hla					sage 0.15.0-beta.2	9dbc86d37117e781	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264467	2026-05-25T12:38:38Z
+PXD058534	human_trypsin	acyl_lactyl	24.0	4.4	bd70b846078b427c	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	479876	2026-07-23T17:26:51Z
+PXD058623	(single)	(none)	24.0	4.4	ed600d7390921c9b	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264468	2026-05-25T12:41:01Z
+PXD058749	(single)	(none)	24.0	4.4	b5bce444d398ed7c	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264659	2026-05-25T14:32:16Z
+PXD058854	(single)	(none)	24.0	4.4	ec89f42ef92958f2	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264864	2026-05-25T16:27:41Z
+PXD059051	(single)	(none)	24.0	4.4	4f48fafbec216dde	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264952	2026-05-25T18:53:49Z
+PXD059168	mouse_trypsin	acyl_lactyl	24.0	4.4	fb6dea8acfeae76a	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	480229	2026-07-23T17:58:34Z
+PXD060091	(single)	(none)	24.0	4.4	a0aa468364d7a580	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264970	2026-05-25T20:32:10Z
+PXD060098	(single)	(none)	24.0	4.4	ce79087409952c20	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264971	2026-05-25T21:23:32Z
+PXD060682	(single)	(none)	24.0	4.4	446bf7ba7e07368e	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264984	2026-05-25T22:56:49Z
+PXD060977	(single)	(none)	24.0	4.4	2bfacf599c921075	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264985	2026-05-25T23:57:35Z
+PXD061039	(single)	(none)	24.0	4.4	152b0abb52e6ad59	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264986	2026-05-26T03:27:38Z
+PXD061057	(single)	(none)	24.0	4.4	37d2d89031ae71b0	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	5cd0f62adc48	True	f49a191fc2a7da62	False	264987	2026-05-26T04:22:46Z
+PXD061265	(single)	(none)	24.0	4.4	142acab86b6102cd	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	265053	2026-05-26T09:06:18Z
+PXD061892	(single)	(none)	24.0	4.4	faa92c0dc01a848a	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	267039	2026-05-26T11:01:40Z
+PXD062384	(single)	(none)	24.0	4.4	8135baba9e203c6c	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	267443	2026-05-26T11:36:11Z
+PXD062679	(single)	(none)	24.0	4.4	264ae0ddbb3352be	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	268737	2026-05-26T16:49:46Z
+PXD062684	(single)	(none)	24.0	4.4	8e4e5514a96edec7	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270131	2026-05-26T23:30:21Z
+PXD062839	(single)	(none)	24.0	4.4	4ef6e93c10d76a98	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270132	2026-05-26T23:37:46Z
+PXD064389	(single)	(none)	24.0	4.4	66aad623c42e743d	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270137	2026-05-27T01:07:43Z
+PXD064795	(single)	(none)	24.0	4.4	6bf245b97570329e	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270138	2026-05-27T01:21:22Z
+PXD064837	(single)	(none)	24.0	4.4	7b7cbf2b01b823db	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270139	2026-05-27T01:50:53Z
+PXD064980	human_trypsin	hla	24.0	4.4	629aba4ec0edd70e	False	sage 0.15.0-beta.2	9dbc86d37117e781	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270145	2026-05-27T02:39:27Z
+PXD065109	(single)	(none)	24.0	4.4	5f853b6e6f89c20c	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270147	2026-05-27T03:22:26Z
+PXD065448	(single)	(none)	24.0	4.4	54192a6db118d579	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270148	2026-05-27T03:22:57Z
+PXD065562	(single)	(none)	24.0	4.4	74496f47c0e77272	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270251	2026-05-27T10:06:12Z
+PXD065685	(single)	(none)	24.0	4.4	f937301914749d80	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	709a5b18400fd3f6	False	270255	2026-05-27T10:27:35Z
+PXD066365	(single)	(none)	24.0	4.4	3ecd202653f11c1d	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270271	2026-05-27T11:42:33Z
+PXD067659	(single)	(none)	24.0	4.4	629759e4f740816c	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270273	2026-05-27T11:43:52Z
+PXD068043	(single)	(none)	24.0	4.4	8779007c10bca636	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270314	2026-05-27T12:06:52Z
+PXD068118	(single)	(none)	24.0	4.4	bea8046ab7b016ab	True	sage 0.15.0-beta.2	4a9314b54ec8ca87	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270475	2026-05-27T14:19:22Z
+PXD068410	(single)	(none)	24.0	4.4	ac4836ffd94cb6dc	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270478	2026-05-27T14:20:17Z
+PXD068808	(single)	(none)	24.0	4.4	245ed429782f1f8c	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270548	2026-05-27T15:42:51Z
+PXD069251	(single)	(none)	24.0	4.4	cab9756cb4fd73e5	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	2ddc6abfdca46f5a	False	270552	2026-05-27T15:54:11Z
+PXD069382	(single)	(none)	24.0	4.4	4059dc8261945723	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271144	2026-05-27T22:21:25Z
+PXD069593	(single)	(none)	24.0	4.4	be605d176c91d901	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271150	2026-05-27T23:53:58Z
+PXD069732	(single)	(none)	24.0	4.4	08776d067e61a466	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271181	2026-05-28T00:32:59Z
+PXD069989	(single)	(none)	24.0	4.4	385faf790f9c98fa	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271182	2026-05-28T02:10:57Z
+PXD070152	(single)	(none)	24.0	4.4	469500ba5fc718ea	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271183	2026-05-28T03:44:27Z
+PXD070632	(single)	(none)	24.0	4.4	57092a9d4237aa5f	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271186	2026-05-28T04:01:00Z
+PXD071403	(single)	(none)	24.0	4.4	ea6e98f0b47d3bc5	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271299	2026-05-28T07:23:28Z
+PXD071471	(single)	(none)	24.0	4.4	736f326ee4702ad9	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271388	2026-05-28T10:23:13Z
+PXD071487	(single)	(none)	24.0	4.4	4647321aece5f2ba	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271423	2026-05-28T11:41:04Z
+PXD072060	(single)	(none)	24.0	4.4	1056a7e61f7f46dc	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	271438	2026-05-28T12:13:56Z
+PXD072598	(single)	(none)	24.0	4.4	2bce27bf55d908bc	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	276594	2026-05-28T15:43:16Z
+PXD073076	(single)	phospho					sage 0.15.0-beta.2	0011426e4c16e2b9	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	278931	2026-05-28T20:05:45Z
+PXD074155	human_trypsin	hla	24.0	4.4	1a966e8afa6731e6	True	sage 0.15.0-beta.2	d9f1a06c81aff6e7	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	278932	2026-05-28T20:08:03Z
+PXD075276	human_trypsin	acyl_malonyl	24.0	4.4	f94b3aafb322f981	False	sage 0.15.0-beta.2	670706036f4cf3bc	True	cfa0d6df250f	True	6eda36046538b1d6	True	569996	2026-08-24T08:16:31Z
+PXD076520	(single)	(none)	24.0	4.4	58ec55f17bae087d	True	sage 0.15.0-beta.2	111456ac306c485d	True	cfa0d6df250f	True	95ff8fb1b31b1405	False	260719	2026-05-28T21:50:11Z
+PXD078736	human_trypsin	acyl_lactyl	24.0	4.4	4a2275fc9a374ab7	False	sage 0.15.0-beta.2	31da1b051e038c19	True	cfa0d6df250f	True	6eda36046538b1d6	True	570106	2026-08-24T09:09:09Z

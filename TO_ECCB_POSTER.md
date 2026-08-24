@@ -33,6 +33,16 @@ track, submitted 2026-04-20).
 7. **Novelty** (§6): explicitly cites **differential + metamorphic testing** and
    concedes PROV / Workflow Run RO-Crate already model run-provenance-for-trust.
 
+**v4.1 update (A9 folded in, 2026-08-24):** the rendered→executed linkage is now
+**recovered**, closing Codex round-2's top residual. A committed supplement
+(`A9_provenance_supplement.tsv`, 150 (accession,group) rows) hashes each rendered
+config and links it to the run's git commit, SLURM job, UTC time, and engine
+versions (FragPipe 24.0 / MSFragger 4.4 / Sage 0.15.0-beta.2). Two findings are
+now quantified, not hedged: **100% of runs had `working_tree_dirty: true`**
+(§5 metric #2 = 0% code-hash-complete) and only **12/150** recorded config SHAs
+match the current config (drift). Figure 2 is a **run-level** claim; code-pinning
+is the stated, measured gap. §4.1, §5, §8, A9 updated below.
+
 ---
 
 ## A. Revised abstract (editable — draft for submission)
@@ -206,9 +216,19 @@ claim is *non-conformance relative to the (reconstructed) `mod_profile`
 contract*, not a proven bug in intended behavior. (It makes an undocumented
 intentional divergence unlikely, but does not prove intent.)
 
-**Caveats (on the board):**
-- **Rendered ≠ executed.** These are the *rendered* config files; proving they are
-  what *ran* needs the command line, container/tool version, and run logs (A9).
+**Rendered→executed linkage — recovered (A9, ✅).** A per-(accession,group)
+supplement (`A9_provenance_supplement.tsv`, 150/150 rows linked to a provenance
+run) hashes each rendered `fragpipe.workflow` / `sage_config.json` and joins it to
+the run's `git_commit`, SLURM `job_id`, UTC timestamp, and engine versions —
+**FragPipe 24.0 / MSFragger 4.4** (workflow header) and **Sage 0.15.0-beta.2**
+(run json). So figure 2 is a **run-level** conformance claim, not merely a config
+audit. **Quantified honest residual:** 100% of the 150 runs carried
+`working_tree_dirty: true` (code not bit-pinned) and only 12/150 recorded config
+SHAs match the current config (drift); the literal command line is not in the run
+json and is not claimed. The conformance verdict itself stands on the rendered
+artifacts regardless of code-pinning.
+
+**Other caveats (on the board):**
 - **PTM matching is engine-semantic**, not string/table equality — mass +
   tolerance + residue/terminus site; mass-only matching conflates isobaric sites
   (N-term vs K Acetyl → PXD050342 false-conforms; true non-conformance is
@@ -272,8 +292,11 @@ claim that human/model review generally fails.
    matches the resolved profile (§4.1, both engines, paired). Figure 2.
 2. **Execution provenance completeness** — fraction of runs carrying immutable
    code/config/input hashes. `_process_runner.sh` records a git SHA, a
-   `working_tree_dirty` boolean, and a config SHA-256; the dirty flag proves
-   ambiguity without identifying the diff.
+   `working_tree_dirty` boolean, and a config SHA-256. **Measured (A9, n=150):
+   100% of runs are `working_tree_dirty: true`** — by the immutable-code-hash
+   criterion, completeness is **0%** — and only **12/150** recorded config SHAs
+   match the current config. The dirty flag proves ambiguity without identifying
+   the diff. A live, quantified instance of the metric, not a hypothetical.
 
 **proteon as contrast, not proof:** it ships validation-first (`ORACLE_SETUP.md`,
 stable/experimental tiers, an EVIDENT release-tier claim on CHARMM19+BALL). The
@@ -332,7 +355,9 @@ before printing.
 - **n = 1, no control, author = subject.** This is a case study.
 - **No LLM attribution** in commits — "AI-assisted" is setting, not variable.
 - Only **claudius** is audited; proteon/cu-ims are context, not generalization.
-- The A2 result is **rendered** config; execution evidence (A9) is pending.
+- The A2 result links rendered config to runs (A9 ✅); the residual is
+  **code-pinning — 100% of runs had a dirty working tree**, so the exact code is
+  not bit-reconstructable (itself the §5 metric-#2 finding).
 - **EVIDENT's orchestrator is sketched**; the fig-5 gate must be actually built
   and shown failing prospectively (A6/A10) or the panel is downgraded to "proposed
   checking pattern."
@@ -381,9 +406,12 @@ v1→v3 removals preserved. New in **v4** (from Codex review):
 - **A6/A10** — build the conformance **gate** and show it failing a FragPipe
   config *before* a search (figure 5's prospective demo). Without it, fig 5 is a
   reporting device, not evidence EVIDENT prevents anything.
-- **A9** — archive a hashed extraction of the relevant rendered configs, parser
-  output, and exact FragPipe/MSFragger/Sage versions as a poster supplement
-  (rendered≠executed; off-site cluster reproducibility).
+- **A9** — ✅ done: `scripts/analysis/a9_provenance_supplement.py` +
+  `A9_provenance_supplement.tsv` (150 rows) — per-(accession,group) hashed chain
+  profile→rendered config→engine versions→run→commit, with conformance verdicts.
+  Recovered FragPipe 24.0 / MSFragger 4.4 / Sage 0.15; found 100% working_tree_dirty
+  and 12/150 config-match-current. Fig 2 is run-level; code-pinning is the stated gap.
+  (Regenerate on-cluster for canonical hashes; local hashes are byte-identical.)
 - **A3** — fix the inaccurate comment in `fragpipe_job.py:90-95`.
 - **A4** — fix/remove the inert `--enzyme` override (§4.1b), with a check.
 - **A5** — record the FragPipe version in `DATASET_CARD.md`/`SCHEMA.md`.
