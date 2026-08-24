@@ -35,6 +35,7 @@ def update_workflow(
     disable_fdr_filter: bool = True,
     enzyme_name: str | None = None,
     mod_config: Optional[Dict[str, Any]] = None,
+    skip_msbooster: bool = False,
 ) -> None:
     """
     Update workflow file with FASTA path and timsTOF settings.
@@ -42,8 +43,11 @@ def update_workflow(
     If disable_fdr_filter=True (San José mode), sets all FDR thresholds to 1.0
     so that ALL PSMs are reported regardless of confidence.
 
-    If enzyme_name is provided, override the enzyme in the workflow
-    (msfragger.search_enzyme_name).
+    If enzyme_name is provided, override the enzyme name in the workflow
+    (msfragger.search_enzyme_name_1, or the legacy unsuffixed key). Raises if
+    the key is absent or if the base workflow's specificity
+    (num_enzyme_termini / search_enzyme_cut_1) contradicts the requested
+    enzyme — a name-only override cannot change MSFragger's digestion.
 
     If mod_config is provided, override MSFragger modification settings
     from the canonical UNIMOD-based profile.
@@ -124,14 +128,60 @@ def update_workflow(
                 break
         updated_lines.insert(insert_idx, f'database.db-path={fasta_path}')
 
-    # Override enzyme if requested
+    # Override enzyme if requested.
+    #
+    # This used to match `msfragger.search_enzyme_name=`, but FragPipe >= 20
+    # keys the enzyme per slot (`msfragger.search_enzyme_name_1`), so the
+    # unsuffixed key matched nothing in any shipped workflow: the override was
+    # a silent no-op and nothing checked that it applied.
+    #
+    # Matching the right key is necessary but NOT sufficient. MSFragger derives
+    # specificity from `search_enzyme_cut_1` / `num_enzyme_termini`, not from
+    # the name, so writing the name alone would leave the workflow internally
+    # inconsistent (name=nonspecific, cut=KR, termini=2) — worse than the
+    # no-op. Rewriting digestion semantics here would silently change results
+    # for every profile, so instead: require the base workflow to already agree
+    # with the requested enzyme, and fail loudly when it does not. The
+    # supported way to get a non-tryptic search is to select the matching base
+    # workflow (`mod_profile.fragpipe_workflow`, e.g. `Nonspecific-HLA`).
     if enzyme_name:
+        enzyme_keys = ('msfragger.search_enzyme_name_1=',   # FragPipe >= 20
+                       'msfragger.search_enzyme_name=')     # legacy
+        current = {}
+        for line in updated_lines:
+            for key in ('msfragger.num_enzyme_termini=', 'msfragger.search_enzyme_cut_1='):
+                if line.startswith(key):
+                    current[key] = line.split('=', 1)[1].strip()
+
+        wants_nonspecific = enzyme_name.strip().lower() == 'nonspecific'
+        termini = current.get('msfragger.num_enzyme_termini=')
+        cut = current.get('msfragger.search_enzyme_cut_1=')
+        workflow_is_nonspecific = termini == '0' or cut == '@'
+
+        if wants_nonspecific != workflow_is_nonspecific:
+            raise ValueError(
+                f"enzyme override '{enzyme_name}' does not match base workflow "
+                f"{Path(base_workflow).name} (num_enzyme_termini={termini}, "
+                f"search_enzyme_cut_1={cut}). A name-only override cannot change "
+                f"MSFragger's specificity — select a base workflow that matches "
+                f"(mod_profile.fragpipe_workflow)."
+            )
+
+        replaced = False
         final_lines = []
         for line in updated_lines:
-            if line.startswith('msfragger.search_enzyme_name='):
-                final_lines.append(f'msfragger.search_enzyme_name={enzyme_name}')
+            matched = next((k for k in enzyme_keys if line.startswith(k)), None)
+            if matched:
+                final_lines.append(f'{matched}{enzyme_name}')
+                replaced = True
             else:
                 final_lines.append(line)
+        if not replaced:
+            raise ValueError(
+                f"enzyme override '{enzyme_name}' requested but no enzyme key "
+                f"({' or '.join(k.rstrip('=') for k in enzyme_keys)}) exists in "
+                f"{base_workflow} — refusing to report a no-op as success."
+            )
         updated_lines = final_lines
 
     # Override modifications if mod_config provided
@@ -149,6 +199,22 @@ def update_workflow(
             final_lines.append(f'{key}={value}')
         updated_lines = final_lines
 
+    # Disable MSBooster for datasets with raw-filename spaces (NoSuchFileException
+    # in PinMzmlMatcher) or mzML scan-null NPEs in MzmlReader.getScanNumObject.
+    # FragPipe still runs MSFragger + Philosopher; we lose the booster's rescoring.
+    if skip_msbooster:
+        found = False
+        final_lines = []
+        for line in updated_lines:
+            if line.startswith('msbooster.run-msbooster='):
+                final_lines.append('msbooster.run-msbooster=false')
+                found = True
+            else:
+                final_lines.append(line)
+        if not found:
+            final_lines.append('msbooster.run-msbooster=false')
+        updated_lines = final_lines
+
     with open(output_workflow, 'w') as f:
         f.write('\n'.join(updated_lines))
 
@@ -161,6 +227,8 @@ def update_workflow(
         print(f"  Mod profile: {mod_config.get('description', 'custom')}")
     if disable_fdr_filter:
         print(f"  FDR filtering: DISABLED (San José mode - report ALL PSMs)")
+    if skip_msbooster:
+        print(f"  MSBooster: DISABLED (workaround for filename-space / mzML NPE bugs)")
 
 
 def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]:
@@ -195,6 +263,13 @@ def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]
     max_len = mod_config.get("max_peptide_length", 50)
     overrides["msfragger.digest_min_length"] = str(min_len)
     overrides["msfragger.digest_max_length"] = str(max_len)
+
+    # Generic MSFragger key overrides from mod_profile (e.g. num_database_chunks
+    # for HLA nonspecific searches that would otherwise OOM). Values are
+    # written verbatim to the workflow as `msfragger.<key>=<value>`.
+    extra = mod_config.get("msfragger_overrides", {}) or {}
+    for key, value in extra.items():
+        overrides[f"msfragger.{key}"] = str(value)
 
     return overrides
 
@@ -327,6 +402,12 @@ def main():
         "--mod-config-json", type=str, default=None,
         help="Modification profile as JSON string (from mod_profiles config)"
     )
+    parser.add_argument(
+        "--skip-msbooster", action="store_true",
+        help="Disable MSBooster in the workflow. Use for datasets where MSBooster "
+             "fails (raw filenames with spaces → PinMzmlMatcher NoSuchFileException, "
+             "or mzML scan NPE in MzmlReader)."
+    )
 
     args = parser.parse_args()
 
@@ -361,6 +442,24 @@ def main():
 
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Sanitize raw filenames: FragPipe's MSBooster (PinMzmlMatcher) and
+    # Percolator (PercolatorOutputToPepXML.getSpectrum) both parse paths on
+    # whitespace and crash on raw filenames containing spaces. Symlink each
+    # offending .d under a space-free name and feed FragPipe the symlinks.
+    if any(' ' in p.name for p in raw_files):
+        nosp_dir = output_dir / "_raw_nosp"
+        nosp_dir.mkdir(parents=True, exist_ok=True)
+        sanitized = []
+        for p in raw_files:
+            new_name = p.name.replace(' ', '_')
+            sym = nosp_dir / new_name
+            if sym.is_symlink() or sym.exists():
+                sym.unlink()
+            sym.symlink_to(p.resolve())
+            sanitized.append(sym)
+        print(f"Sanitized {len(sanitized)} raw paths (spaces → '_') in {nosp_dir}")
+        raw_files = sanitized
 
     # Resolve workflow path
     if Path(args.workflow).exists():
@@ -400,6 +499,7 @@ def main():
         disable_fdr_filter=not args.enable_fdr_filter,  # Default: disable FDR (San José mode)
         enzyme_name=args.enzyme,
         mod_config=mod_config_dict,
+        skip_msbooster=args.skip_msbooster,
     )
 
     # Resolve temp directory

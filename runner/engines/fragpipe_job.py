@@ -88,11 +88,20 @@ class FragPipeJob(EngineJob):
             cmd.extend(["--enzyme", enzyme_config["fragpipe_name"]])
 
         # Pass the FragPipe base workflow if the mod profile specifies one
-        # (e.g. HLA -> "Nonspecific-HLA"). WITHOUT this, run_fragpipe.py always
-        # used its default LFQ-MBR (tryptic) workflow even for no-enzyme HLA
-        # datasets — so dual-engine HLA was never actually no-enzyme on the
-        # FragPipe side. (run_fragpipe.py resolves the name to workflows/<name>
-        # .workflow and errors clearly if the file isn't shipped with FragPipe.)
+        # (e.g. HLA -> "Nonspecific-HLA"). The base workflow is what actually
+        # determines MSFragger's specificity (num_enzyme_termini,
+        # search_enzyme_cut_1); the --enzyme flag above only renames the
+        # enzyme and cannot make a tryptic workflow nonspecific.
+        # (run_fragpipe.py resolves the name to workflows/<name>.workflow and
+        # errors clearly if the file isn't shipped with FragPipe.)
+        #
+        # Without this, a run through THIS path falls back to run_fragpipe.py's
+        # default LFQ-MBR base workflow. Note that HLA datasets processed before
+        # 2026-08-24 are NOT uniformly affected: rendered fragpipe.workflow
+        # artifacts show PXD046535/PXD042316 ran nonspecific (termini=0, 7-25)
+        # while PXD046755 ran generic tryptic (termini=2, 7-50) — i.e. some runs
+        # reached the HLA workflow by another invocation path. Check the rendered
+        # workflow per dataset rather than assuming. See TO_ECCB_POSTER.md §4.1.
         if mod_config and mod_config.get("fragpipe_workflow"):
             cmd.extend(["--workflow", mod_config["fragpipe_workflow"]])
 
