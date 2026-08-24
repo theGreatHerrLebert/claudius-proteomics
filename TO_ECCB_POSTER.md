@@ -422,8 +422,11 @@ v1→v3 removals preserved. New in **v4** (from Codex review):
   pre-search gate, exit 2 on non-conformance, emits an EVIDENT TrustReport
   (Verified/Judged/Absent). Demonstrated failing FragPipe/PXD059168 (Lactyl
   absent) + FragPipe/PXD058376 (HLA→tryptic), passing Sage/PXD059168. Example
-  report: `A6_trustreport_example.json`. Remaining: wire into `_process_runner.sh`
-  between config-render and search; integrate the full typed-trust crate (future).
+  report: `A6_trustreport_example.json`. ✅ **Wired into `_process_runner.sh`**
+  (soft: writes a TrustReport per rendered config + warns; `CONFORMANCE_GATE_STRICT=1`
+  fails the job once the A4 render bug is fixed — hard-blocking now would halt every
+  PTM run). Fuller *pre-engine* gating belongs inside `step2_search.py`; full
+  typed-trust crate integration is future.
 - **A9** — ✅ done: `scripts/analysis/a9_provenance_supplement.py` +
   `A9_provenance_supplement.tsv` (150 rows) — per-(accession,group) hashed chain
   profile→rendered config→engine versions→run→commit, with conformance verdicts.

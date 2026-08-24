@@ -80,6 +80,35 @@ python runner/run_dataset.py "$ACC" \
     --resume
 RUN_RC=$?
 
+# --- Conformance gate (EVIDENT typed-trust): for each rendered engine config,
+# check it against the resolved mod_profile and write a TrustReport
+# (Verified / Judged / Absent) into the provenance dir. SOFT by default — it
+# records and warns but does not fail the job, because the FragPipe PTM-render
+# gap is still systemic (plan A4); set CONFORMANCE_GATE_STRICT=1 to make
+# non-conformance fail the job once that is fixed. See
+# scripts/analysis/conformance_gate.py.
+if [ "$RUN_RC" -eq 0 ]; then
+    GATE_LOG="$PROV_DIR/conformance-${SLURM_JOB_ID:-local}.log"
+    NONCONF=0
+    while IFS= read -r cfg; do
+        [ -z "$cfg" ] && continue
+        rel=$(echo "$cfg" | sed "s#$ROOT/data/processed/##; s#/#_#g")
+        python "$PROJ/scripts/analysis/conformance_gate.py" \
+            --config config/config.mogon.yaml --rendered "$cfg" \
+            --out "$PROV_DIR/trustreport-${rel}.json" >>"$GATE_LOG" 2>&1
+        [ $? -eq 2 ] && NONCONF=$((NONCONF + 1))
+    done < <(find "$ROOT/data/processed/$ACC" \
+                 \( -name fragpipe.workflow -o -name sage_config.json \) \
+                 -not -path "*.bak*" -not -path "*.failed*" 2>/dev/null)
+    if [ "$NONCONF" -gt 0 ]; then
+        echo "CONFORMANCE GATE: $NONCONF non-conformant rendered config(s) for $ACC — TrustReports in $PROV_DIR (log: $GATE_LOG)"
+        if [ "${CONFORMANCE_GATE_STRICT:-0}" = "1" ]; then
+            echo "CONFORMANCE GATE: STRICT — failing job for $ACC"
+            RUN_RC=2
+        fi
+    fi
+fi
+
 # --- QC gate: halt the array if recent completions show a systemic failure ---
 if [ -n "${SLURM_ARRAY_JOB_ID:-}" ]; then
     if ! python "$PROJ/scripts/cluster/qc_gate.py" --batch-check --data-dir "$ROOT/data"; then
