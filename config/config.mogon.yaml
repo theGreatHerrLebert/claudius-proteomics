@@ -49,29 +49,121 @@ dataset_metadata:
     acquisition_mode: "PASEF"  # DDA-PASEF
     mod_profile: "phospho"  # Triggers Phospho(STY) variable mod
 
+  # --- Re-queued after 0-confident-PSM diagnosis (2026-05-22) ---------------
+  PXD035691:
+    description: "Phosphoproteomics - Wolframin/calcium axis, primary aldosteronism"
+    organism: "human"
+    mod_profile: "phospho"  # phospho-enriched; standard profile missed it -> 0 IDs
+  PXD014777:
+    description: "Meier MaxQuant benchmark - mixed human + yeast + E.coli proteome"
+    organism: "human_yeast_ecoli"  # mixed sample; needs the combined FASTA
+  PXD029648:
+    description: "HLA class II immunopeptidome of 9033 cells"
+    organism: "human"
+    mod_profile: "hla"  # class II immunopeptidomics; standard tryptic profile missed it
+
+  # --- mod-profile fixes from resolver audit (2026-05-22) ------------------
+  # 4 already searched standard (need reprocess) + 9 pending (campaign picks up).
+  PXD020861:
+    description: "Phosphopeptides from urinary extracellular vesicles (PhosTip)"
+    organism: "human"
+    mod_profile: "phospho"
+    acquisition_mode: PASEF
+  PXD067573:
+    description: "Phosphoproteomics of PCMD-1 (C. elegans)"
+    organism: "c_elegans"
+    mod_profile: "phospho"
+  PXD046755:
+    description: "Insulin/exercise phosphoproteomics, human skeletal muscle"
+    organism: "human"
+    mod_profile: "phospho"
+  PXD055387:
+    description: "Activity-based pY-IP kinase inhibitor screen (Midostaurin BQG0007)"
+    organism: "human"
+    mod_profile: "phospho"  # pY immunoprecipitation; standard profile -> biased IDs of unmodified contaminants only
+  PXD035301:
+    description: "Comparative N-glycoproteomes HCT116 cancer vs normal; also phospho-enriched"
+    organism: "human"
+    mod_profile: "phospho"  # primary enrichment is glyco; phospho re-search recovers a useful fraction
+
+  # --- PTM expansion wave 1 (2026-05-27): ubiquitin + acetyl + multi-PTM anchor ---
+    acquisition_mode: PASEF
+  PXD050319:
+    description: "BRCA1/BARD1 ubiquitinates PCNA in unperturbed conditions (ubiquitylome, K-GG enrichment)"
+    organism: "human"
+    mod_profile: "ubiquitin"  # K-GG remnant; standard profile got 540k Sage hits but ~all garbage
+  PXD050342:
+    description: "Systematic proteomics of lysine acetylation (Choudhary-style K-acetylome)"
+    organism: "human"
+    mod_profile: "acetyl"  # K-acetyl as variable; standard profile produced 1M PSMs but biased
+  PXD042416:
+    description: "Will et al. 2023 — CCS of 22 PTMs on timsTOF (synthetic peptide library, paired mod/unmod). Reference dataset for PTM-aware CCS/IM modelling."
+    organism: "human"
+    mod_profile: "multi_ptm"  # broad PTM cover for the 22-PTM panel; may need per-mod follow-ups
+  PXD054971:
+    description: "Ubiquitylome of virus-infected maize (K-GG enrichment, timsTOF Pro 2)"
+    organism: "maize"
+    mod_profile: "ubiquitin"
+  PXD057602:
+    description: "Eukaryotic-like ubiquitin-related modifier — protein modification analysis (timsTOF Pro)"
+    organism: "human"
+    mod_profile: "ubiquitin"
+  PXD046958:
+    description: "E3 Ubiquitin Ligase Cul5 limits HSPC expansion (K-GG enrichment, timsTOF Pro 2)"
+    organism: "mouse"
+    mod_profile: "ubiquitin"
+  PXD026533:
+    description: "Ubiquitylation of RIPK3 beyond-the-RHIM (K-GG enrichment, timsTOF Pro)"
+    organism: "mouse"
+    mod_profile: "ubiquitin"
+  PXD026463:
+    description: "Immunopeptidomics - personalized oncolytic cancer vaccines"
+    organism: "mouse"
+    mod_profile: "hla"
+  PXD038273:
+    description: "Immunopeptidomics of malignant mesothelioma"
+    organism: "human"
+    mod_profile: "hla"
+  PXD042316:
+    description: "HLA class I presentation of DNAJB1-PRKACA fusion neoantigens"
+    organism: "human"
+    mod_profile: "hla"
+  PXD046370:
+    description: "Neoantigen identification immunopeptidomics workflow"
+    organism: "human"
+    mod_profile: "hla"
+  PXD046535:
+    description: "Thunder-DDA-PASEF immunopeptidomics, HLA-I SARS-CoV-2 epitopes"
+    organism: "human"
+    mod_profile: "hla"
+  PXD051880:
+    description: "Immunopeptidome of human RCC cells, oncolytic viruses"
+    organism: "human"
+    mod_profile: "hla"
+  PXD054248:
+    description: "Immunopeptidome-guided personalised peptide vaccines, CLL"
+    organism: "human"
+    mod_profile: "hla"
+  PXD055547:
+    description: "Immunopeptidomics bacterial epitope discovery (human; ideally + Listeria)"
+    organism: "human"
+    mod_profile: "hla"
+  PXD058376:
+    description: "PCI-DB primary tissue immunopeptidome database"
+    organism: "human"
+    mod_profile: "hla"
+  PXD058436:
+    description: "MHCquant2 immunopeptidomics tumor antigen discovery"
+    organism: "human"
+    mod_profile: "hla"
+
   # --- Immunopeptidomics / HLA datasets -------------------------------------
   # Non-tryptic: the hla mod_profile applies a nonspecific enzyme and a
   # 7-25mer length window (see mod_profiles.hla). Flagged manually so the
   # right profile is used even without a paper PDF; mod_profile_resolver also
   # detects these from classI/classII/HLA/MHC tokens in the .d file names.
-  PXD046370:
-    description: "HLA class I neoantigen immunopeptidomics"
-    organism: "human"
-    mod_profile: "hla"
   PXD047053:
     description: "HLA class I immunopeptidomics, newly-diagnosed multiple myeloma"
-    organism: "human"
-    mod_profile: "hla"
-  PXD051880:
-    description: "MHC immunopeptidomics, human renal cell carcinoma (Feola lab)"
-    organism: "human"
-    mod_profile: "hla"
-  PXD055547:
-    description: "MHC class I immunopeptidomics, HeLa"
-    organism: "human"
-    mod_profile: "hla"
-  PXD058436:
-    description: "HLA class I + class II immunopeptidomics, human donor tissues (brain/tongue)"
     organism: "human"
     mod_profile: "hla"
   PXD064980:
@@ -84,6 +176,205 @@ dataset_metadata:
     mod_profile: "hla"
 
 # Download settings for PRIDE data
+  PXD021789:
+    description: Re-Sage with phospho mods (was default-tryptic); ~1.9M PSMs
+    organism: human
+    instrument: timsTOF
+    acquisition_mode: PASEF
+    mod_profile: phospho
+  PXD031371:
+    description: K-ubiquitin remnant enrichment; re-Sage with ubiq mods
+    organism: human
+    instrument: timsTOF
+    acquisition_mode: PASEF
+    mod_profile: ubiq
+  PXD073076:
+    description: Re-Sage with phospho mods
+    organism: mouse
+    instrument: timsTOF
+    acquisition_mode: PASEF
+    mod_profile: phospho
+  PXD037501:
+    description: Re-Sage with phospho mods
+    organism: human
+    instrument: timsTOF
+    acquisition_mode: PASEF
+    mod_profile: phospho
+
+  # --- v0.3 campaign: acyl / PTM gap-fillers + re-Sage backlog (from MOGON) ---
+  PXD040514:
+    description: "Analysis of Lysine Lactylation in CD4+ T cells of normal and EAU mouse - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD042171:
+    description: "Quantification of lactylation in mouse peritoneal macrophages with or without st - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD046022:
+    description: "Staphylococcus aureus LC-MSMS lactylation - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: staphylococcus_aureu
+    mod_profile: "acyl_lactyl"
+  PXD046495:
+    description: "Lactylome analysis reveals potential target modified proteins in the retina of f - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: cavia_porcellus_(gui
+    mod_profile: "acyl_lactyl"
+  PXD046631:
+    description: "Lysine lactylation of mouse ischemia reperfusion heart - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD047535:
+    description: "Global Lactylation Profiling Reveals Lactate-Driven Regulatory Mechanisms Promot - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_lactyl"
+  PXD052772:
+    description: "YTHDC1 lactylation promotes RCC progression by regulating phase-separation to en - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_lactyl"
+  PXD053029:
+    description: "YTHDC1 lactylation promotes RCC progression by regulating phase-separation to en - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_lactyl"
+  PXD053276:
+    description: "Multi-omics study on the effect of moderate intensity exercise on protein of lac - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD058023:
+    description: "Protein lactylation promotes AKI–CKD transition in mice - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD058534:
+    description: "The lactylome data of renal tubular epithelial cells - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_lactyl"
+  PXD059168:
+    description: "The lactylome of mice granulosa cells - v0.3 acyl (lactyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD022052:
+    description: "Dynamic responses of barley root quantitative succinyl-proteome to short-term ph - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: hordeum_vulgare_(bar
+    mod_profile: "acyl_succinyl"
+  PXD022053:
+    description: "Dynamic responses of barley root quantitative succinyl-proteome to short-term ph - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: hordeum_vulgare_(bar
+    mod_profile: "acyl_succinyl"
+  PXD022077:
+    description: "Dynamic responses of barley root quantitative succinyl-proteome to short-term ph - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: hordeum_vulgare_(bar
+    mod_profile: "acyl_succinyl"
+  PXD028098:
+    description: "Turnip succinylation modification - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: brassica_rapa_var._r
+    mod_profile: "acyl_succinyl"
+  PXD040521:
+    description: "Succinylation in pseudorabies virus infection - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: viruses,sus_scrofa_d
+    mod_profile: "acyl_succinyl"
+  PXD044696:
+    description: "SIRT5-mediated lysine desuccinylation regulates oxidative stress adaptation for  - v0.3 acyl (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: magnaporthe_oryzae_(
+    mod_profile: "acyl_succinyl"
+  PXD071478:
+    description: "Proteomic Analysis of Lysine Crotonylation (Kcr) in Reynoutria japonica Seedling - v0.3 acyl (crotonyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: reynoutria_japonica
+    mod_profile: "acyl_crotonyl"
+  PXD058676:
+    description: "Quantitative Analysis of Lysine Malonylation Proteome Unravels Physiological and - v0.3 acyl (malonyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: platycodon_grandiflo
+    mod_profile: "acyl_malonyl"
+  PXD075276:
+    description: "Placental 4D LFQ proteome and malonylation - v0.3 acyl (malonyl, 2026-07 sweep reinforcement)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_malonyl"
+  PXD078736:
+    description: "HK-2 cells 4D label quantitative lactylproteomic analysis - v0.3 acyl (lactyl, 2026-07 sweep)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: human
+    mod_profile: "acyl_lactyl"
+  PXD045802:
+    description: "Lysine Lactylome of cortex proteins - v0.3 acyl (lactyl, 2026-07 sweep reinforcement)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_lactyl"
+  PXD050906:
+    description: "Lysine lactylation proteome (Systematic profiling) - v0.3 acyl pilot"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    mod_profile: "acyl_lactyl"
+  PXD048158:
+    description: "Mouse Neuro-2a succinylome (Cd-exposed) - v0.3 acyl pilot (succinyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_succinyl"
+  PXD029698:
+    description: "Mouse RAW264.7 crotonylome (butyrate-treated) - v0.3 acyl pilot (crotonyl)"
+    instrument: "timsTOF"
+    acquisition_mode: "PASEF"
+    organism: mouse
+    mod_profile: "acyl_crotonyl"
+  PXD066365:
+    skip_msbooster: true
+    skip_msbooster_reason: MSBooster MzmlReader NPE (scan null)
+  PXD068043:
+    skip_msbooster: true
+    skip_msbooster_reason: MSBooster PinMzmlMatcher NoSuchFileException (space in
+      .d filenames)
+  PXD069382:
+    skip_msbooster: true
+    skip_msbooster_reason: MSBooster PinMzmlMatcher NoSuchFileException (space in
+      .d filenames)
+  PXD062684:
+    skip_msbooster: true
+    skip_msbooster_reason: MSBooster OOM (exit 137) at 240G
+  PXD062839:
+    skip_msbooster: true
+    skip_msbooster_reason: MSBooster OOM (exit 137) at 240G
+
 download:
   protocol: "ftp"  # ftp | aspera (aspera requires ascp client)
   retry_count: 3
@@ -99,64 +390,68 @@ download:
 # Organism FASTA configuration
 # Local paths or UniProt IDs for automatic download
 organisms:
+  proteometools_21ptm:
+    local_fasta: /lustre/project/ki-proanagi/dateschn/claudius-proteomics/resources/fasta/search_db/PXD042416_proteometools_21ptm.fasta
+    proteome_id:
+    description: PXD042416 ProteomeTools 21-PTM synthetic kit
   human:
     taxon_id: 9606
     proteome_id: "UP000005640"
-    local_fasta: null  # MOGON: download human proteome from UniProt
+    local_fasta:       # MOGON: download human proteome from UniProt
     includes_contaminants: false  # MOGON: contaminants appended separately
     # If local_fasta not available, will download from UniProt
   yeast:
     taxon_id: 559292
     proteome_id: "UP000002311"
-    local_fasta: null  # Will download from UniProt
+    local_fasta:       # Will download from UniProt
   ecoli:
     taxon_id: 83333
     proteome_id: "UP000000625"
-    local_fasta: null
+    local_fasta:
   mouse:
     taxon_id: 10090
     proteome_id: "UP000000589"
-    local_fasta: null
+    local_fasta:
   drosophila:
     taxon_id: 7227
     proteome_id: "UP000000803"
-    local_fasta: null
+    local_fasta:
   c_elegans:
     taxon_id: 6239
     proteome_id: "UP000001940"
-    local_fasta: null
+    local_fasta:
   pig:
     taxon_id: 9823
     proteome_id: "UP000008227"
-    local_fasta: null
+    local_fasta:
   sheep:
     taxon_id: 9940
     proteome_id: "UP000664991"
-    local_fasta: null
+    local_fasta:
   chlamydomonas:
     taxon_id: 3055
     proteome_id: "UP000006906"
-    local_fasta: null
+    local_fasta:
   guinea_pig:
     taxon_id: 10141
     proteome_id: "UP000005447"
-    local_fasta: null
+    local_fasta:
   rat:
     taxon_id: 10116
     proteome_id: "UP000002494"
-    local_fasta: null
+    local_fasta:
   arabidopsis:
     taxon_id: 3702
     proteome_id: "UP000006548"
-    local_fasta: null
+    local_fasta:
   zebrafish:
     taxon_id: 7955
     proteome_id: "UP000000437"
-    local_fasta: null
+    local_fasta:
   bovine:
     taxon_id: 9913
     proteome_id: "UP000009136"
-    local_fasta: null
+    local_fasta:
 
 # Contaminants database (appended to all FASTA files)
 contaminants:
@@ -172,41 +467,484 @@ enzymes:
     restrict: "P"
     terminal: "C"
     missed_cleavages: 2
-    fragpipe_name: "stricttrypsin"
+    fragpipe_name: "trypsin"
     diann_cut: "K*,R*,!*P"
     sage_cleave_at: "KR"
     sage_restrict: "P"
   lysc:
     cleave_at: "K"
-    restrict: null
+    restrict:
     terminal: "C"
     missed_cleavages: 2
     fragpipe_name: "lysc"
     diann_cut: "K*"
     sage_cleave_at: "K"
-    sage_restrict: null
+    sage_restrict:
   lysn:
     cleave_at: "K"
-    restrict: null
+    restrict:
     terminal: "N"
     missed_cleavages: 2
     fragpipe_name: "lysn"
     diann_cut: "*K"
     sage_cleave_at: "K"
-    sage_restrict: null
+    sage_restrict:
   nonspecific:
     cleave_at: ""
-    restrict: null
-    terminal: null
+    restrict:
+    terminal:
     missed_cleavages: 0
     fragpipe_name: "nonspecific"
     diann_cut: ""
     sage_cleave_at: ""
-    sage_restrict: null
+    sage_restrict:
 
 # Modification profiles for different study types
 # Each engine translates from this canonical UNIMOD-based format
 mod_profiles:
+  ptm_kmod_dimethyl:
+    description: 'PXD042416 single-PTM: Kmod_Dimethyl (UniMod:36, 28.0313 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 36
+        name: Dimethyl
+        mass: 28.0313
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_crotonyl:
+    description: 'PXD042416 single-PTM: Kmod_Crotonyl (UniMod:1363, 68.026215 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1363
+        name: Crotonyl
+        mass: 68.026215
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_rmod_methyl:
+    description: 'PXD042416 single-PTM: Rmod_Methyl (UniMod:34, 14.01565 on R)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 34
+        name: Methyl
+        mass: 14.01565
+        residues:
+          - R
+    max_variable_mods: 2
+  ptm_kmod_trimethyl:
+    description: 'PXD042416 single-PTM: Kmod_Trimethyl (UniMod:37, 42.04695 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 37
+        name: Trimethyl
+        mass: 42.04695
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_hydroxyisobut:
+    description: 'PXD042416 single-PTM: Kmod_Hydroxyisobut (UniMod:1849, 86.036779 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1849
+        name: Hydroxyisobut
+        mass: 86.036779
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_rmod_dimethyl_asym:
+    description: 'PXD042416 single-PTM: Rmod_Dimethyl_asym (UniMod:36, 28.0313 on R)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 36
+        name: Dimethyl_asym
+        mass: 28.0313
+        residues:
+          - R
+    max_variable_mods: 2
+  ptm_kmod_formyl:
+    description: 'PXD042416 single-PTM: Kmod_Formyl (UniMod:122, 27.994915 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 122
+        name: Formyl
+        mass: 27.994915
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_biotin:
+    description: 'PXD042416 single-PTM: Kmod_Biotin (UniMod:3, 226.077598 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 3
+        name: Biotin
+        mass: 226.077598
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_rmod_dimethyl_sym:
+    description: 'PXD042416 single-PTM: Rmod_Dimethyl_sym (UniMod:36, 28.0313 on R)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 36
+        name: Dimethyl_sym
+        mass: 28.0313
+        residues:
+          - R
+    max_variable_mods: 2
+  ptm_kmod_ubiquitin_gg:
+    description: 'PXD042416 single-PTM: Kmod_Ubiquitin_GG (UniMod:121, 114.042927 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 121
+        name: Ubiquitin_GG
+        mass: 114.042927
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_rmod_citrulline:
+    description: 'PXD042416 single-PTM: Rmod_Citrulline (UniMod:7, 0.984016 on R)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 7
+        name: Citrulline
+        mass: 0.984016
+        residues:
+          - R
+    max_variable_mods: 2
+  ptm_kmod_butyryl:
+    description: 'PXD042416 single-PTM: Kmod_Butyryl (UniMod:1289, 70.041865 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1289
+        name: Butyryl
+        mass: 70.041865
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_succinyl:
+    description: 'PXD042416 single-PTM: Kmod_Succinyl (UniMod:64, 100.016044 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 64
+        name: Succinyl
+        mass: 100.016044
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_ymod_nitrotyrosine:
+    description: 'PXD042416 single-PTM: Ymod_Nitrotyrosine (UniMod:354, 44.985078 on Y)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 354
+        name: Nitrotyrosine
+        mass: 44.985078
+        residues:
+          - Y
+    max_variable_mods: 2
+  ptm_kmod_acetyl:
+    description: 'PXD042416 single-PTM: Kmod_Acetyl (UniMod:1, 42.010565 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1
+        name: Acetyl
+        mass: 42.010565
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_malonyl:
+    description: 'PXD042416 single-PTM: Kmod_Malonyl (UniMod:747, 86.000394 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 747
+        name: Malonyl
+        mass: 86.000394
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_methyl:
+    description: 'PXD042416 single-PTM: Kmod_Methyl (UniMod:34, 14.01565 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 34
+        name: Methyl
+        mass: 14.01565
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_kmod_glutaryl:
+    description: 'PXD042416 single-PTM: Kmod_Glutaryl (UniMod:1848, 114.031694 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1848
+        name: Glutaryl
+        mass: 114.031694
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_pmod_hydroxyproline:
+    description: 'PXD042416 single-PTM: Pmod_Hydroxyproline (UniMod:35, 15.994915 on P)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 35
+        name: Hydroxyproline
+        mass: 15.994915
+        residues:
+          - P
+    max_variable_mods: 2
+  ptm_kmod_propionyl:
+    description: 'PXD042416 single-PTM: Kmod_Propionyl (UniMod:58, 56.026215 on K)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 58
+        name: Propionyl
+        mass: 56.026215
+        residues:
+          - K
+    max_variable_mods: 2
+  ptm_spikemix_oglcnac:
+    description: 'PXD042416 single-PTM: SpikeMix_OGlcNAc (UniMod:43, 203.079373 on S,T)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 43
+        name: OGlcNAc
+        mass: 203.079373
+        residues:
+          - S
+          - T
+    max_variable_mods: 2
+  ptm_ymod_phospho:
+    description: 'PXD042416 single-PTM: Ymod_Phospho (UniMod:21, 79.966331 on S,T,Y)'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 21
+        name: Phospho
+        mass: 79.966331
+        residues:
+          - S
+          - T
+          - Y
+    max_variable_mods: 2
   standard:
     description: "Standard: Cam(C) fixed, Ox(M) + Acetyl(N-term) variable"
     fixed_modifications:
@@ -229,6 +967,8 @@ mod_profiles:
     max_variable_mods: 4
     min_peptide_length: 7
     max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true  # search-space safety for max_variable_mods=4 on full human FASTA
 
   hla:
     description: "Immunopeptidomics: non-specific enzyme, shorter peptides"
@@ -241,8 +981,145 @@ mod_profiles:
     max_variable_mods: 3
     min_peptide_length: 7
     max_peptide_length: 25
+    sage_overrides:
+      prefilter_low_memory: true  # HLA nonspecific search OOMs at merge step without this
+    fragpipe_workflow: "Nonspecific-HLA"  # FragPipe 24.0 HLA workflow: nonspecific digest, HLA-aware rescoring
+
+    msfragger_overrides:
+      num_database_chunks: 16
+
+  # --- Lysine acylations (v0.3 expansion, 2026-06-12) ---
+  # One acyl type per dataset. UniMod ids verified (lactyl=2114, NOT 1926 which
+  # is a methylglyoxal artefact). NOTE: acyl-K blocks trypsin -> these runs need
+  # missed_cleavages 3 (the trypsin enzyme default is 2); bump per-run before
+  # searching the acyl cohort (TO_V03_EXPANSION.md §2/§5).
+  acyl_lactyl:
+    description: "K-lactylation (Kla) enrichment"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 2114, name: "Lactyl", mass: 72.021129, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true  # search-space safety for max_variable_mods=4
+  acyl_succinyl:
+    description: "K-succinylation (Ksucc) enrichment"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 64, name: "Succinyl", mass: 100.016044, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true
+  acyl_crotonyl:
+    description: "K-crotonylation (Kcr) enrichment"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1363, name: "Crotonyl", mass: 68.026215, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true
+  acyl_malonyl:
+    description: "K-malonylation (Kmal) enrichment (note: malonyl has a CO2 neutral loss)"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 747, name: "Malonyl", mass: 86.000394, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true
+
+  ubiquitin:
+    description: "Ubiquitylome: adds K-GG remnant (+114.0429 on K) for trypsin-digested ubiquitinated peptides"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+      - {unimod_id: 121, name: "GlyGly", mass: 114.042927, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true  # search-space safety for max_variable_mods=4 on full human FASTA
+
+    msfragger_overrides:
+      num_database_chunks: 4
+  acetyl:
+    description: "Lysine acetylome: adds K-Acetyl (+42.0106) as variable mod alongside the N-term acetyl already in standard"
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, residues: ["K"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true  # search-space safety for max_variable_mods=4 on full human FASTA
+
+    msfragger_overrides:
+      num_database_chunks: 4
+  multi_ptm:
+    description: "Broad PTM coverage for purpose-built libraries like PXD042416 (Will/Meier 22-PTM): phospho + acetyl-K + K-GG + methyl-K. Max 4 variable mods keeps Sage search-space manageable."
+    fixed_modifications:
+      - {unimod_id: 4, name: "Carbamidomethyl", mass: 57.021464, residues: ["C"]}
+    variable_modifications:
+      - {unimod_id: 35, name: "Oxidation", mass: 15.994915, residues: ["M"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, site: "N-term"}
+      - {unimod_id: 21, name: "Phospho", mass: 79.966331, residues: ["S", "T", "Y"]}
+      - {unimod_id: 1, name: "Acetyl", mass: 42.010565, residues: ["K"]}
+      - {unimod_id: 121, name: "GlyGly", mass: 114.042927, residues: ["K"]}
+      - {unimod_id: 34, name: "Methyl", mass: 14.015650, residues: ["K", "R"]}
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    sage_overrides:
+      prefilter_low_memory: true  # search-space safety for max_variable_mods=4 on full human FASTA
 
 # Local data paths (for testing without PRIDE download)
+  ubiq:
+    description: 'K-ubiquitin remnant (GlyGly): adds K-GG to standard'
+    fixed_modifications:
+      - unimod_id: 4
+        name: Carbamidomethyl
+        mass: 57.021464
+        residues:
+          - C
+    variable_modifications:
+      - unimod_id: 35
+        name: Oxidation
+        mass: 15.994915
+        residues:
+          - M
+      - unimod_id: 1
+        name: Acetyl
+        mass: 42.010565
+        site: N-term
+      - unimod_id: 121
+        name: GG
+        mass: 114.042927
+        residues:
+          - K
+    max_variable_mods: 4
+    min_peptide_length: 7
+    max_peptide_length: 50
+    msfragger_overrides:
+      num_database_chunks: 4
 local_data:
   PXD019086: "/home/dateschn/raw-data/Raw_HeLa_Trp"
 
@@ -252,7 +1129,7 @@ fragpipe:
   workflow: "LFQ-MBR"  # Good default for DDA timsTOF with match-between-runs
   threads: 64
   memory_gb: 128
-  timeout_hours: 12
+  timeout_hours: 24
 
 # DIA-NN configuration (v2.3.2 supports DDA mode)
 diann:
@@ -267,7 +1144,7 @@ sage:
   path: "/lustre/project/ki-proanagi/dateschn/engines/sage/sage"  # MOGON: native build
   config: "config/sage_config.json"
   threads: 64
-  timeout_hours: 2
+  timeout_hours: 8
   # Sage uses timsrust for reading Bruker .d files
 
 # San José mode: report ALL results without FDR/PEP filtering
