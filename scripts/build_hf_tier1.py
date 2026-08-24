@@ -271,6 +271,7 @@ def build(acc: str, data_root: Path, out_dir: Path,
 
     pidx = _read_concat(pidx_hits)
     rf = _read_concat(rf_hits)
+    raw_src_dir = _rf_source_dirs(rf_hits)   # raw_file -> dir with its blobs
     alignment_gate(pidx, rf)
 
     # Sage cross-run-aligned RT (validated +3pp RT Pearson vs raw rt_seconds):
@@ -334,7 +335,7 @@ def build(acc: str, data_root: Path, out_dir: Path,
 
     for raw_file in sorted(by_raw):
         items = sorted(by_raw[raw_file], key=lambda t: (t[0] if t[0] is not None else -1))
-        blob_path = _resolve_blob(extr, raw_file)
+        blob_path = _resolve_blob(raw_src_dir.get(raw_file, extr), raw_file)
         file_size = blob_path.stat().st_size if blob_path else 0
         fh = open(blob_path, "rb") if blob_path else None
         batch = []
@@ -405,12 +406,31 @@ def build(acc: str, data_root: Path, out_dir: Path,
     return manifest
 
 
-def _resolve_blob(extr: Path, raw_file: str):
+def _resolve_blob(base: Path, raw_file: str):
+    """Resolve a raw file's blobs.bin. Two extraction layouts exist:
+      (a) per-raw-file  `<base>/<rawfile>.d/blobs.bin`  (flat, one .d per run);
+      (b) merged        `<base>/analysis.d/blobs.bin`   (per-group extraction —
+          one blob file for all runs in the group, blob_offset is global into it).
+    `base` is the directory that held this raw file's raw_features.parquet
+    (blobs are always a sibling of it)."""
     clean = raw_file.replace(".d", "")
-    for p in (extr / f"{clean}.d" / "blobs.bin", extr / raw_file / "blobs.bin"):
+    for p in (base / f"{clean}.d" / "blobs.bin",
+              base / raw_file / "blobs.bin",
+              base / "analysis.d" / "blobs.bin"):
         if p.exists():
             return p
     return None
+
+
+def _rf_source_dirs(rf_hits) -> dict:
+    """Map each raw_file -> the directory holding its raw_features.parquet, so
+    blobs resolve next to their own group's parquet (per-group datasets keep
+    raw_features + analysis.d together in a group subdir)."""
+    src = {}
+    for p in rf_hits:
+        for rfn in pq.read_table(p, columns=["raw_file"]).column("raw_file").to_pylist():
+            src.setdefault(rfn, p.parent)
+    return src
 
 
 def _null_blob_fields(rec, rrow, status):

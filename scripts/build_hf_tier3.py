@@ -172,12 +172,27 @@ def _norm_raw(s):
     return s[:-2] if isinstance(s, str) and s.endswith(".d") else s
 
 
-def _resolve_blob(extr: Path, raw_file: str):
+def _resolve_blob(base: Path, raw_file: str):
+    """Resolve a raw file's blobs.bin (see build_hf_tier1 for the two layouts):
+    per-raw-file `<base>/<rawfile>.d/blobs.bin` or merged
+    `<base>/analysis.d/blobs.bin`. `base` = dir holding this raw file's
+    raw_features.parquet (blobs are a sibling)."""
     clean = raw_file.replace(".d", "")
-    for p in (extr / f"{clean}.d" / "blobs.bin", extr / raw_file / "blobs.bin"):
+    for p in (base / f"{clean}.d" / "blobs.bin",
+              base / raw_file / "blobs.bin",
+              base / "analysis.d" / "blobs.bin"):
         if p.exists():
             return p
     return None
+
+
+def _rf_source_dirs(rf_hits) -> dict:
+    """Map raw_file -> dir holding its raw_features.parquet (blobs live there)."""
+    src = {}
+    for p in rf_hits:
+        for rfn in pq.read_table(p, columns=["raw_file"]).column("raw_file").to_pylist():
+            src.setdefault(rfn, p.parent)
+    return src
 
 
 def _read_concat(paths):
@@ -200,6 +215,7 @@ def build(acc, data_root, out_dir, matcher, mods, q_max, fail_frac_max, limit=0)
         raise SystemExit(f"missing inputs for {acc}")
     pidx = _read_concat(pidx_hits).to_pylist()
     rf = _read_concat(rf_hits)
+    raw_src_dir = _rf_source_dirs(rf_hits)   # raw_file -> dir with its blobs
     rf_by_key = {(_norm_raw(r["raw_file"]), r["precursor_id"]): r for r in rf.to_pylist()}
     have_sage = "sage_qvalue" in (pidx[0] if pidx else {})
 
@@ -241,7 +257,7 @@ def build(acc, data_root, out_dir, matcher, mods, q_max, fail_frac_max, limit=0)
 
     for raw_file in sorted(by_raw):
         items = sorted(by_raw[raw_file], key=lambda t: (t[0] if t[0] is not None else -1))
-        blob_path = _resolve_blob(extr, raw_file)
+        blob_path = _resolve_blob(raw_src_dir.get(raw_file, extr), raw_file)
         file_size = blob_path.stat().st_size if blob_path else 0
         fh = open(blob_path, "rb") if blob_path else None
         batch = []
