@@ -58,7 +58,7 @@ biology & GPU signal-processing as use-cases). Title editable per #1015.
 > intended contract.
 >
 > We evaluate the gate on one proteomics case: a single profile silently drove two
-> search engines to search different modification spaces on 25 of 128 datasets,
+> search engines to search different modification spaces on 28 of 127 datasets,
 > caught only by the rendered artifact. Two further AI-assisted systems
 > (structural biology; GPU signal-processing) are shown as design probes.
 
@@ -106,10 +106,11 @@ contribution isolated in §6.
 ## 3. The evaluated case (proteomics — the one measured anchor)
 
 **Oracle: the rendered configuration vs the resolved `mod_profile` contract**
-(NOT cross-engine agreement). On **128 paired datasets** searched by both engines,
-one profile produced two different rendered search configurations: **25/128
-divergent, one-sided (25 vs 0)** — Sage carried the profile's PTM, FragPipe a
-generic default; 4/128 both-fail (Sage not universally conformant). Verified from
+(NOT cross-engine agreement). On **127 paired datasets** searched by both engines,
+one profile produced two different rendered search configurations: **28/127
+divergent, one-sided (28 vs 0; Sage 99.2%, FragPipe 77.2%)** — Sage carried the
+profile's PTM, FragPipe a generic default; 1/127 both-fail (Sage not universally
+conformant — the multi_ptm synthetic kit). Verified from
 rendered configs; engine versions recovered (FragPipe 24.0 / MSFragger 4.4 / Sage
 0.15); run-linked (A9 provenance supplement; caveat: 100% `working_tree_dirty`,
 config drift). A **deterministic conformance gate** is built, deployed, exits 2
@@ -165,7 +166,7 @@ Prior art cited, not implied absent: **differential + metamorphic testing**
 ## 7. Figures (five panels)
 
 1. **Hook + the framework** (EVIDENT: the 4 ideas; V/J/A device defined).
-2. **The evaluated case** ⭐ — the paired conformance result (25 vs 0), oracle =
+2. **The evaluated case** ⭐ — the paired conformance result (28 vs 0), oracle =
    config-vs-contract. The one measured panel.
 3. **Failure classes + provenance** (no-op override; silent API null; 100% dirty).
 4. **Design probes** — proteon + cu-ims, labelled not-evaluated.
