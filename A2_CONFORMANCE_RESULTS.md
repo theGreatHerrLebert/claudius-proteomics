@@ -8,7 +8,27 @@ Read-only. Script: `a2_conformance.py` (parses `msfragger.table.var-mods`, the
 enzyme/termini/digest keys). This is the poster's **figure 2** — the full sweep
 that extends the 3-dataset preview in `TO_ECCB_POSTER.md` §4.1.
 
-## Headline
+## ⭐ CORRECTED paired result (2026-08-25, after the #5 stale-dir fix) — this is figure 2
+
+The per-engine snapshot below (2026-08-24) counted 4 stale group-level Sage
+configs (`sage.pre-resage-20260601`) that `acc_of` failed to exclude, deflating
+Sage. With all-path-component stale filtering, the **paired** comparison (datasets
+searched by *both* engines) is:
+
+| metric | value |
+|---|---|
+| paired datasets | **127** |
+| FragPipe-conforming | **98 / 127 = 77.2%** |
+| Sage-conforming | **126 / 127 = 99.2%** |
+| concordance both / Sage-only / FragPipe-only / neither | **98 / 28 / 0 / 1** |
+| divergence (Sage-only) | **28 / 127 = 22.0%** — one-sided (FragPipe never the conformant one) |
+
+Per-profile (paired): generic 100/100 · HLA 67/100 · phospho 0/100 · ubiquitin
+0/100 · acyl 0/100 (FragPipe / Sage %). The lone Sage non-conformer is the
+multi_ptm synthetic kit (PXD042416; mis-scored by the aggregate check). Reproduce
+with the fixed `a2_conformance.py` (excludes `.bak/.failed/.oom/.pre` at any level).
+
+## Headline (per-engine snapshot, superseded by the paired result above)
 
 | metric | value |
 |---|---|
@@ -72,11 +92,11 @@ Same comparison against rendered `data/processed/<ACC>/*/sage/sage_config.json`
 
 | | FragPipe | Sage |
 |---|---|---|
-| conforming datasets | 99/128 = **77.3%** | 128/132 = **97.0%** |
+| conforming datasets | 99/128 = **77.3%** | **130/131 = 99.2%** (corrected; was 128/132 = 97.0% before the #5 fix) |
 | acyl (lactyl/succinyl/crotonyl/malonyl) | **0/15** (PTM absent) | **15/15** (PTM present) |
 | HLA | 8/12 (4 render generic tryptic) | 13/13 |
-| ubiquitin | 0/5 (GlyGly absent) | 4/4 |
-| phospho | 0/5 (Phospho disabled) | 5/7 |
+| ubiquitin | 0/5 (GlyGly absent) | **5/5** (was 4/4; stale config excluded) |
+| phospho | 0/5 (Phospho disabled) | **5/5** (was 5/7; 2 stale pre-resage configs excluded) |
 
 **Directly verified:** PXD059168 (acyl_lactyl) Sage config has
 `variable_mods: {"M":[15.994915], "K":[72.021129]}` — Sage searched Lactyl-K;
@@ -92,7 +112,10 @@ profile's `variable_modifications` reach **Sage** but never render into the
 > against a PTM-blind one. A real defect in the FragPipe config path, not a
 > design choice.
 
-Residual Sage gaps (small, genuine): PXD021789 + PXD037501 (phospho PTM absent
-on Sage too), PXD031371 (ubiq GlyGly absent). PXD042416 (multi_ptm synthetic
-kit) is mis-scored on **both** engines by the aggregate-profile comparison — its
-per-PTM subgroups each target one mod; exclude it or score site/subgroup-aware.
+Residual Sage gaps — **corrected 2026-08-25:** PXD021789 + PXD037501 (phospho),
+PXD031371 (ubiq) were NOT real Sage gaps — the non-conformance came from stale
+`sage.pre-resage-20260601` configs the old `acc_of` failed to exclude (#5). Their
+*current* re-saged configs are conformant. After the #5 fix, the **only** Sage
+non-conformer is PXD042416 (multi_ptm synthetic kit), which is mis-scored on both
+engines by the aggregate-profile comparison — its per-PTM subgroups each target
+one mod; exclude it or score site/subgroup-aware.

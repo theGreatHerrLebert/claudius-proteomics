@@ -63,10 +63,16 @@ def load_expected(config_path):
     return expected_for
 
 
+_STALE = re.compile(r"\.(bak|failed|oom|pre)")
+
+
 def acc_of(path, marker):
-    a = path.split(marker, 1)[1].split("/", 1)[0]
-    if ".bak" in a or ".failed" in a:
+    rel = path.split(marker, 1)[1]
+    # #5 fix: reject any stale path component (group-level .pre-resage etc.),
+    # not just the accession-level dir.
+    if any(_STALE.search(c) for c in rel.split("/")):
         return None, None
+    a = rel.split("/", 1)[0]
     m = re.match(r"(PXD\d+)", a)
     return (m.group(1), a) if m else (None, None)
 

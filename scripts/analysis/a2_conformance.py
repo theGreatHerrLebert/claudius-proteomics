@@ -12,7 +12,7 @@ Rendered artifacts:
   Sage:     <root>/<ACC>[/<group>]/sage/sage_config.json
             (`database.variable_mods` = {residue: [masses]}, `database.enzyme`)
 
-Stale run dirs (`.bak*`, `.failed*`) are excluded. PTM matching is by mass
+Stale run dirs (`.bak`/`.failed`/`.oom`/`.pre`, at ANY path level) are excluded. PTM matching is by mass
 (±0.02) and skips ubiquitous Oxidation/M; a known limitation is that mass-only
 matching conflates isobaric N-term vs side-chain sites (e.g. Acetyl 42.0106).
 
@@ -49,11 +49,17 @@ def load_expected(config_path):
     return expected_for
 
 
+_STALE = re.compile(r"\.(bak|failed|oom|pre)")
+
+
 def acc_of(path, marker):
-    accdir = path.split(marker, 1)[1].split("/", 1)[0]
-    if ".bak" in accdir or ".failed" in accdir:
+    rel = path.split(marker, 1)[1]
+    # #5 fix: reject if ANY path component is a stale run dir (.bak/.failed/
+    # .oom/.pre-resage...), not only the accession-level dir — group-level stale
+    # dirs (e.g. PXD.../sage.pre-resage-.../) were previously leaking in.
+    if any(_STALE.search(c) for c in rel.split("/")):
         return None
-    m = re.match(r"(PXD\d+)", accdir)
+    m = re.match(r"(PXD\d+)", rel)
     return m.group(1) if m else None
 
 

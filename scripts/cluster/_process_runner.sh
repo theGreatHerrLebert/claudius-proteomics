@@ -107,7 +107,8 @@ if [ "$RUN_RC" -eq 0 ]; then
         fi
     done < <(find "$ROOT/data/processed/$ACC" \
                  \( -name fragpipe.workflow -o -name sage_config.json \) \
-                 -not -path "*.bak*" -not -path "*.failed*" 2>/dev/null)
+                 -not -path "*.bak*" -not -path "*.failed*" \
+                 -not -path "*.oom*" -not -path "*.pre*" 2>/dev/null)
     if [ "$NONCONF" -gt 0 ] || [ "$GATE_ERR" -gt 0 ]; then
         echo "CONFORMANCE GATE: $NONCONF non-conformant, $GATE_ERR gate-error(s) for $ACC — TrustReports in $PROV_DIR (log: $GATE_LOG)"
         # STRICT = fail the job on non-conformance OR a gate error (fail-closed);
