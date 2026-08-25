@@ -1,444 +1,212 @@
-# ECCB 2026 poster — LLM-assisted scientific infrastructure PLAN
+# ECCB 2026 poster — PLAN (v5, reframed)
 
-**Status:** v4, 2026-08-24. Revises v3 after an independent Codex plan review
-(`TO_ECCB_POSTER.codex-review.md`). v4 is a **de-overclaiming pass**: it reframes
-the work as a **single-case study** (not a quasi-comparative "empirical study"),
-replaces the mismatched A2 denominators with a **paired** engine comparison,
-softens "defect"/"amplifies"/"remedy" to what the evidence supports, and reframes
-EVIDENT from a claimed remedy into a **conformance gate + evidence-status
-reporting** demonstrated prospectively. For ECCB 2026 submission #1015 (Posters
-track, submitted 2026-04-20).
+**Status:** v5, 2026-08-25. **Reframed spine** (author's call): from a
+proteomics-infrastructure case study to a general question — *how do you trust
+code, configs, and results an AI wrote that you didn't author and don't fully
+understand?* — with proteomics as the **sole evaluated case** and proteon/cu-ims
+as **design probes**. Then hardened against a third Codex review
+(`TO_ECCB_POSTER.codex-review-v3.md`). Supersedes v4 (proteomics-spine). Prior
+reviews: `TO_ECCB_POSTER.codex-review{,-v2,-v3}.md`. For ECCB 2026 submission
+#1015 (Posters track).
 
-**What changed from v3 (all from the Codex review):**
+**Why reframe.** ECCB is broad computational biology; MS proteomics is niche
+there. The general thesis draws the room; the concrete deliverables + one measured
+result reward the specialists who stop by. A poster is a conversation-starter, so
+an explorative thesis is fine — **but only if the epistemic status is worn openly**
+(the V/J/A tagging device), and only if the scope boundary is unmistakable.
 
-1. **Thesis de-causalised** (§1). "Amplifies" implied a non-LLM baseline we don't
-   have. Reframed as: in *this one* project, rendered-artifact validation exposed
-   failures the development-time checks did not. Lead with **case study**.
-2. **A2 paired** (§4.1). v3 compared FragPipe 99/128 vs Sage 128/132 — different
-   sets. v4 reports the **128 datasets run through both engines**: FragPipe 77.3%,
-   Sage 96.9%, **25/128 (19.5%) divergent, fully asymmetric** (FragPipe never the
-   conformant one).
-3. **"Real defect" → "conformance defect vs the (reconstructed) `mod_profile`
-   contract"** (§4.1). Claim scoped to what's shown: FragPipe omitted the
-   profile-specified target variable PTM; Sage included it.
-4. **New caveat: rendered ≠ executed config** (§4.1) — proving execution needs
-   command line + tool versions + logs; supplement to archive them (A9).
-5. **Abstract de-scaled** (§A): drops "rare setting / team-scale / previously
-   required teams"; LOC demoted; structural biology trimmed to "contextual
-   breadth" (portfolio stays on the poster, lighter in the abstract).
-6. **EVIDENT reframed** (§6, §7 fig 5): from "systematic validation strategy /
-   remedy" to a **small executable conformance gate + Verified/Judged/Absent
-   reporting**, demonstrated **prospectively** (the gate failing *before* a search
-   runs), not by labeling our own past finding.
-7. **Novelty** (§6): explicitly cites **differential + metamorphic testing** and
-   concedes PROV / Workflow Run RO-Crate already model run-provenance-for-trust.
+**The scope boundary (the single most important thing — Codex v3 (b)).**
+> The conformance gate is **evaluated on ONE proteomics configuration-conformance
+> problem.** General AI-assisted-software trust is the **motivating question, not a
+> demonstrated conclusion.** proteon/cu-ims are design probes; there is no
+> comparative study and no claim of improved reliability. n=1.
 
-**v4.1 update (A9 folded in, 2026-08-24):** the rendered→executed linkage is now
-**recovered**, closing Codex round-2's top residual. A committed supplement
-(`A9_provenance_supplement.tsv`, 150 (accession,group) rows) hashes each rendered
-config and links it to the run's git commit, SLURM job, UTC time, and engine
-versions (FragPipe 24.0 / MSFragger 4.4 / Sage 0.15.0-beta.2). Two findings are
-now quantified, not hedged: **100% of runs had `working_tree_dirty: true`**
-(§5 metric #2 = 0% code-hash-complete) and only **12/150** recorded config SHAs
-match the current config (drift). Figure 2 is a **run-level** claim; code-pinning
-is the stated, measured gap. §4.1, §5, §8, A9 updated below.
-
-**v4.2 update (A6/A10 gate built, 2026-08-24):** the figure-5 conformance gate is
-now **built + demonstrated** (`scripts/analysis/conformance_gate.py`) — it exits 2
-and **blocks on non-conformance**, emitting an EVIDENT TrustReport
-(Verified/Judged/Absent). Shown failing divergent FragPipe configs *pre-search*
-(PXD059168 Lactyl absent; PXD058376 HLA→tryptic) and passing the conforming Sage
-config. This closes Codex's fig-5 circularity concern: EVIDENT now *prevents*
-something, it does not just label a past finding. §7, §8, A6/A10 updated.
+**What changed from v4 (all from Codex v3):**
+1. Thesis is now a *bounded position + one case study*, not a general solution.
+2. proteon/cu-ims relabelled **design probes**, not "the pattern generalizes."
+3. Broad factual claims softened (§1) — tags constrain rhetoric, not decorate it.
+4. The **one contribution** named (§6): executable claim-level evidence-status
+   rendering + the deterministic gate. The 4 "patterns" are framing/design, not
+   novelty claims.
+5. **Oracle corrected:** the finding's oracle is the *rendered-config-vs-profile
+   contract*, NOT cross-engine agreement (which is correlated evidence only).
+6. Deliverables must be evidence-bearing or framed as "built with this practice"
+   (§7), not proof.
+7. New **"What is NOT shown + proposed evaluation"** panel (§8) — answers the
+   "where's the evaluation?" puncture before it's asked.
 
 ---
 
-## A. Revised abstract (editable — draft for submission)
+## A. Abstract (~165 words, broad-first, softened)
 
-**Title options:**
-- (keep, safest) the submitted title — *LLM-Assisted Development of Large-Scale
-  Proteomics Infrastructure: An Empirical Study from PRIDE Reanalysis*.
-- (sharper, if body-and-title editable) *…: A Case Study of Failure Modes and a
-  Conformance Gate*. Avoid "remedy" — the gate is a partial, demonstrated check,
-  not a validated remedy.
+**Title:** *Typed Trust: verifying scientific software you didn't write*
+(subtitle: a discipline for AI-assisted research software — proteomics, structural
+biology & GPU signal-processing as use-cases). Title editable per #1015.
 
-> In data-intensive fields such as proteomics, the bottleneck is often not
-> algorithm development but the construction and operation of scalable data
-> infrastructure. We present a **case study** of such infrastructure built by a
-> single researcher with LLM assistance: an operational PRIDE timsTOF reanalysis
-> pipeline — multi-engine search, raw-signal extraction, and a versioned,
-> bias-documented reference layer — that has produced a 58-dataset,
-> 33.7-million-precursor, 100% CC0 reference corpus. Two further research-software
-> projects, a GPU-native diaPASEF stack and a published Rust
-> structural-bioinformatics toolkit, provide contextual breadth.
+> Researchers increasingly build scientific software with AI assistance, and a
+> recurring difficulty is *trusting* code, configurations, and results one did not
+> author and does not fully understand. Failures at configuration, deployment, and
+> external-service boundaries are not exposed by unit tests or successful-looking
+> runs, and — in the case we document — were not resolved by code review, human or
+> model.
 >
-> Analyzing the pipeline through version history and *rendered run artifacts*, we
-> identify failure modes not exposed by the development-time checks in use — unit
-> tests, successful-looking runs, and (for the configuration case) code review by
-> human and model: configuration non-conformance — across 128 datasets searched
-> by two engines under one modification profile, the engines' rendered configs
-> diverged on 25 (21 a target PTM, 4 the nonspecific-enzyme setting), one engine
-> applying the profile and the other a generic default — plus a silent null at an
-> external-service boundary and deployment–version-control divergence. These cluster at configuration, deployment, and external-service
-> boundaries.
+> We present EVIDENT, a framework for typed trust: every assertion records how it
+> was established — Verified (a reproducible procedure ran), Judged (an
+> interpretation), or Absent (sought, not found) — with a deterministic final
+> report that calls no model. It couples this evidence-status rendering to an
+> executable conformance gate that checks a rendered configuration against its
+> intended contract.
 >
-> As a partial answer we present a small, executable **conformance gate** that
-> checks each engine's rendered configuration against the resolved profile,
-> reported through EVIDENT, a typed-trust layer separating Verified, Judged, and
-> Absent evidence deterministically. We argue that in this case validation was the
-> binding constraint, and that lightweight rendered-artifact checks address a
-> concrete part of it.
+> We evaluate the gate on one proteomics case: a single profile silently drove two
+> search engines to search different modification spaces on 25 of 128 datasets,
+> caught only by the rendered artifact. Two further AI-assisted systems
+> (structural biology; GPU signal-processing) are shown as design probes.
 
-Open: does ECCB permit editing the **title**? If not, the body edit stands within
-the existing title.
-
----
-
-## 0. Repos, paths, artifacts
-
-| system | domain | local path | GitHub | state |
-|---|---|---|---|---|
-| **claudius-proteomics** | proteomics reanalysis (spine) | `~/Documents/promotion/claudius-proteomics` | `theGreatHerrLebert/claudius-proteomics` | `feat/hf-corpus`; poster docs + fig-2 committed |
-| **proteon** | structural biology | `/scratch/TMAlign/proteon` | `theGreatHerrLebert/proteon` | `main` @ `c66b975`, v0.4.0, pip-published |
-| **cu-ims-primitives** | GPU diaPASEF | `/scratch/ims/cu-ims-primitives` | `theGreatHerrLebert/cu-ims-primitives` | `feat/mbi-ms1-only` @ `9c86d15` |
-| **evident** | validation meta / reporting | `/scratch/TMAlign/evident` | `theGreatHerrLebert/evident` | `docs/overview-examples` @ `93092b4` |
-
-Key files for a reviewer:
-
-- `scripts/analysis/a2_conformance.py`, `A2_CONFORMANCE_RESULTS.md` — figure 2,
-  committed (`065cc82`). The paired analysis is A8 (to fold into the report).
-- claudius: `runner/engines/fragpipe_job.py`, `scripts/run_fragpipe.py`,
-  `runner/engines/sage_job.py`, `config/config.mogon.yaml` — the §4.1 path.
-- `evident/OVERVIEW.md`, `evident/concepts/typed-trust.md` — Verified/Judged/
-  Absent; deterministic synthesis. `evident/cases/{proteon,cu-ims-primitives}.md`.
-- `proteon/docs/ORACLE_SETUP.md`, `proteon/STABILITY.md` — validation-first
-  structure (context for §5).
-- Cluster (not off-site reachable): MOGON-NHR
-  `.../data/processed/<ACC>/*/{fragpipe_output/fragpipe.workflow,sage/sage_config.json}`
-  — the rendered configs. **A9: archive a hashed extraction + exact
-  FragPipe/MSFragger/Sage versions as a supplement** (reproducibility).
+Softened vs the punchier draft: dropped "AI writes faster than anyone can verify"
+(unevidenced) and "invisible to humans *and* models alike" (→ "in the case we
+document … not resolved by code review"). Keep the punchier line only as the
+spoken hook, tagged Judged.
 
 ---
 
-## 1. Thesis (a case study, stated as one)
+## 1. Thesis (a bounded position)
 
-> In one large, single-author, AI-assisted infrastructure project, validation
-> against **rendered run artifacts** exposed configuration, deployment, and
-> external-service-boundary failures that the development-time checks — unit
-> tests, successful-looking runs, and the code reviews performed here (human and
-> model) — did not surface.
+> In AI-assisted scientific software, trusting artifacts you did not author is a
+> distinct and under-tooled problem. In one documented proteomics case,
+> validation against **rendered run artifacts** exposed a configuration failure
+> that unit tests, successful runs, and code review (human and model) did not.
 
-**What this is and is not.** This is a **case study / incident analysis** with a
-reproducible artifact-level audit. n = 1, no non-LLM control, author =
-developer = analyst = subject. "AI-assisted" is the **setting**, not a measured
-explanatory variable — we do **not** claim LLM assistance *causes* or *amplifies*
-these failures relative to a baseline (that would need a control we don't have).
-The defensible, and still interesting, claim is that these failure classes exist,
-are artifact-detectable, and were missed by the checks in use.
-
-The "not resolved by human or model review" clause is earned narrowly by §4.4:
-one author misreading + one model review, both wrong, both settled by the
-rendered artifact. It is a demonstration, not a prevalence claim.
+Explicitly a **position + one case study**, not a measured general effect. "AI
+writes code faster than we can verify it" is the *motivation* (spoken, tagged
+Judged), not an asserted finding. n=1, no control, author = developer = analyst =
+subject; "AI-assisted" is the setting, not a variable.
 
 ---
 
-## 2. What exists (scale context only)
+## 2. The framework — EVIDENT (design, not novelty claims)
 
-Measured 2026-08-24 from the git repos. **Scale context, not evidence** — LOC is
-sensitive to language, generated/vendor code, tests, and counting tool, so it is
-reported with a fixed policy (`git ls-files '*.rs|*.py'` tracked lines, no vendor
-exclusion) and **not** used as a headline.
-
-| | claudius | cu-ims | proteon | EVIDENT |
-|---|---|---|---|---|
-| domain | proteomics | GPU diaPASEF | structural bio | validation/reporting |
-| commits | 180 | 393 | 517 | 154 |
-| code LOC (policy above) | 42,292 | 40,649 | 167,340 | 42,187 |
-| maturity | operational | behind SOTA (research) | v0.4 pip-published | early, tested |
-
-**The headline is operational output, not LOC:**
-
-- **claudius / HF corpus v0.2** — 58 datasets, 33,717,207 precursor rows,
-  504,097,214 b/y fragment rows, 100% CC0.
-- **proteon** — `pip install proteon`; SASA/DSSP/H-bonds, prep/minimization,
-  TM-align, CHARMM19+BALL electrostatics, Vina docking.
-- **cu-ims** — 17,814 peptides @1% FDR vs DiaNN 2.3's 50,482 (reported as behind).
-- **EVIDENT** — typed-trust engine + READ MCP server, evident-agent + EXEC MCP
-  server, Claude/Codex driver. Deterministic orchestrator sketched only.
+Four organizing ideas; presented as the framework's shape, with the actual
+contribution isolated in §6.
+1. **Typed trust** — Verified / Judged / Absent; deterministic synthesis (verdict
+   calls no model).
+2. **Claim ⊥ test** — a manifest binds `claim → oracle → tolerance → command →
+   artifact`; a test attaches to / is challenged against a claim without rewriting
+   it. (Familiar test architecture unless the manifest shows a capability
+   conventional test metadata lacks — do not overclaim.)
+3. **The oracle pattern** — what to check against with no ground truth:
+   reproducible check · cross-tool agreement (**correlated evidence, not an
+   oracle**) · simulator truth · declared tolerance · **the intended-config
+   contract** (the oracle in §3).
+4. **Verification as learning** — unknown agent output → extract claim → verify
+   against an oracle → fold the verified fact into the knowledge base. Presented
+   as a *workflow*, not a technical contribution.
 
 ---
 
-## 3. Spine and scope
+## 3. The evaluated case (proteomics — the one measured anchor)
 
-**Spine: claudius-proteomics** — the abstract's subject and the *only* system with
-a quantified audit. **proteon and cu-ims are contextual breadth**, not evidence of
-generalization: the validation conclusion rests on claudius alone (§8). They
-appear as a portfolio strip (§7 fig 1) and one oracle inset (fig 4); they do not
-carry the argument.
-
-Discipline: if space forces cuts, cu-ims goes first, then proteon detail (keep it
-in the strip only). **In the abstract, structural biology is one phrase**
-("contextual breadth") so it does not dilute a proteomics-track submission —
-while the full portfolio still shows on the poster (author's call).
-
----
-
-## 4. The empirical core
-
-### 4.1 Configuration non-conformance — paired engine comparison (measured)
-
-**The poster's strongest panel (figure 2).** For datasets searched by *both*
-engines, the *rendered* configuration of each is compared against the
-`mod_profile` that `config.mogon.yaml` resolves. Reproducible:
-`scripts/analysis/a2_conformance.py`.
-
-**Paired set: 128 datasets run through both FragPipe and Sage** (every FragPipe
-dataset is paired; 4 Sage-only datasets excluded for the comparison):
-
-| engine | conforming (same 128) | |
-|---|---|---|
-| **FragPipe** | **99/128 = 77.3%** | all non-conformance is PTM/HLA profiles; 0/90 generic-tryptic fail |
-| **Sage** | **124/128 = 96.9%** | |
-| **divergent** (Sage conforms, FragPipe does not) | **25/128 = 19.5%** | acyl-lactyl 11, HLA 4, ubiquitin 4, phospho 3, crotonyl/malonyl/succinyl 1 each |
-| divergent the other way (FragPipe conforms, Sage not) | **0** | one-sided discordance (25 vs 0) |
-| both non-conformant | **4/128** | Sage is not universally conformant |
-
-**The scoped claim (what the artifacts show, and only that):**
-
-> For the tested profiles, on 25 of 128 paired datasets **FragPipe omitted the
-> profile-specified target variable PTM (or, for 4 HLA sets, the nonspecific
-> enzyme) while Sage included it** — one modification profile, two engines, two
-> different rendered search configurations. The pairwise discordance is one-sided
-> (25 vs 0) — Sage was never the less-conformant engine on a shared dataset —
-> though Sage is itself non-conformant on 4/128 (both marginal rates retained
-> above); this is directional discordance, not "Sage always conformed."
-
-Mechanism, verified in-file: PXD059168 Sage `variable_mods {M:[15.99],
-K:[72.021129]}` searched Lactyl-K; the same dataset's FragPipe workflow enabled
-only Oxidation/M + N-term-Acetyl. FragPipe stores nothing for the target mass.
-
-**Framed as conformance, not "defect."** There was no pre-existing, versioned
-contract stating both engines must implement the resolved profile identically;
-that contract is **reconstructed post hoc** from the config's intent. So the
-claim is *non-conformance relative to the (reconstructed) `mod_profile`
-contract*, not a proven bug in intended behavior. (It makes an undocumented
-intentional divergence unlikely, but does not prove intent.)
-
-**Rendered→executed linkage — recovered (A9, ✅).** A per-(accession,group)
-supplement (`A9_provenance_supplement.tsv`, 150/150 rows linked to a provenance
-run) hashes each rendered `fragpipe.workflow` / `sage_config.json` and joins it to
-the run's `git_commit`, SLURM `job_id`, UTC timestamp, and engine versions —
-**FragPipe 24.0 / MSFragger 4.4** (workflow header) and **Sage 0.15.0-beta.2**
-(run json). So figure 2 is a **run-level** conformance claim, not merely a config
-audit. **Quantified honest residual:** 100% of the 150 runs carried
-`working_tree_dirty: true` (code not bit-pinned) and only 12/150 recorded config
-SHAs match the current config (drift); the literal command line is not in the run
-json and is not claimed. The conformance verdict itself stands on the rendered
-artifacts regardless of code-pinning.
-
-**Other caveats (on the board):**
-- **PTM matching is engine-semantic**, not string/table equality — mass +
-  tolerance + residue/terminus site; mass-only matching conflates isobaric sites
-  (N-term vs K Acetyl → PXD050342 false-conforms; true non-conformance is
-  marginally *higher*).
-- **Search space is broader than a single variable-mod mass** (fixed mods, max
-  var-mods/peptide, length/mass windows, enzyme specificity, localization). The
-  claim is scoped to the target PTM and enzyme, not to full search-space identity.
-- PXD042416 (synthetic multi-PTM kit) needs subgroup-specific expected sets;
-  currently mis-scored by the aggregate comparison.
-
-### 4.1b The silent no-op override (found while checking 4.1)
-
-`scripts/run_fragpipe.py:132` rewrites `msfragger.search_enzyme_name=` lines;
-FragPipe keys the enzyme as `msfragger.search_enzyme_name_1=` (multi-enzyme
-format, ≥20). The prefix never matches, nothing checks the replacement applied —
-the `--enzyme` override is inert. Same class as §4.1: an intended configuration
-silently not applied, where "the run succeeded" says nothing about whether the
-intended config was used.
-
-### 4.1c A workflow name is not a stable configuration identifier
-
-The same named base workflow ships different enzyme semantics across FragPipe
-versions (23.1 `LFQ-MBR` `stricttrypsin`, cleaves before P; 24 `trypsin`, does
-not). **A5** — record the FragPipe version in `DATASET_CARD.md`/`SCHEMA.md`; its
-absence is a reproducibility gap in a shipped CC0 resource.
-
-### 4.2 Deployment–VCS divergence (illustration, not a metric)
-
-Illustration only, confounds stated (mtimes/`.bak-*` names establish neither
-first execution nor which outputs used which version; n=4):
-
-| change | live | committed | lag |
-|---|---|---|---|
-| `sage_overrides` | 2026-05-27 | 2026-08-24 | 89 d |
-| `skip_msbooster` | 2026-06-01 | 2026-08-24 | 84 d |
-| blob-resolver fix | 2026-07-23 | 2026-08-24 | 32 d |
-
-### 4.3 Silent nulls at external-service boundaries
-
-PRIDE v2 `files/byProject` returns HTTP 200 with an empty body; an audit read that
-as "no raw files" and zeroed **191/544 datasets (35%)**. Caught only by 20
-controls where two sizing methods must agree; v3 + `fileCategory == RAW` recovered
-188/191 and 24.4 TB. **Admission:** `scripts/audit_pool_size_license.py` — the
-detector — has the same defect (a `None` fetch is indistinguishable from an empty
-listing). **A1: fix + commit control table and archived responses.**
-
-### 4.4 The review instance (why §1's last clause is narrow)
-
-Reviewing this plan, an independent model read the relevant files, cited line
-numbers, and concluded the enzyme override reached MSFragger. It does not (§4.1b).
-The author had concluded the opposite error from an inaccurate code comment.
-Neither reading resolved it; the rendered artifact did, in one command. A single
-demonstration that the artifact settles what code-reading did not — **not** a
-claim that human/model review generally fails.
+**Oracle: the rendered configuration vs the resolved `mod_profile` contract**
+(NOT cross-engine agreement). On **128 paired datasets** searched by both engines,
+one profile produced two different rendered search configurations: **25/128
+divergent, one-sided (25 vs 0)** — Sage carried the profile's PTM, FragPipe a
+generic default; 4/128 both-fail (Sage not universally conformant). Verified from
+rendered configs; engine versions recovered (FragPipe 24.0 / MSFragger 4.4 / Sage
+0.15); run-linked (A9 provenance supplement; caveat: 100% `working_tree_dirty`,
+config drift). A **deterministic conformance gate** is built, deployed, exits 2
+pre-search, emits a V/J/A TrustReport (A2/A6/A9/A10 done, committed). Two further
+failure classes (silent no-op override; silent API null zeroing 191/544 datasets)
+support the boundary-error thesis. All Verified; the mechanism is Judged; the
+invocation path is Absent.
 
 ---
 
-## 5. Two candidate metrics
+## 4. Design probes (NOT generalization — Judged, n=1)
 
-1. **Configuration conformance** — fraction of runs whose *rendered* config
-   matches the resolved profile (§4.1, both engines, paired). Figure 2.
-2. **Execution provenance completeness** — fraction of runs carrying immutable
-   code/config/input hashes. `_process_runner.sh` records a git SHA, a
-   `working_tree_dirty` boolean, and a config SHA-256. **Measured (A9, n=150):
-   100% of runs are `working_tree_dirty: true`** — by the immutable-code-hash
-   criterion, completeness is **0%** — and only **12/150** recorded config SHAs
-   match the current config. The dirty flag proves ambiguity without identifying
-   the diff. A live, quantified instance of the metric, not a hypothetical.
-
-**proteon as contrast, not proof:** it ships validation-first (`ORACLE_SETUP.md`,
-stable/experimental tiers, an EVIDENT release-tier claim on CHARMM19+BALL). The
-claudius-vs-proteon contrast (drift found post-hoc vs tolerances declared up
-front) is illustrative — it is **not** a second audited data point.
+Two more single-author AI-assisted systems illustrate the same *practice*; they
+are **not evaluated** and do not demonstrate that the approach generalizes.
+- **proteon** — structural biology, Rust, pip-published; declared tolerances,
+  oracle setup, a release-tier typed-trust claim on CHARMM19+BALL electrostatics.
+- **cu-ims** — GPU diaPASEF; oracle = simulator truth + CPU/CUDA bit-parity;
+  honestly behind SOTA on identification depth.
+Report as *"systems built with this practice,"* one author, ~250k LOC — scale
+context, not evidence.
 
 ---
 
-## 6. Novelty, positioned honestly
+## 5. Concrete deliverables (real; framed as built-with-this-practice)
 
-Prior art is real and cited, not implied absent:
-- **Provenance:** W3C PROV (provenance used to assess trust); **Workflow Run
-  RO-Crate** already models workflow-run inputs/outputs/code/execution provenance.
-- **Lineage tooling:** MLflow, DVC.
-- **Oracle-poor testing:** **differential testing** (cross-implementation
-  agreement) and **metamorphic testing** already target scientific software
-  without ground truth — the §4.1 cross-engine comparison *is* differential
-  testing applied to config, and must be named as such.
+- **HF corpus** — public 100% CC0 timsTOF reference layer (v0.2: 58 datasets,
+  33.7M precursors, 504M b/y fragments; v0.3 acyl-PTM increment building now).
+- **timsTOF property predictors** — RT / ion-mobility / intensity / CCS on the
+  imspy_predictors hub (models-v0.6.0; best fine-tune SA 0.798, CCS MAE 0.0148,
+  RT r 0.918).
+To avoid "bolted-on advertisement" (Codex v3 Q4): **render one corpus claim as a
+TrustReport** (claim: "corpus rows carry documented extraction provenance"; oracle:
+the manifest; artifact: the parquet) so the deliverables sit inside the trust
+frame — else demote to a one-line footer. "Real/usable" is not evidence the
+framework works.
 
-So the contribution is **not** a new provenance model or a new testing paradigm.
-It is narrower and honest: **a small, executable, domain-grounded conformance
-gate** (rendered engine config vs resolved profile) **plus explicit
-evidence-status rendering** (Verified/Judged/Absent, deterministic synthesis).
-Enough for a poster if presented at that size.
+---
 
-**O6:** confirm the differential/metamorphic framing survives a real lit check
-before printing.
+## 6. Contribution & novelty (modest, honest)
+
+**The contribution is narrow and concrete:** *executable, claim-level
+evidence-status rendering (Verified/Judged/Absent, deterministic) coupled to a
+deterministic conformance gate over rendered configuration.* Demoable; not a new
+provenance model, not a new testing paradigm.
+
+Prior art cited, not implied absent: **differential + metamorphic testing**
+(no-ground-truth checks — the §3 comparison *is* differential testing on config);
+**W3C PROV**, **Workflow Run RO-Crate** (run provenance); **MLflow/DVC** (lineage).
+"Verification as learning" and "claim ⊥ test" are framing, not claimed as novel.
 
 ---
 
 ## 7. Figures (five panels)
 
-1. **Portfolio + problem** — 3 systems × 3 domains, one author (strip); claudius
-   at scale as the detailed case. (Portfolio = context, labeled as such.)
-2. **Configuration conformance** ⭐ — the §4.1 **paired** result: 128 datasets,
-   FragPipe 77.3% vs Sage 96.9%, **one-sided discordance 25 vs 0** (retain both
-   marginal rates). The money figure *because it is measured and paired*.
-3. **Failure classes** — silent no-op override (§4.1b), silent API null (§4.3),
-   deployment drift (§4.2, labeled illustration).
-4. **The oracle question** — cross-engine agreement (correlated evidence, not an
-   oracle); **cu-ims inset** (simulator truth + CPU/CUDA bit-parity); proteon
-   (declared tolerances); EVIDENT (manifest as oracle).
-5. **The conformance gate, run prospectively** ⭐ — **not** a label on our own
-   finding. A deterministic check: *resolved profile → rendered config → PASS/FAIL,
-   the failing config caught before the search runs*, reported as a TrustReport
-   (Verified = criterion results read from the artifact; Judged = the mechanism;
-   Absent = the O5 invocation path). **✅ Built + demonstrated**
-   (`scripts/analysis/conformance_gate.py`): **exits 2 (blocks) on
-   non-conformance** — shown failing FragPipe/PXD059168 (Lactyl absent) and
-   FragPipe/PXD058376 (HLA rendered tryptic) while passing the conforming Sage
-   config; emits `A6_trustreport_example.json` (typed Verified/Judged/Absent,
-   engine version + rendered-config sha256, deterministic). This makes EVIDENT
-   operational rather than circular.
-
-**Device:** tag every poster claim Verified / Judged / Absent.
+1. **Hook + the framework** (EVIDENT: the 4 ideas; V/J/A device defined).
+2. **The evaluated case** ⭐ — the paired conformance result (25 vs 0), oracle =
+   config-vs-contract. The one measured panel.
+3. **Failure classes + provenance** (no-op override; silent API null; 100% dirty).
+4. **Design probes** — proteon + cu-ims, labelled not-evaluated.
+5. **Verification-as-learning, worked** — the gate run prospectively (exit 2) as a
+   TrustReport (Verified / Judged / Absent). Plus the deliverables band.
+Device: tag every claim V/J/A; the motivational/general claims are Judged/Absent.
 
 ---
 
-## 8. Explicitly exploratory (say these out loud)
+## 8. What is NOT shown (put it on the poster — Codex v3 Q5)
 
-- **n = 1, no control, author = subject.** This is a case study.
-- **No LLM attribution** in commits — "AI-assisted" is setting, not variable.
-- Only **claudius** is audited; proteon/cu-ims are context, not generalization.
-- The A2 result links rendered config to runs (A9 ✅); the residual is
-  **code-pinning — 100% of runs had a dirty working tree**, so the exact code is
-  not bit-reconstructable (itself the §5 metric-#2 finding).
-- The fig-5 conformance gate is **built and demonstrated** (A6/A10 ✅,
-  `conformance_gate.py`, exit-2-on-non-conformance). It emits EVIDENT-schema
-  TrustReports directly; the **full EVIDENT engine integration** (manifest → the
-  typed-trust Rust crate → orchestrator) **remains future work** — the crate is
-  scaffolded, the orchestrator sketched.
-- cu-ims is behind SOTA; its parity matrix is partly prospective.
+- **No evaluation** that EVIDENT reduces undetected failures or improves review.
+- **No comparative study**; **no transfer** beyond one author's proteomics pipeline.
+- One measured incident; proteon/cu-ims unevaluated; orchestrator sketched.
+- **Proposed evaluation protocol** (future): inject known config non-conformances
+  across a dataset panel; measure gate detection rate + false positives; compare
+  against reviewer (human/model) detection. State this as the next step.
 
 ---
 
-## 9. Hook
+## 9. Actions / open questions
 
-Lead with §4.1: *one modification profile, two search engines — Sage searched the
-PTM, FragPipe searched a generic default, on 25 of 128 datasets, and the
-development-time checks in use did not flag it.* Then §4.4: the rendered artifact settled in one command what code
-reading did not. Then offer the conformance gate + typed-trust reporting as a
-small, concrete answer — and the portfolio as context that this is one person's
-operating infrastructure, not a toy.
-
----
-
-## 10. Claims removed or softened (audit trail)
-
-v1→v3 removals preserved. New in **v4** (from Codex review):
-- "amplifies verification gaps" → case-study framing; no causal/baseline claim.
-- "invisible to code review by humans and models" → "not resolved by the reviews
-  performed here" (one instance, not a generalization).
-- A2 "77.3% vs 97.0%" across **different** sets → **paired** 128-dataset
-  comparison (25/128 divergent, asymmetric).
-- "a real defect, not a design choice" → "non-conformance vs the reconstructed
-  `mod_profile` contract; intent not proven."
-- "different modification spaces" (unqualified) → scoped to the target PTM/enzyme,
-  with rendered≠executed and search-space-breadth caveats added.
-- EVIDENT "systematic validation strategy / remedy" → "conformance gate +
-  evidence-status rendering," demonstrated prospectively.
-- "~250k LOC / team-scale / previously required dedicated teams" → LOC demoted to
-  context with a counting policy; sociological claims dropped.
-- Novelty: differential + metamorphic testing now cited; contribution narrowed.
+- **A2/A6/A9/A10** ✅ done (measured finding, gate, provenance supplement — committed).
+- **A-new1** — render one corpus claim as a TrustReport (§5) or footer-demote.
+- **A-new2** — update the mockup: relabel proteon/cu-ims as design probes; fix the
+  oracle label (config-contract, not cross-engine agreement); soften the two broad
+  claims; add the §8 "not shown" box.
+- **A4** — deploy the FragPipe render fixes so the gate can go strict (separate track).
+- **O1** — title editability for #1015. **O6** — differential/metamorphic lit check.
+- **O7** — publishing a shipped corpus has non-conforming runs: credibility vs reprocess-first.
 
 ---
 
-## 11. Actions and open questions
+## 10. Audit trail (claims removed/softened)
 
-- **A1** — fix the fetch-failure/empty-listing conflation in
-  `audit_pool_size_license.py`; commit control table + archived responses.
-- **A2** — ✅ full conformance sweep, both engines (committed `065cc82`).
-- **A8** — ✅ paired analysis (128 datasets; 25/128 divergent, asymmetric). Fold
-  into `A2_CONFORMANCE_RESULTS.md` + `a2_conformance.py` (`--paired`).
-- **A6/A10** — ✅ done: `scripts/analysis/conformance_gate.py` — deterministic
-  pre-search gate, exit 2 on non-conformance, emits an EVIDENT TrustReport
-  (Verified/Judged/Absent). Demonstrated failing FragPipe/PXD059168 (Lactyl
-  absent) + FragPipe/PXD058376 (HLA→tryptic), passing Sage/PXD059168. Example
-  report: `A6_trustreport_example.json`. ✅ **Wired into `_process_runner.sh`**
-  (soft: writes a TrustReport per rendered config + warns; `CONFORMANCE_GATE_STRICT=1`
-  fails the job once the A4 render bug is fixed — hard-blocking now would halt every
-  PTM run). Fuller *pre-engine* gating belongs inside `step2_search.py`; full
-  typed-trust crate integration is future.
-- **A9** — ✅ done: `scripts/analysis/a9_provenance_supplement.py` +
-  `A9_provenance_supplement.tsv` (150 rows) — per-(accession,group) hashed chain
-  profile→rendered config→engine versions→run→commit, with conformance verdicts.
-  Recovered FragPipe 24.0 / MSFragger 4.4 / Sage 0.15; found 100% working_tree_dirty
-  and 12/150 config-match-current. Fig 2 is run-level; code-pinning is the stated gap.
-  (Regenerate on-cluster for canonical hashes; local hashes are byte-identical.)
-- **A3** — fix the inaccurate comment in `fragpipe_job.py:90-95`.
-- **A4** — fix/remove the inert `--enzyme` override (§4.1b), with a check.
-- **A5** — record the FragPipe version in `DATASET_CARD.md`/`SCHEMA.md`.
-- **O1** — abstract editable; **title-edit permission unconfirmed**.
-- **O5** — which invocation path selected `Nonspecific-HLA.workflow` for the
-  conforming HLA datasets? (§4.1 Absent line).
-- **O6** — confirm the differential/metamorphic-testing lit framing.
-- **O7** — publishing §4.1 admits a shipped corpus has non-conforming runs.
-  Credibility win, or reprocess first and show the fix?
+v1→v4 removals preserved. New in **v5**:
+- "the pattern generalizes (3 systems)" → **design probes, not generalization** (Q1).
+- "AI writes faster than anyone can verify" / "invisible to humans and models" →
+  softened to the documented case (Q2).
+- 4 patterns as novelty → **framing; one narrow contribution named** (Q3).
+- proteomics oracle "cross-engine agreement" → **config-vs-profile contract** (Q3/c);
+  cross-engine agreement is correlated evidence, not an oracle.
+- deliverables as standalone value → evidence-bearing or footer (Q4).
+- added the explicit **"not shown + proposed evaluation"** (Q5).
