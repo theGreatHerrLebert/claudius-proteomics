@@ -90,18 +90,28 @@ RUN_RC=$?
 if [ "$RUN_RC" -eq 0 ]; then
     GATE_LOG="$PROV_DIR/conformance-${SLURM_JOB_ID:-local}.log"
     NONCONF=0
+    GATE_ERR=0
     while IFS= read -r cfg; do
         [ -z "$cfg" ] && continue
         rel=$(echo "$cfg" | sed "s#$ROOT/data/processed/##; s#/#_#g")
         python "$PROJ/scripts/analysis/conformance_gate.py" \
             --config config/config.mogon.yaml --rendered "$cfg" \
             --out "$PROV_DIR/trustreport-${rel}.json" >>"$GATE_LOG" 2>&1
-        [ $? -eq 2 ] && NONCONF=$((NONCONF + 1))
+        GATE_RC=$?
+        if [ "$GATE_RC" -eq 2 ]; then
+            NONCONF=$((NONCONF + 1))
+        elif [ "$GATE_RC" -ne 0 ]; then
+            # rc 1/3 = gate could not evaluate (parse error, missing file, etc.)
+            GATE_ERR=$((GATE_ERR + 1))
+            echo "CONFORMANCE GATE: error (rc=$GATE_RC) on $cfg — see $GATE_LOG"
+        fi
     done < <(find "$ROOT/data/processed/$ACC" \
                  \( -name fragpipe.workflow -o -name sage_config.json \) \
                  -not -path "*.bak*" -not -path "*.failed*" 2>/dev/null)
-    if [ "$NONCONF" -gt 0 ]; then
-        echo "CONFORMANCE GATE: $NONCONF non-conformant rendered config(s) for $ACC — TrustReports in $PROV_DIR (log: $GATE_LOG)"
+    if [ "$NONCONF" -gt 0 ] || [ "$GATE_ERR" -gt 0 ]; then
+        echo "CONFORMANCE GATE: $NONCONF non-conformant, $GATE_ERR gate-error(s) for $ACC — TrustReports in $PROV_DIR (log: $GATE_LOG)"
+        # STRICT = fail the job on non-conformance OR a gate error (fail-closed);
+        # default (soft) records + warns without failing.
         if [ "${CONFORMANCE_GATE_STRICT:-0}" = "1" ]; then
             echo "CONFORMANCE GATE: STRICT — failing job for $ACC"
             RUN_RC=2

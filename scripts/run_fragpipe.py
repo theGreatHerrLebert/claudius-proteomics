@@ -234,29 +234,25 @@ def update_workflow(
 def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]:
     """Build MSFragger workflow key overrides from a mod profile.
 
-    MSFragger format: mass residues max_per_peptide
-    N-term uses [^ as residue marker.
+    The authoritative variable-mod set is the FragPipe UI table
+    ``msfragger.table.var-mods`` — FragPipe regenerates MSFragger's
+    ``variable_mod_*`` params from it, so writing ``variable_mod_0X`` directly has
+    no effect. Table entry format: ``mass,residues,enabled,max_per_peptide``,
+    with ``[^`` marking the N-terminus.
 
     Returns:
-        Dict of workflow keys -> values (e.g. "msfragger.variable_mod_01" -> "15.994900 M 3")
+        Dict of workflow keys -> values (``table.var-mods``, digest lengths, and
+        any profile ``msfragger_overrides``).
     """
     overrides = {}
 
-    # Variable modifications
     var_mods = mod_config.get("variable_modifications", [])
     max_var = mod_config.get("max_variable_mods", 3)
-    for i, vm in enumerate(var_mods, start=1):
-        key = f"msfragger.variable_mod_0{i}" if i < 10 else f"msfragger.variable_mod_{i}"
-        if vm.get("site") == "N-term":
-            overrides[key] = f"{vm['mass']:.6f} [^ 1"
-        else:
-            residues = "".join(vm["residues"])
-            overrides[key] = f"{vm['mass']:.6f} {residues} {max_var}"
-
-    # Clear any remaining variable_mod slots (up to 07) to avoid stale entries
-    for j in range(len(var_mods) + 1, 8):
-        key = f"msfragger.variable_mod_0{j}"
-        overrides[key] = "0.0 X 0"
+    if len(var_mods) > 16:
+        raise ValueError(
+            f"mod profile has {len(var_mods)} variable modifications; FragPipe's "
+            f"msfragger.table.var-mods supports at most 16 slots"
+        )
 
     # Peptide length
     min_len = mod_config.get("min_peptide_length", 7)
@@ -264,13 +260,11 @@ def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]
     overrides["msfragger.digest_min_length"] = str(min_len)
     overrides["msfragger.digest_max_length"] = str(max_len)
 
-    # --- A4 FIX: the authoritative variable-mod set FragPipe actually searches ---
-    # FragPipe regenerates MSFragger's variable_mod_* params from the workflow's
-    # `msfragger.table.var-mods` UI table, so the variable_mod_0X keys written
-    # above are overwritten and have no effect on their own. Build the table
-    # directly, with the profile's mods ENABLED (format: mass,residues,enabled,
-    # max_per_peptide; N-term uses the [^ marker), padded to 16 slots with
-    # disabled placeholders to match FragPipe's fixed table size.
+    # --- A4: build the authoritative variable-mod table FragPipe actually uses ---
+    # Profile mods ENABLED; padded to 16 slots with disabled placeholders to match
+    # FragPipe's fixed table size. N-term mods use the [^ marker and max 1 (a
+    # peptide has a single N-terminus); side-chain mods use the profile's
+    # max_variable_mods as the per-mod occurrence cap.
     table = []
     for vm in var_mods:
         if vm.get("site") == "N-term":
