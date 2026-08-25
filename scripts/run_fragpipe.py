@@ -264,6 +264,24 @@ def _build_msfragger_mod_overrides(mod_config: Dict[str, Any]) -> Dict[str, str]
     overrides["msfragger.digest_min_length"] = str(min_len)
     overrides["msfragger.digest_max_length"] = str(max_len)
 
+    # --- A4 FIX: the authoritative variable-mod set FragPipe actually searches ---
+    # FragPipe regenerates MSFragger's variable_mod_* params from the workflow's
+    # `msfragger.table.var-mods` UI table, so the variable_mod_0X keys written
+    # above are overwritten and have no effect on their own. Build the table
+    # directly, with the profile's mods ENABLED (format: mass,residues,enabled,
+    # max_per_peptide; N-term uses the [^ marker), padded to 16 slots with
+    # disabled placeholders to match FragPipe's fixed table size.
+    table = []
+    for vm in var_mods:
+        if vm.get("site") == "N-term":
+            table.append(f"{vm['mass']:.6f},[^,true,1")
+        else:
+            residues = "".join(vm["residues"])
+            table.append(f"{vm['mass']:.6f},{residues},true,{max_var}")
+    for i in range(len(table) + 1, 17):
+        table.append(f"0.0,site_{i:02d},false,1")
+    overrides["msfragger.table.var-mods"] = "; ".join(table)
+
     # Generic MSFragger key overrides from mod_profile (e.g. num_database_chunks
     # for HLA nonspecific searches that would otherwise OOM). Values are
     # written verbatim to the workflow as `msfragger.<key>=<value>`.
