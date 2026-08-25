@@ -19,7 +19,7 @@ PRIDE Archive                    San José Database              Models
                                 └─────────────────┘
 ```
 
-See [CLAUDIUS-PROTEOMICS.md](CLAUDIUS-PROTEOMICS.md) for the full project plan and [docs/SAN_JOSE_PITCH.md](docs/SAN_JOSE_PITCH.md) for the vision.
+See [docs/DESIGN.md](docs/DESIGN.md) for the full project plan and [docs/SAN_JOSE_PITCH.md](docs/SAN_JOSE_PITCH.md) for the vision.
 
 ## Key Design Principles
 
@@ -247,8 +247,9 @@ claudius-proteomics/
 │   ├── packages/              # Step 6: Distributable archives
 │   └── checkpoints/           # Pipeline state (state.json)
 │
-├── CLAUDIUS-PROTEOMICS.md      # Full project plan
-└── CLAUDE.md                   # Claude Code instructions
+├── paper_inbox/               # Per-dataset publication pointers (SOURCE.md)
+├── LICENSE
+└── README.md
 ```
 
 ## Data Storage

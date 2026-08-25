@@ -19,6 +19,7 @@ Output:
     - ce_calibration_report.pdf: diagnostic plots with before/after cossim
 """
 
+import os
 import argparse
 import json
 import re
@@ -36,7 +37,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 # Rustims / imspy paths
-RUSTIMS_PREDICTORS = Path("/home/administrator/Documents/promotion/rust/rustims/packages/imspy-predictors/src")
+# Local checkout of https://github.com/theGreatHerrLebert/rustims.
+# Override with RUSTIMS_ROOT; defaults to a sibling of this repository.
+RUSTIMS_ROOT = Path(
+    os.environ.get("RUSTIMS_ROOT", Path(__file__).resolve().parents[2] / ".." / "rustims")
+).expanduser().resolve()
+RUSTIMS_PREDICTORS = RUSTIMS_ROOT / "packages" / "imspy-predictors" / "src"
 sys.path.insert(0, str(RUSTIMS_PREDICTORS))
 
 warnings.filterwarnings("ignore", category=FutureWarning)

@@ -9,6 +9,7 @@ annotation.
 Uses imspy-core's PeptideSequence for theoretical fragment generation.
 """
 
+import os
 import sys
 from dataclasses import dataclass, field
 from typing import List, Dict, Tuple, Optional, Union
@@ -19,7 +20,12 @@ import numpy as np
 import pandas as pd
 
 # Add imspy-core to path
-IMSPY_CORE_PATH = Path("/home/administrator/Documents/promotion/rust/rustims/packages/imspy-core/src")
+# Local checkout of https://github.com/theGreatHerrLebert/rustims.
+# Override with RUSTIMS_ROOT; defaults to a sibling of this repository.
+RUSTIMS_ROOT = Path(
+    os.environ.get("RUSTIMS_ROOT", Path(__file__).resolve().parents[1] / ".." / "rustims")
+).expanduser().resolve()
+IMSPY_CORE_PATH = RUSTIMS_ROOT / "packages" / "imspy-core" / "src"
 if str(IMSPY_CORE_PATH) not in sys.path:
     sys.path.insert(0, str(IMSPY_CORE_PATH))
 

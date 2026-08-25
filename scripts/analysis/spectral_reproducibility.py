@@ -16,6 +16,7 @@ Output:
     - spectral_reproducibility_report.pdf: 8-page diagnostic report
 """
 
+import os
 import argparse
 import re
 import sys
@@ -35,7 +36,12 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # For optional predicted spectrum comparison
-RUSTIMS_PREDICTORS = Path("/home/administrator/Documents/promotion/rust/rustims/packages/imspy-predictors/src")
+# Local checkout of https://github.com/theGreatHerrLebert/rustims.
+# Override with RUSTIMS_ROOT; defaults to a sibling of this repository.
+RUSTIMS_ROOT = Path(
+    os.environ.get("RUSTIMS_ROOT", Path(__file__).resolve().parents[2] / ".." / "rustims")
+).expanduser().resolve()
+RUSTIMS_PREDICTORS = RUSTIMS_ROOT / "packages" / "imspy-predictors" / "src"
 
 
 # ---------------------------------------------------------------------------
