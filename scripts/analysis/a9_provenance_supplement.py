@@ -63,7 +63,7 @@ def load_expected(config_path):
     return expected_for
 
 
-_STALE = re.compile(r"\.(bak|failed|oom|pre)")
+_STALE = re.compile(r"\.(?:bak|failed|oom|pre)(?:[-_.]|$)")  # delimiter boundary (#2): avoid over-matching e.g. .preprint
 
 
 def acc_of(path, marker):

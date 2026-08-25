@@ -91,8 +91,10 @@ if [ "$RUN_RC" -eq 0 ]; then
     GATE_LOG="$PROV_DIR/conformance-${SLURM_JOB_ID:-local}.log"
     NONCONF=0
     GATE_ERR=0
+    CFG_COUNT=0
     while IFS= read -r cfg; do
         [ -z "$cfg" ] && continue
+        CFG_COUNT=$((CFG_COUNT + 1))
         rel=$(echo "$cfg" | sed "s#$ROOT/data/processed/##; s#/#_#g")
         python "$PROJ/scripts/analysis/conformance_gate.py" \
             --config config/config.mogon.yaml --rendered "$cfg" \
@@ -109,6 +111,12 @@ if [ "$RUN_RC" -eq 0 ]; then
                  \( -name fragpipe.workflow -o -name sage_config.json \) \
                  -not -path "*.bak*" -not -path "*.failed*" \
                  -not -path "*.oom*" -not -path "*.pre*" 2>/dev/null)
+    # A successful run with zero rendered configs is suspicious (search skipped /
+    # discovery failed): treat as a gate error so STRICT does not pass silently.
+    if [ "$CFG_COUNT" -eq 0 ]; then
+        GATE_ERR=$((GATE_ERR + 1))
+        echo "CONFORMANCE GATE: no rendered configs found for $ACC after a successful run — gate error"
+    fi
     if [ "$NONCONF" -gt 0 ] || [ "$GATE_ERR" -gt 0 ]; then
         echo "CONFORMANCE GATE: $NONCONF non-conformant, $GATE_ERR gate-error(s) for $ACC — TrustReports in $PROV_DIR (log: $GATE_LOG)"
         # STRICT = fail the job on non-conformance OR a gate error (fail-closed);
