@@ -2,7 +2,15 @@
 
 ## Overview
 
-The San José Runner is a self-contained 6-step pipeline designed for SLURM cluster submission. It processes PRIDE datasets through triple orthogonal validation (FragPipe + DIA-NN + Sage), extracts raw signal features, and produces dashboard-ready datasets.
+The San José Runner is a self-contained 6-step pipeline designed for SLURM cluster submission. It searches PRIDE datasets with independent engines, extracts raw signal features, and produces dashboard-ready datasets.
+
+> **Engines actually run.** The production path is **two** engines, **Sage +
+> FragPipe**. A DIA-NN harness exists (`runner/engines/diann_job.py`) and the
+> schema below carries `diann_*` columns and `diann_only` strata, but DIA-NN is
+> **off by default** — measured as a third vote it added +8.5% cross-engine
+> corroboration and 0.7% unique precursors at q ≤ 0.01, which did not justify the
+> per-dataset cost. Everything described below is engine-agnostic; with the
+> default configuration the `diann_*` fields are NULL and `n_engines` is 0–2.
 
 ```
 RUNNER (Steps 1-5) - Submittable to SLURM
@@ -67,7 +75,7 @@ data/processed/{accession}/step1_summary.json
 
 ### Step 2: Execute Third-Party Software
 
-**Purpose**: Run FragPipe, DIA-NN, Sage (all with FDR=1.0 for full results)
+**Purpose**: Run the configured engines (default Sage + FragPipe; DIA-NN optional) — all with FDR=1.0 so nothing is filtered before the store
 
 **Input**: `data/raw/{accession}/*.d`, FASTA database
 
@@ -356,7 +364,13 @@ Tested on PXD019086 (24 .d files, ~1M PSMs):
 
 ## Output Statistics Example
 
-From a test run on PXD019086:
+> ⚠️ **Historical.** These numbers come from an early three-engine POC run on
+> PXD019086 and are kept to show the shape of the output, not as representative
+> figures. They predate the current search configuration, and the production path
+> no longer runs DIA-NN, so a "3 engines" row does not occur. For current corpus
+> figures see the [README](../README.md).
+
+From that test run on PXD019086:
 
 **Engine Agreement**:
 - FragPipe: 51,124 unique precursors
