@@ -40,7 +40,11 @@ import yaml
 # Constants
 # ---------------------------------------------------------------------------
 
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
+# v2 is an alias for v3 on /projects and /search/projects, but its
+# files/byProject endpoint was retired and now answers 200 with an empty
+# body — see FileCheckError below.
+FILE_PAGE_SIZE = 1000
 
 DEFAULT_CACHE_DIR = Path("data/discovery/cache")
 DEFAULT_OUTPUT_DIR = Path("data/discovery")
@@ -236,43 +240,109 @@ def classify_instrument(
 # File manifest check
 # ---------------------------------------------------------------------------
 
+class FileCheckError(Exception):
+    """The file listing could not be retrieved. NOT the same as "no files".
+
+    The retired v2 ``files/byProject`` endpoint answers HTTP 200 with an empty
+    body, which the previous version of this check read as "this dataset ships
+    no Bruker data" and wrote into the catalog as a measurement of 0 GB. A
+    failed fetch must never be representable as a size.
+    """
+
+
+def _fetch_file_listing(
+    accession: str,
+    cache_dir: Path,
+    rate_limit: float,
+) -> List[Dict[str, Any]]:
+    """Every file record for a project, following v3 pagination.
+
+    Raises FileCheckError if any page fails — a short read must not look like
+    the end of the listing.
+    """
+    cache_file = cache_dir / f"files_v3_{accession}.json"
+    cached = _load_cache(cache_file)
+    if cached is not None:
+        return cached
+
+    files: List[Dict[str, Any]] = []
+    page = 0
+    while True:
+        url = (
+            f"{PRIDE_API_BASE}/projects/{accession}/files"
+            f"?pageSize={FILE_PAGE_SIZE}&page={page}"
+        )
+        chunk = _api_get_with_retry(url)
+        if chunk is None:
+            raise FileCheckError(f"page {page} fetch failed")
+        if not isinstance(chunk, list):
+            raise FileCheckError(
+                f"page {page}: expected a list, got {type(chunk).__name__}"
+            )
+        files.extend(chunk)
+        time.sleep(rate_limit)
+        if len(chunk) < FILE_PAGE_SIZE:
+            break
+        page += 1
+
+    if not files:
+        # v3 answers 200 with [] for an accession that is not in the database,
+        # so an empty listing is ambiguous: genuinely no files, or a withdrawn
+        # or mistyped accession. Confirm the project record before believing it.
+        if _api_get_with_retry(f"{PRIDE_API_BASE}/projects/{accession}") is None:
+            raise FileCheckError("empty listing and no project record")
+
+    _save_cache(cache_file, files)
+    return files
+
+
 def validate_bruker_files(
     accession: str,
     cache_dir: Path,
     rate_limit: float = 0.5,
-) -> Tuple[bool, int, float]:
-    """Check if a project has Bruker .d files on PRIDE.
+) -> Tuple[bool, int, float, float, str]:
+    """Check if a project has Bruker raw data on PRIDE.
 
-    Returns (has_files, n_files, size_gb).
+    Returns (has_files, n_files, size_gb, raw_size_gb, size_source); raises
+    FileCheckError if the listing could not be fetched.
+
+    Two views of the raw data, because neither alone is right: filename globs
+    (``*.d.zip`` and friends) miss archive-wrapped raw — ``raw.zip``,
+    ``*.tar.gz``, ``Topology.rar`` — while PRIDE's own RAW ``fileCategory``
+    catches those. By this stage the catalog is timsTOF-only, so RAW here means
+    Bruker .d in some wrapper. ``n_files`` is the union of both views and
+    ``size_gb`` the better-supported estimate, so a glob miss no longer sinks a
+    dataset at the ``--min-files`` gate or bins it as "small" when scoring.
+    Same convention as ``audit_pool_size_license.py``'s ``size_source`` column.
     """
-    cache_file = cache_dir / f"files_{accession}.json"
+    files_data = _fetch_file_listing(accession, cache_dir, rate_limit)
 
-    # Try cache
-    files_data = _load_cache(cache_file)
-    if files_data is None:
-        url = f"{PRIDE_API_BASE}/files/byProject?accession={accession}"
-        files_data = _api_get_with_retry(url)
-        if files_data is not None:
-            _save_cache(cache_file, files_data)
-        time.sleep(rate_limit)
-
-    if not files_data:
-        return False, 0, 0.0
-
-    # Filter for Bruker raw files
-    bruker_files = []
+    n_files = 0
+    bruker_bytes = raw_bytes = 0
     for f in files_data:
-        filename = f.get("fileName", "")
-        for pattern in BRUKER_FILE_PATTERNS:
-            if fnmatch.fnmatch(filename.lower(), pattern.lower()):
-                bruker_files.append(f)
-                break
+        name = (f.get("fileName") or "").lower()
+        size = f.get("fileSizeBytes", 0)
+        is_glob = any(
+            fnmatch.fnmatch(name, pat.lower()) for pat in BRUKER_FILE_PATTERNS
+        )
+        is_raw = ((f.get("fileCategory") or {}).get("value") or "").upper() == "RAW"
+        if is_glob:
+            bruker_bytes += size
+        if is_raw:
+            raw_bytes += size
+        if is_glob or is_raw:
+            n_files += 1
 
-    n_files = len(bruker_files)
-    size_bytes = sum(f.get("fileSize", 0) for f in bruker_files)
-    size_gb = round(size_bytes / (1024**3), 2)
+    size_gb = round(bruker_bytes / (1024**3), 2)
+    raw_gb = round(raw_bytes / (1024**3), 2)
+    if size_gb > 0:
+        best_gb, source = size_gb, "filename_glob"
+    elif raw_gb > 0:
+        best_gb, source = raw_gb, "raw_category"
+    else:
+        best_gb, source = 0.0, "none"
 
-    return n_files > 0, n_files, size_gb
+    return bool(n_files), n_files, best_gb, raw_gb, source
 
 
 # ---------------------------------------------------------------------------
@@ -528,6 +598,8 @@ def classify_projects(
             "has_bruker_files": None,
             "n_bruker_files": None,
             "bruker_size_gb": None,
+            "raw_size_gb": None,
+            "size_source": None,
         }
         classified.append(entry)
 
@@ -575,14 +647,32 @@ def validate_all_files(
     Modifies datasets in-place and returns filtered list.
     """
     valid = []
+    failed = []
     for i, ds in enumerate(datasets):
         acc = ds["accession"]
-        has_files, n_files, size_gb = validate_bruker_files(
-            acc, cache_dir, rate_limit
-        )
+        try:
+            has_files, n_files, size_gb, raw_gb, size_src = validate_bruker_files(
+                acc, cache_dir, rate_limit
+            )
+        except FileCheckError as e:
+            # Fields stay None so a later --cached-only re-score cannot read a
+            # throttled fetch as "0 GB, no Bruker files". The dataset is held
+            # back from `valid` because we genuinely do not know, and the count
+            # is reported below rather than swallowed.
+            ds["has_bruker_files"] = None
+            ds["n_bruker_files"] = None
+            ds["bruker_size_gb"] = None
+            ds["raw_size_gb"] = None
+            ds["size_source"] = None
+            ds.setdefault("warnings", []).append(f"file_check_failed: {e}")
+            failed.append(acc)
+            continue
+
         ds["has_bruker_files"] = has_files
         ds["n_bruker_files"] = n_files
         ds["bruker_size_gb"] = size_gb
+        ds["raw_size_gb"] = raw_gb
+        ds["size_source"] = size_src
 
         if has_files and n_files >= min_files:
             valid.append(ds)
@@ -591,6 +681,12 @@ def validate_all_files(
             print(f"  Checked files for {i + 1}/{len(datasets)}...")
 
     print(f"  Stage 3 complete: {len(valid)}/{len(datasets)} have Bruker files")
+    if failed:
+        print(
+            f"  WARNING: {len(failed)} file checks could not be completed and "
+            f"were left unmeasured (not counted as empty): "
+            f"{', '.join(failed[:5])}{' ...' if len(failed) > 5 else ''}"
+        )
     return valid
 
 
@@ -754,6 +850,8 @@ def generate_csv(
         "has_bruker_files",
         "n_bruker_files",
         "bruker_size_gb",
+        "raw_size_gb",
+        "size_source",
         "warnings",
     ]
 

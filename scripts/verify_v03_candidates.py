@@ -15,7 +15,7 @@ import sys
 import time
 import urllib.request
 
-API = "https://www.ebi.ac.uk/pride/ws/archive/v2/projects/%s"
+API = "https://www.ebi.ac.uk/pride/ws/archive/v3/projects/%s"
 
 # protocol-text signatures (word-boundary, case-insensitive)
 ACYL_SIG = {

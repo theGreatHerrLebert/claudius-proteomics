@@ -17,7 +17,7 @@ import requests
 import yaml
 
 # PRIDE REST API v2 base URL
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 
 
 @dataclass
@@ -452,11 +452,21 @@ class DatasetMetadata:
             )
 
         # Fetch file information
-        files_url = f"{PRIDE_API_BASE}/files/byProject?accession={accession}"
         try:
-            files_response = requests.get(files_url, timeout=30)
-            files_response.raise_for_status()
-            files_data = files_response.json()
+            files_data = []
+            page, page_size = 0, 1000
+            while True:
+                files_url = (
+                    f"{PRIDE_API_BASE}/projects/{accession}/files"
+                    f"?pageSize={page_size}&page={page}"
+                )
+                files_response = requests.get(files_url, timeout=30)
+                files_response.raise_for_status()
+                batch = files_response.json()
+                files_data.extend(batch)
+                if len(batch) < page_size:
+                    break
+                page += 1
 
             if files_data:
                 metadata.num_files = MetadataField.auto(
@@ -469,7 +479,7 @@ class DatasetMetadata:
                 for f in files_data:
                     ext = Path(f.get("fileName", "")).suffix.lower()
                     file_types[ext] = file_types.get(ext, 0) + 1
-                    total_size += f.get("fileSize", 0)
+                    total_size += f.get("fileSizeBytes", 0)
 
                 metadata.file_types = MetadataField.auto(
                     file_types, "pride_api.files"

@@ -327,17 +327,28 @@ def _make_group_id(organism_key: str, enzyme: str, sample_type: str,
 # PRIDE API helpers
 # ---------------------------------------------------------------------------
 
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 
 
 def _fetch_pride_file_list(accession: str) -> List[Dict[str, Any]]:
     """Fetch the file list from PRIDE REST API."""
     import requests
 
-    url = f"{PRIDE_API_BASE}/files/byProject?accession={accession}"
-    response = requests.get(url, timeout=30)
-    response.raise_for_status()
-    return response.json()
+    files: List[Dict[str, Any]] = []
+    page, page_size = 0, 1000
+    while True:
+        url = (
+            f"{PRIDE_API_BASE}/projects/{accession}/files"
+            f"?pageSize={page_size}&page={page}"
+        )
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        batch = response.json()
+        files.extend(batch)
+        if len(batch) < page_size:
+            break
+        page += 1
+    return files
 
 
 def _fetch_pride_organisms(accession: str) -> List[Dict[str, Any]]:

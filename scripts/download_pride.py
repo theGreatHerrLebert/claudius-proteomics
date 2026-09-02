@@ -36,7 +36,7 @@ from pride_metadata import (
 )
 
 # PRIDE REST API v2 base URL
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 
 # ProteomeXchange API for cross-repository resolution
 PX_API_BASE = "https://proteomecentral.proteomexchange.org/cgi/GetDataset"
@@ -377,7 +377,7 @@ def _create_px_metadata(accession: str, px_data: dict, metadata_dir: Path) -> No
 
 def _get_file_list_pride_api(accession: str) -> List[dict]:
     """
-    List all files for a PRIDE project via the v2 REST API.
+    List all files for a PRIDE project via the v3 REST API.
 
     Uses the paginated ``/projects/{accession}/files`` endpoint and normalises
     each entry to a dict with ``fileName``, ``fileSize``, ``fileCategory`` and
@@ -428,7 +428,7 @@ def get_file_list(accession: str) -> tuple:
 
     Falls back through: PRIDE API → EBI HTTPS index → ProteomeXchange → jPOST.
     """
-    # Primary: PRIDE v2 REST API project files endpoint.
+    # Primary: PRIDE v3 REST API project files endpoint.
     try:
         api_files = _get_file_list_pride_api(accession)
         if api_files:

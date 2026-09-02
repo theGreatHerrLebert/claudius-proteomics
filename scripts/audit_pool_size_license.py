@@ -25,8 +25,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-API = "https://www.ebi.ac.uk/pride/ws/archive/v2"
-API3 = "https://www.ebi.ac.uk/pride/ws/archive/v3"   # v2 files/byProject returns an empty body
+# v3 throughout: v2 is an alias for v3 on /projects, but its files/byProject
+# endpoint was retired and answers 200 with an empty body.
+API = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 BRUKER_PATTERNS = ["*.d", "*.d.zip", "*.d.rar", "*.tdf", "*.tdf_bin", "*brukertimstof*"]
 FIELDS = ["accession", "cc0", "license", "n_bruker_files", "bruker_size_gb",
           "n_raw_files", "raw_size_gb",
@@ -88,7 +89,7 @@ def audit(acc, sleep):
     files, page = [], 0
     while True:   # v3 paginates; a few deposits run to thousands of files
         try:
-            chunk = get(f"{API3}/projects/{acc}/files?pageSize=1000&page={page}", sleep)
+            chunk = get(f"{API}/projects/{acc}/files?pageSize=1000&page={page}", sleep)
         except FetchError as e:
             # Do NOT treat a failed page as end-of-listing: that is exactly the
             # bug this script exists to catch. Fail the row instead.
