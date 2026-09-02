@@ -14,6 +14,7 @@ Output:
     - ccs_prediction_accuracy_report.pdf: diagnostic plots
 """
 
+import os
 import argparse
 import re
 import sys
@@ -32,7 +33,12 @@ from matplotlib.backends.backend_pdf import PdfPages
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-RUSTIMS_PREDICTORS = Path("/home/administrator/Documents/promotion/rust/rustims/packages/imspy-predictors/src")
+# Local checkout of https://github.com/theGreatHerrLebert/rustims.
+# Override with RUSTIMS_ROOT; defaults to a sibling of this repository.
+RUSTIMS_ROOT = Path(
+    os.environ.get("RUSTIMS_ROOT", Path(__file__).resolve().parents[2] / ".." / "rustims")
+).expanduser().resolve()
+RUSTIMS_PREDICTORS = RUSTIMS_ROOT / "packages" / "imspy-predictors" / "src"
 
 
 def clean_sequence(seq: str) -> str | None:

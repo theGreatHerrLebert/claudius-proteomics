@@ -36,7 +36,7 @@ from pride_metadata import (
 )
 
 # PRIDE REST API v2 base URL
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 
 # ProteomeXchange API for cross-repository resolution
 PX_API_BASE = "https://proteomecentral.proteomexchange.org/cgi/GetDataset"
@@ -377,7 +377,7 @@ def _create_px_metadata(accession: str, px_data: dict, metadata_dir: Path) -> No
 
 def _get_file_list_pride_api(accession: str) -> List[dict]:
     """
-    List all files for a PRIDE project via the v2 REST API.
+    List all files for a PRIDE project via the v3 REST API.
 
     Uses the paginated ``/projects/{accession}/files`` endpoint and normalises
     each entry to a dict with ``fileName``, ``fileSize``, ``fileCategory`` and
@@ -428,7 +428,7 @@ def get_file_list(accession: str) -> tuple:
 
     Falls back through: PRIDE API → EBI HTTPS index → ProteomeXchange → jPOST.
     """
-    # Primary: PRIDE v2 REST API project files endpoint.
+    # Primary: PRIDE v3 REST API project files endpoint.
     try:
         api_files = _get_file_list_pride_api(accession)
         if api_files:
@@ -936,6 +936,36 @@ def download_pride(
     n_reassembled = _reassemble_tdf_to_d(output_dir)
     if n_reassembled > 0:
         print(f"   Reassembled {n_reassembled} .d folders from flat TDF files")
+
+    # Step 4c: Merge raw .d metadata into pride_metadata.yaml.
+    # Without this, instrument (and gradient_length/acquisition_mode/lc_system)
+    # stay at whatever PRIDE's API reported. That's wrong when a deposit lists
+    # multiple instruments and instruments[0] isn't the one actually processed
+    # — see the PXD073076 batch from the May 2026 campaign. The merge writes
+    # status=auto for these fields, which blocks the later paper-extraction
+    # step (whitelisted to 6 fields and required to respect auto/manual) from
+    # overwriting them with paper-inferred values. Precedence: raw .d > paper
+    # extraction > PRIDE API.
+    pride_meta_file = metadata_dir / "pride_metadata.yaml"
+    if pride_meta_file.exists():
+        print(f"\n4c. Merging raw .d metadata into pride_metadata.yaml...")
+        try:
+            from extract_raw_metadata import (
+                extract_from_all_raw_files,
+                merge_metadata,
+            )
+            raw_meta = extract_from_all_raw_files(output_dir)
+            if raw_meta:
+                pride_meta = DatasetMetadata.from_yaml(pride_meta_file)
+                merged = merge_metadata(pride_meta, raw_meta)
+                merged.to_yaml(pride_meta_file)
+                instr = (raw_meta.get("instrument") or {}).get("value")
+                if instr:
+                    print(f"   Instrument from .d: {instr}")
+            else:
+                print(f"   No .d folders to merge from.")
+        except Exception as e:
+            print(f"   Warning: raw metadata merge failed: {e}")
 
     # Step 5: Create download complete flag
     flag_file = output_dir / ".download_complete"

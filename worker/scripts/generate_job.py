@@ -47,7 +47,7 @@ FASTA_SOURCES = {
     },
 }
 
-PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v2"
+PRIDE_API_BASE = "https://www.ebi.ac.uk/pride/ws/archive/v3"
 
 
 def get_pride_metadata(accession: str) -> dict:
@@ -59,12 +59,25 @@ def get_pride_metadata(accession: str) -> dict:
 
 
 def get_pride_files(accession: str) -> list[dict]:
-    """Fetch file list from PRIDE API."""
-    url = f"{PRIDE_API_BASE}/files/byProject"
-    params = {"accession": accession, "pageSize": 1000}
-    response = requests.get(url, params=params, timeout=60)
-    response.raise_for_status()
-    return response.json().get("_embedded", {}).get("files", [])
+    """Fetch the full file list from the PRIDE API, following pagination.
+
+    v3 returns a bare JSON list per page, not the HAL ``_embedded.files``
+    envelope the retired v2 files/byProject endpoint used.
+    """
+    files: list[dict] = []
+    page = 0
+    page_size = 1000
+    while True:
+        url = f"{PRIDE_API_BASE}/projects/{accession}/files"
+        params = {"pageSize": page_size, "page": page}
+        response = requests.get(url, params=params, timeout=60)
+        response.raise_for_status()
+        batch = response.json()
+        files.extend(batch)
+        if len(batch) < page_size:
+            break
+        page += 1
+    return files
 
 
 def detect_organism(metadata: dict) -> str:

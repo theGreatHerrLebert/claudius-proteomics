@@ -4,6 +4,25 @@
 
 ---
 
+> ### ⚠️ Status: this is the original design, not a description of the built system
+>
+> Kept as the design record. Several decisions below were revised once they met
+> real data — the deltas that matter for a reader are listed here, and the
+> [README](../README.md) describes what actually exists.
+>
+> | This doc plans | What was built |
+> |---|---|
+> | Triple orthogonal validation (FragPipe + DIA-NN + Sage) | **Two** engines in production, Sage + FragPipe. DIA-NN was benchmarked as a third vote: +8.5% cross-engine corroboration and 0.7% unique precursors at q ≤ 0.01 — a confidence tier, not a coverage win. Harness kept, deferred to v0.4 |
+> | `imspy-predictors`, TensorFlow backend, ionmob GRU | **PyTorch** (`torch>=2.0`). CCS/intensity are fine-tuned `UnifiedPeptideModel` checkpoints; RT is Chronologer, not a GRU |
+> | POC on PXD019086 | shipped as a **58-dataset, 33.7M-precursor CC0 corpus** on Hugging Face |
+> | Snakemake as the workflow | the **San José runner** (`runner/run_dataset.py`, driven by `scripts/cluster/`) is the production path on the cluster; the Snakemake rules remain for local use |
+> | Mogon2 | MOGON-NHR (cluster `mogonki`) |
+> | `model.h5` snapshots | `.pt` checkpoints, distributed via rustims release `models-v0.6.0` |
+
+---
+
+---
+
 ## 1. Vision: San José
 
 ### The Core Principle

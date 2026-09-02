@@ -1,5 +1,16 @@
 # San José: A Reprocessed, Bias-Aware Reference Layer for timsTOF Data on PRIDE
 
+> ### ⚠️ Status: vision document
+>
+> This argues for the approach; it is not a description of the current build.
+> Two things have since changed in ways a reader should not be misled about:
+> **two** search engines run in production (Sage + FragPipe), not three — DIA-NN
+> was measured as a third vote and deferred — and the corpus is no longer
+> hypothetical: 58 datasets / 33.7M precursors are public and CC0 at
+> [timstof-dda-pasef-cc0](https://huggingface.co/datasets/theGreatHerrLebert/timstof-dda-pasef-cc0).
+> See the [README](../README.md) for the built system.
+
+
 ## The Vision
 
 PRIDE is not just an archive.

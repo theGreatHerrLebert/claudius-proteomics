@@ -280,3 +280,45 @@ notebook/
 # never the downloaded PDFs themselves.
 paper_inbox/**/*.pdf
 paper_inbox/**/*.PDF
+
+# ===================================
+# PUBLIC-RELEASE HYGIENE
+# ===================================
+# The manuscript lives outside the repo (../claudius-proteomics-private/paper/)
+# until publication — never commit it back in.
+paper/
+*.tex
+*.bbl
+*.blg
+*.aux
+*.synctex.gz
+
+# Agent / session context and planning docs. These are working notes, not
+# project documentation: they go stale, they leak internal infra details, and
+# they mislead anyone reading the repo. Keep them in
+# ../claudius-proteomics-private/notes/.
+CLAUDE.md
+AGENTS.md
+CURRENT.md
+NEXT_ACTIONS.md
+NEXT_STEPS.md
+next-session.md
+TO_*.md
+*.codex-review*.md
+*.codex-2*.md
+
+# Tool / review scratch output
+*.stderr
+*.stdout
+*.bak-*
+codex-*.log
+
+# Loose analysis artefacts dropped at the repo root
+/*.tsv
+/*.parquet
+/*.csv
+/*.json
+
+# Stale unix sockets left by long-running runners
+/san
+/claudius
