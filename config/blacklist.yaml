@@ -8,7 +8,30 @@
 # - format_unsupported: File formats we can't process
 # - manual_split: Needs to be split into sub-datasets
 
-blacklist: {}
+blacklist:
+  PXD071478:
+    reason: "format_unsupported"
+    action: "skip"
+    notes: >-
+      Dropped 2026-09-01. Two independent blockers. (1) Organism is Reynoutria
+      japonica (NEWT:488216) and UniProt has no proteome for Reynoutria or
+      Fallopia at any rank, so there is no defensible search database — a
+      neighbour species would be worse than skipping. (2) The PRIDE download is
+      truncated anyway: one 0-byte .d.zip and two ~1 MB, where real timsTOF
+      archives are GB-scale. Was the crotonyl entry of the v0.3 acyl cohort.
+
+  PXD058676:
+    reason: "format_unsupported"
+    action: "skip"
+    notes: >-
+      Dropped 2026-09-01, confirming a decision already taken in practice in
+      July. UniProt has no proteome for Platycodon grandiflorus (NEWT:94286), so
+      there is no search database. Unlike PXD071478 the DATA is fine — 21 GB,
+      8 valid .d, and a processed/ dir from an earlier search attempt — so this
+      becomes processable the moment a proteome exists (a genome-derived FASTA
+      set as organisms.platycodon.local_fasta would be enough). Was the malonyl
+      entry of the v0.3 acyl cohort. Raw moved to data/excluded/, not deleted.
+
   # Example:
   # PXD012345:
   #   reason: "multi_organism"
